@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:sharexev2/data/models/chat_message.dart';
+import 'package:sharexev2/config/app_config.dart';
 
 class WebSocketService {
-  static const String wsUrl = 'ws://localhost:8080/ws';
   WebSocketChannel? _channel;
   bool _isConnected = false;
   String? _currentToken;
@@ -24,7 +24,8 @@ class WebSocketService {
       _currentToken = token;
       _currentRoomId = roomId;
       
-      // Create WebSocket connection with authentication
+      // Create WebSocket connection with authentication using config URL
+      final wsUrl = AppConfig.I.webSocketUrl;
       final uri = Uri.parse('$wsUrl?token=$token&roomId=$roomId');
       _channel = WebSocketChannel.connect(uri);
       
@@ -98,8 +99,7 @@ class WebSocketService {
   // Send chat message
   void sendMessage(ChatMessage message) {
     if (!_isConnected || _channel == null) {
-      print('❌ Cannot send message: WebSocket not connected');
-      onError?.call('WebSocket not connected');
+      print('❌ WebSocket not connected');
       return;
     }
 
@@ -107,11 +107,12 @@ class WebSocketService {
       final messageData = {
         'type': 'chat_message',
         'data': message.toJson(),
-        'token': _currentToken,
+        'roomId': _currentRoomId,
+        'timestamp': DateTime.now().toIso8601String(),
       };
-      
+
       _channel!.sink.add(jsonEncode(messageData));
-      print('📤 Message sent: ${message.content}');
+      print('✅ Message sent via WebSocket');
     } catch (e) {
       print('❌ Error sending message: $e');
       onError?.call('Failed to send message: $e');
@@ -124,124 +125,47 @@ class WebSocketService {
 
     try {
       final typingData = {
-        'type': 'typing_indicator',
+        'type': 'user_typing',
         'data': {
-          'roomId': _currentRoomId,
+          'userEmail': _currentToken, // Use token as user identifier
           'isTyping': isTyping,
+          'roomId': _currentRoomId,
         },
-        'token': _currentToken,
       };
-      
+
       _channel!.sink.add(jsonEncode(typingData));
     } catch (e) {
-      print('❌ Error sending typing indicator: $e');
+      print('Error sending typing indicator: $e');
     }
   }
 
-  // Join room (if not already connected)
-  void joinRoom(String roomId) {
-    if (!_isConnected || _channel == null) return;
-
-    try {
-      final joinData = {
-        'type': 'join_room',
-        'data': {
-          'roomId': roomId,
-        },
-        'token': _currentToken,
-      };
-      
-      _channel!.sink.add(jsonEncode(joinData));
-      _currentRoomId = roomId;
-      print('🚪 Joined room: $roomId');
-    } catch (e) {
-      print('❌ Error joining room: $e');
-    }
-  }
-
-  // Leave room
-  void leaveRoom() {
-    if (!_isConnected || _channel == null) return;
-
-    try {
-      final leaveData = {
-        'type': 'leave_room',
-        'data': {
-          'roomId': _currentRoomId,
-        },
-        'token': _currentToken,
-      };
-      
-      _channel!.sink.add(jsonEncode(leaveData));
-      print('🚪 Left room: $_currentRoomId');
-    } catch (e) {
-      print('❌ Error leaving room: $e');
-    }
-  }
-
-  // Disconnect WebSocket
+  // Disconnect from WebSocket
   void disconnect() {
-    try {
-      if (_isConnected && _channel != null) {
-        leaveRoom(); // Leave current room before disconnecting
-        _channel!.sink.close(status.goingAway);
-      }
-      _isConnected = false;
-      _currentToken = null;
-      _currentRoomId = null;
-      print('🔌 WebSocket disconnected');
-    } catch (e) {
-      print('❌ Error disconnecting: $e');
+    if (_channel != null) {
+      _channel!.sink.close(status.goingAway);
+      _channel = null;
     }
+    _isConnected = false;
+    _currentToken = null;
+    _currentRoomId = null;
+    print('🔌 WebSocket disconnected manually');
   }
 
-  // Reconnect with exponential backoff
+  // Reconnect to WebSocket
   Future<void> reconnect() async {
-    if (_currentToken == null || _currentRoomId == null) {
-      print('❌ Cannot reconnect: Missing token or room ID');
-      return;
-    }
-
-    int retryCount = 0;
-    const maxRetries = 5;
-    
-    while (retryCount < maxRetries && !_isConnected) {
-      try {
-        await Future.delayed(Duration(seconds: 2 << retryCount)); // Exponential backoff
-        await connect(_currentToken!, _currentRoomId!);
-        break;
-      } catch (e) {
-        retryCount++;
-        print('🔄 Reconnection attempt $retryCount failed: $e');
-        if (retryCount >= maxRetries) {
-          onError?.call('Failed to reconnect after $maxRetries attempts');
-        }
-      }
+    if (_currentToken != null && _currentRoomId != null) {
+      disconnect();
+      await Future.delayed(const Duration(seconds: 1));
+      await connect(_currentToken!, _currentRoomId!);
     }
   }
 
   // Check connection health
-  void ping() {
-    if (!_isConnected || _channel == null) return;
+  bool get isHealthy => _isConnected && _channel != null;
 
-    try {
-      final pingData = {
-        'type': 'ping',
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-      
-      _channel!.sink.add(jsonEncode(pingData));
-    } catch (e) {
-      print('❌ Error sending ping: $e');
-    }
-  }
+  // Get current room ID
+  String? get currentRoomId => _currentRoomId;
 
-  // Dispose resources
-  void dispose() {
-    disconnect();
-    onMessageReceived = null;
-    onConnected = null;
-    onDisconnected = null;
-    onError = null;
-  }
+  // Get current token
+  String? get currentToken => _currentToken;
 }

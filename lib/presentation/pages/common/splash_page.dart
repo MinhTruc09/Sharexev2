@@ -5,6 +5,7 @@ import 'package:sharexev2/routes/app_routes.dart';
 import 'package:sharexev2/logic/splash/splash_cubit.dart';
 import 'package:sharexev2/logic/splash/splash_state.dart';
 import 'package:sharexev2/presentation/views/splash_view.dart';
+import 'package:sharexev2/core/network/api_client.dart';
 
 class SplashPage extends StatefulWidget {
   final String?
@@ -21,7 +22,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    _cubit = SplashCubit(AuthService());
+    _cubit = SplashCubit(AuthService(ApiClient()));
     // Bắt đầu kiểm tra, nếu có overrideRole thì bỏ qua kiểm tra đăng nhập
     _cubit.checkLoginStatus(overrideRole: widget.overrideRole);
   }

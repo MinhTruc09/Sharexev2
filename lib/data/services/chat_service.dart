@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:sharexev2/data/models/chat_message.dart';
-import 'package:sharexev2/config/env.dart';
+import 'package:sharexev2/core/network/api_response.dart';
+import 'package:sharexev2/config/app_config.dart';
 
 class ChatService {
-  static const String baseUrl = 'http://localhost:8080/api';
-  
   // Load chat history from API
-  static Future<List<ChatMessage>> fetchMessages(String roomId, String token) async {
+  static Future<ApiResponse<List<ChatMessage>>> fetchMessages(
+    String roomId,
+    String token,
+  ) async {
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/chat/$roomId"),
+        Uri.parse("${AppConfig.I.baseUrl}/chat/$roomId"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -18,33 +20,46 @@ class ChatService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final messages = (data['data'] as List)
-            .map((e) => ChatMessage.fromJson(e))
-            .toList();
-        return messages;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list =
+            (data['data'] as List<dynamic>? ?? [])
+                .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+                .toList();
+
+        return ApiResponse<List<ChatMessage>>(
+          message: data['message'] ?? '',
+          statusCode: data['statusCode'] ?? 0,
+          data: list,
+          success: data['success'] ?? false,
+        );
       } else {
         throw Exception("Failed to load chat history: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching messages: $e");
-      // Return mock data for development
-      return _getMockMessages(roomId);
+      // No mock data: return an empty result and surface the error.
+      return ApiResponse<List<ChatMessage>>(
+        message: 'Failed to fetch messages: $e',
+        statusCode: 500,
+        data: const [],
+        success: false,
+      );
     }
   }
 
   // Create chat room
-  static Future<String> createChatRoom(String participantEmail, String token) async {
+  static Future<String> createChatRoom(
+    String participantEmail,
+    String token,
+  ) async {
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/chat/room"),
+        Uri.parse("${AppConfig.I.baseUrl}/chat/room"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({
-          "participantEmail": participantEmail,
-        }),
+        body: jsonEncode({"participantEmail": participantEmail}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -55,16 +70,17 @@ class ChatService {
       }
     } catch (e) {
       print("Error creating chat room: $e");
-      // Return mock room ID for development
-      return "room_${DateTime.now().millisecondsSinceEpoch}";
+      rethrow;
     }
   }
 
   // Get chat rooms for user
-  static Future<List<Map<String, dynamic>>> getChatRooms(String token) async {
+  static Future<ApiResponse<List<Map<String, dynamic>>>> getChatRooms(
+    String token,
+  ) async {
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/chat/rooms"),
+        Uri.parse("${AppConfig.I.baseUrl}/chat/rooms"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -72,116 +88,97 @@ class ChatService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data['data']);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = List<Map<String, dynamic>>.from(
+          data['data'] as List<dynamic>? ?? [],
+        );
+        return ApiResponse<List<Map<String, dynamic>>>(
+          message: data['message'] ?? '',
+          statusCode: data['statusCode'] ?? 0,
+          data: list,
+          success: data['success'] ?? false,
+        );
       } else {
-        throw Exception("Failed to load chat rooms: ${response.statusCode}");
+        throw Exception("Failed to get chat rooms: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error fetching chat rooms: $e");
-      // Return mock data for development
-      return _getMockChatRooms();
+      print("Error getting chat rooms: $e");
+      return ApiResponse<List<Map<String, dynamic>>>(
+        message: 'Failed to get chat rooms: $e',
+        statusCode: 500,
+        data: const [],
+        success: false,
+      );
     }
   }
 
-  // Mark messages as read
-  static Future<void> markAsRead(String roomId, String token) async {
+  // Get chat room ID by other user email
+  static Future<String?> getChatRoomId(
+    String otherUserEmail,
+    String token,
+  ) async {
     try {
-      await http.put(
-        Uri.parse("$baseUrl/chat/$roomId/read"),
+      final response = await http.get(
+        Uri.parse("${AppConfig.I.baseUrl}/chat/room/$otherUserEmail"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
       );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['data'] as String?;
+      } else {
+        throw Exception("Failed to get chat room ID: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error getting chat room ID: $e");
+      return null;
+    }
+  }
+
+  // Mark messages as read
+  static Future<bool> markMessagesAsRead(
+    String roomId,
+    String token,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse("${AppConfig.I.baseUrl}/chat/$roomId/mark-read"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      return response.statusCode == 200;
     } catch (e) {
       print("Error marking messages as read: $e");
+      return false;
     }
   }
 
-  // Mock data for development
-  static List<ChatMessage> _getMockMessages(String roomId) {
-    return [
-      ChatMessage(
-        roomId: roomId,
-        senderEmail: 'driver@test.com',
-        senderName: 'Driver A',
-        receiverEmail: 'passenger@test.com',
-        content: 'Hello! I am your driver for today.',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
-        read: true,
-        messageId: 'msg_1',
-      ),
-      ChatMessage(
-        roomId: roomId,
-        senderEmail: 'passenger@test.com',
-        senderName: 'Passenger B',
-        receiverEmail: 'driver@test.com',
-        content: 'Hi! Where are you now?',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 8)),
-        read: true,
-        messageId: 'msg_2',
-      ),
-      ChatMessage(
-        roomId: roomId,
-        senderEmail: 'driver@test.com',
-        senderName: 'Driver A',
-        receiverEmail: 'passenger@test.com',
-        content: 'I am 5 minutes away from pickup location.',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-        read: false,
-        messageId: 'msg_3',
-      ),
-    ];
-  }
+  // Send test message via API (for testing purposes)
+  static Future<bool> sendTestMessage(
+    String roomId,
+    Map<String, dynamic> messageData,
+    String token,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("${AppConfig.I.baseUrl}/chat/test/$roomId"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(messageData),
+      );
 
-  static List<Map<String, dynamic>> _getMockChatRooms() {
-    return [
-      {
-        'roomId': 'room_1',
-        'participantName': 'Driver A',
-        'participantEmail': 'driver@test.com',
-        'lastMessage': 'I am 5 minutes away from pickup location.',
-        'lastMessageTime': DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(),
-        'unreadCount': 1,
-        'tripId': 'trip_1',
-      },
-      {
-        'roomId': 'room_2',
-        'participantName': 'Passenger B',
-        'participantEmail': 'passenger2@test.com',
-        'lastMessage': 'Thank you for the ride!',
-        'lastMessageTime': DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
-        'unreadCount': 0,
-        'tripId': 'trip_2',
-      },
-    ];
-  }
-
-  // Validate message content
-  static bool isValidMessage(String content) {
-    return content.trim().isNotEmpty && content.length <= 1000;
-  }
-
-  // Format timestamp for display
-  static String formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error sending test message: $e");
+      return false;
     }
-  }
-
-  // Generate room ID for two users
-  static String generateRoomId(String email1, String email2) {
-    final emails = [email1, email2]..sort();
-    return 'room_${emails.join('_').replaceAll('@', '_').replaceAll('.', '_')}';
   }
 }

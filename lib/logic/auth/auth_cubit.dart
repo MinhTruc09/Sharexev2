@@ -1,10 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/core/services/navigation_service.dart';
-import 'package:sharexev2/data/services/mock_auth_service.dart';
+import 'package:sharexev2/data/repositories/auth_repository.dart';
 import 'package:sharexev2/logic/auth/auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final MockAuthService _authService;
+  final AuthRepository _authService;
   final NavigationService _navigationService = NavigationService();
 
   AuthCubit(this._authService) : super(const AuthState());
@@ -25,14 +25,14 @@ class AuthCubit extends Cubit<AuthState> {
             isLoading: false,
           ),
         );
-        
+
         // Navigate to appropriate home screen based on user role
         _navigateToHome(user?.role ?? 'PASSENGER');
       } else {
         emit(
           state.copyWith(status: AuthStatus.unauthenticated, isLoading: false),
         );
-        
+
         // Navigate to role selection if not logged in
         _navigationService.navigateToRoleSelection();
       }
@@ -71,7 +71,7 @@ class AuthCubit extends Cubit<AuthState> {
           isLoading: false,
         ),
       );
-      
+
       // Navigate to home screen after successful login
       _navigateToHomeAndClear(role);
     } catch (e) {
@@ -99,7 +99,7 @@ class AuthCubit extends Cubit<AuthState> {
           isGoogleSigningIn: false,
         ),
       );
-      
+
       // Navigate to home screen after successful Google login
       _navigateToHomeAndClear(role);
     } catch (e) {
@@ -139,7 +139,7 @@ class AuthCubit extends Cubit<AuthState> {
           isRegistering: false,
         ),
       );
-      
+
       // Navigate to home screen after successful registration
       _navigateToHomeAndClear(role);
     } catch (e) {
@@ -167,7 +167,7 @@ class AuthCubit extends Cubit<AuthState> {
           isLoading: false,
         ),
       );
-      
+
       // Navigate to login screen and clear navigation stack
       _navigationService.navigateToLoginAndClear();
     } catch (e) {
@@ -250,9 +250,6 @@ class AuthCubit extends Cubit<AuthState> {
     required Map<String, dynamic> tripData,
     String role = 'PASSENGER',
   }) {
-    _navigationService.navigateToTripReview(
-      tripData: tripData,
-      role: role,
-    );
+    _navigationService.navigateToTripReview(tripData: tripData, role: role);
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sharexev2/data/services/mock_auth_service.dart';
+import 'package:sharexev2/data/repositories/real_auth_repository.dart';
 import 'package:sharexev2/logic/registration/registration_cubit.dart';
 import 'package:sharexev2/data/models/registration_models.dart';
 import 'package:sharexev2/presentation/widgets/common/auth_container.dart';
@@ -16,7 +16,7 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => RegistrationCubit(MockAuthService(), role),
+      create: (_) => RegistrationCubit(RealAuthRepository(), role),
       child: BlocConsumer<RegistrationCubit, RegistrationState>(
         listener: (context, state) {
           // Handle success

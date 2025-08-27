@@ -1,27 +1,41 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/models/ride.dart';
-import 'package:sharexev2/data/services/mock_data_service.dart';
+import 'package:sharexev2/data/services/ride_service_impl.dart';
 
 part 'home_passenger_state.dart';
 
 class HomePassengerCubit extends Cubit<HomePassengerState> {
+  final RideService _rideService = RideService();
+
   HomePassengerCubit() : super(const HomePassengerState());
 
   Future<void> init() async {
     emit(state.copyWith(status: HomePassengerStatus.loading));
     try {
-      // Load mock data
-      final rideHistory = await MockDataService.getRideHistory();
+      // Try load from API, fallback to local generated data
+      List<Ride> rideHistory = [];
+      try {
+        final res = await _rideService.getRideHistory();
+        rideHistory = (res.data ?? []).cast<Ride>();
+      } catch (_) {
+        // ignore and leave rideHistory empty
+      }
+
       final nearbyTrips = await _loadNearbyTrips();
 
       emit(
         state.copyWith(
           status: HomePassengerStatus.ready,
           rideHistory: rideHistory,
-          popularDestinations: MockDataService.popularDestinations,
-          recentSearches: MockDataService.recentSearches,
+          popularDestinations: [
+            'Sân bay Nội Bài',
+            'Hồ Gươm',
+            'Trung tâm Lotte',
+            'Vincom Mega Mall',
+          ],
+          recentSearches: ['Sân bay Nội Bài', 'Trung tâm Lotte'],
           nearbyTrips: nearbyTrips,
-          hasActiveTrip: false, // Check for active trips
+          hasActiveTrip: false,
         ),
       );
     } catch (e) {
@@ -89,7 +103,14 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
 
     emit(state.copyWith(isSearching: true));
     try {
-      final results = await MockDataService.searchPlaces(query);
+      // TODO: replace with Places API call when available
+      final results = await Future.value(
+        [
+          'Sân bay Nội Bài',
+          'Trung tâm Lotte',
+          'Vincom Mega Mall',
+        ].where((p) => p.toLowerCase().contains(query.toLowerCase())).toList(),
+      );
       emit(state.copyWith(searchResults: results, isSearching: false));
     } catch (e) {
       emit(state.copyWith(isSearching: false, error: 'Lỗi tìm kiếm: $e'));
@@ -116,7 +137,7 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
 
     emit(state.copyWith(status: HomePassengerStatus.booking));
     try {
-      final ride = await MockDataService.createRide(
+      final ride = await _rideService.createRideLocal(
         pickupAddress: state.pickupAddress!,
         dropoffAddress: state.dropoffAddress!,
         pickupLat: state.pickupLat!,

@@ -5,6 +5,7 @@ import 'package:sharexev2/logic/chat/chat_state.dart';
 import 'package:sharexev2/config/theme.dart';
 import 'package:sharexev2/presentation/pages/chat/chat_page.dart';
 import 'package:sharexev2/data/services/chat_service.dart';
+import 'package:sharexev2/data/repositories/real_auth_repository.dart';
 
 class ChatRoomsPage extends StatefulWidget {
   const ChatRoomsPage({super.key});
@@ -19,7 +20,11 @@ class _ChatRoomsPageState extends State<ChatRoomsPage> {
     super.initState();
     // Initialize chat with mock token
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatCubit>().initialize('mock_jwt_token');
+      // Try to load a real token from the RealAuthRepository.
+      RealAuthRepository().getAuthToken().then((token) {
+        final useToken = token ?? 'no_token_available';
+        context.read<ChatCubit>().initialize(useToken);
+      });
     });
   }
 

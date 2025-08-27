@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sharexev2/data/services/mock_auth_service.dart';
+import 'package:sharexev2/data/repositories/real_auth_repository.dart';
 import 'package:sharexev2/logic/auth/auth_cubit.dart';
 import 'package:sharexev2/logic/auth/auth_state.dart';
 import 'package:sharexev2/presentation/widgets/common/auth_container.dart';
@@ -16,7 +16,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AuthCubit(MockAuthService()),
+      create: (_) => AuthCubit(RealAuthRepository()),
       child: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state.status == AuthStatus.authenticated) {
@@ -171,11 +171,14 @@ class _LoginFormState extends State<LoginForm> {
               Expanded(child: Divider(color: Colors.grey.shade300)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: const Text('hoặc', style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black54,
-                )),
+                child: const Text(
+                  'hoặc',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                ),
               ),
               Expanded(child: Divider(color: Colors.grey.shade300)),
             ],
@@ -202,11 +205,14 @@ class _LoginFormState extends State<LoginForm> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Chưa có tài khoản? ', style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              )),
+              const Text(
+                'Chưa có tài khoản? ',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(

@@ -7,6 +7,8 @@ import 'package:sharexev2/app.dart';
 import 'package:sharexev2/core/services/navigation_service.dart';
 import 'package:sharexev2/data/services/firebase_api.dart';
 import 'package:sharexev2/data/services/firebase_service.dart';
+import 'package:sharexev2/core/network/api_client.dart';
+import 'package:sharexev2/data/repositories/real_auth_repository.dart';
 import 'package:sharexev2/firebase_options.dart';
 
 // Global navigation service instance
@@ -41,7 +43,7 @@ Future<void> main() async {
   // Get shared preferences for first open check
   final prefs = await SharedPreferences.getInstance();
   final isFirstOpen = prefs.getBool('isFirstOpen') ?? true;
-  
+
   runApp(App(isFirstOpen: isFirstOpen));
 }
 
@@ -68,6 +70,26 @@ Future<void> _initializeFirebase() async {
 
     // Initialize Firebase services
     await FirebaseService.initialize();
+
+    // Wire ApiClient token providers to the auth repository
+    final authRepo = RealAuthRepository();
+
+    ApiClient.tokenProvider = () async {
+      try {
+        return await authRepo.getAuthToken();
+      } catch (_) {
+        return null;
+      }
+    };
+
+    ApiClient.refreshTokenProvider = () async {
+      try {
+        await authRepo.refreshToken();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    };
 
     // Initialize FCM notifications
     await FirebaseApi().initNotification();

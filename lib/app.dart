@@ -18,9 +18,10 @@ import 'package:sharexev2/logic/roleselection/role_selection_cubit.dart';
 import 'package:sharexev2/logic/splash/splash_cubit.dart';
 import 'package:sharexev2/logic/trip/trip_detail_cubit.dart';
 import 'package:sharexev2/logic/trip/trip_review_cubit.dart';
-import 'package:sharexev2/data/services/mock_auth_service.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository.dart';
 import 'package:sharexev2/data/services/auth_service.dart';
 import 'package:sharexev2/data/repositories/role_repository.dart';
+import 'package:sharexev2/core/network/api_client.dart';
 
 class App extends StatelessWidget {
   final bool isFirstOpen;
@@ -32,18 +33,21 @@ class App extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         // Core BLoCs
-        BlocProvider(create: (_) => SplashCubit(AuthService())),
+        BlocProvider(create: (_) => SplashCubit(AuthService(ApiClient()))),
         BlocProvider(create: (_) => OnboardingCubit()),
         BlocProvider(create: (_) => RoleSelectionCubit(LocalRoleRepository())),
-        
+
         // Auth BLoCs
-        BlocProvider(create: (_) => AuthCubit(MockAuthService())),
-        BlocProvider(create: (_) => RegistrationCubit(MockAuthService(), 'PASSENGER')),
-        
+        // Use repository abstraction (RealAuthRepository is the canonical implementation)
+        BlocProvider(create: (_) => AuthCubit(AuthRepository)),
+        BlocProvider(
+          create: (_) => RegistrationCubit(AuthRepository, 'PASSENGER'),
+        ),
+
         // Home BLoCs
         BlocProvider(create: (_) => HomePassengerCubit()),
         BlocProvider(create: (_) => HomeDriverCubit()),
-        
+
         // Feature BLoCs
         BlocProvider(create: (_) => BookingCubit()),
         BlocProvider(create: (_) => ChatCubit()),
@@ -63,7 +67,9 @@ class App extends StatelessWidget {
           builder: (context, child) {
             return MediaQuery(
               // Set text scaling to prevent layout issues
-              data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: const TextScaler.linear(1.0)),
               child: child!,
             );
           },
@@ -108,27 +114,27 @@ class _ThemeProviderState extends State<ThemeProvider> {
 /// Extension to easily access theme colors
 extension ThemeExtension on BuildContext {
   ThemeData get theme => Theme.of(this);
-  
+
   Color get primaryColor => theme.primaryColor;
   Color get backgroundColor => theme.scaffoldBackgroundColor;
-  
+
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
-  
+
   // Helper methods for common theme elements
   TextStyle get headlineStyle => textTheme.headlineMedium!;
   TextStyle get titleStyle => textTheme.titleLarge!;
   TextStyle get bodyStyle => textTheme.bodyMedium!;
   TextStyle get labelStyle => textTheme.labelLarge!;
-  
+
   // Button styles
   ButtonStyle get primaryButtonStyle => theme.elevatedButtonTheme.style!;
   ButtonStyle get outlinedButtonStyle => theme.outlinedButtonTheme.style!;
   ButtonStyle get textButtonStyle => theme.textButtonTheme.style!;
-  
+
   // Input styles
   InputDecorationTheme get inputDecorationTheme => theme.inputDecorationTheme;
-  
+
   // Card styles
   CardThemeData get cardTheme => theme.cardTheme;
 }
