@@ -1,9 +1,7 @@
 import 'package:sharexev2/core/network/api_client.dart';
 import 'package:sharexev2/core/network/api_response.dart';
 import 'package:sharexev2/data/models/auth/api/login_request_dto.dart';
-import 'package:sharexev2/data/models/auth/auth_reponse_dto.dart';
-import 'package:sharexev2/data/models/auth/mappers/app_user_mapper.dart';
-import 'package:sharexev2/data/models/auth/app_user.dart';
+import 'package:sharexev2/data/models/auth/auth_response_dto.dart';
 import 'package:sharexev2/config/app_config.dart';
 
 class AuthService {
@@ -11,8 +9,8 @@ class AuthService {
 
   AuthService(this._api);
 
-  /// Đăng nhập → AppUser
-  Future<AppUser> login(LoginRequestDTO request) async {
+  /// Đăng nhập → AuthResponseDto
+  Future<AuthResponseDto> login(LoginRequestDTO request) async {
     final res = await _api.client.post(
       AppConfig.I.auth.login,
       data: request.toJson(),
@@ -23,12 +21,13 @@ class AuthService {
       (data) => AuthResponseDto.fromJson(data),
     );
 
-    final dto = apiRes.data as AuthResponseDto;
-    return AppUserMapper.fromUserDto(dto.user);
+    return apiRes.data as AuthResponseDto;
   }
 
-  /// Đăng ký hành khách → AppUser
-  Future<AppUser> registerPassenger(Map<String, dynamic> payload) async {
+  /// Đăng ký hành khách → AuthResponseDto
+  Future<AuthResponseDto> registerPassenger(
+    Map<String, dynamic> payload,
+  ) async {
     final res = await _api.client.post(
       AppConfig.I.auth.registerPassenger,
       data: payload,
@@ -39,12 +38,11 @@ class AuthService {
       (data) => AuthResponseDto.fromJson(data),
     );
 
-    final dto = apiRes.data as AuthResponseDto;
-    return AppUserMapper.fromUserDto(dto.user);
+    return apiRes.data as AuthResponseDto;
   }
 
-  /// Đăng ký tài xế → AppUser
-  Future<AppUser> registerDriver(Map<String, dynamic> payload) async {
+  /// Đăng ký tài xế → AuthResponseDto
+  Future<AuthResponseDto> registerDriver(Map<String, dynamic> payload) async {
     final res = await _api.client.post(
       AppConfig.I.auth.registerDriver,
       data: payload,
@@ -55,17 +53,20 @@ class AuthService {
       (data) => AuthResponseDto.fromJson(data),
     );
 
-    final dto = apiRes.data as AuthResponseDto;
-    return AppUserMapper.fromDriverDto(dto.user.toDriverDTO());
+    return apiRes.data as AuthResponseDto;
   }
 
   /// TODO: Refresh token (backend cần cung cấp API này)
-  Future<bool> refreshToken(String refreshToken) async {
+  Future<AuthResponseDto?> refreshToken(String refreshToken) async {
     // final res = await _api.client.post(
     //   AppConfig.I.auth.refresh,
     //   data: {"refreshToken": refreshToken},
     // );
-    // parse response -> save new tokens
-    return false;
+    // final apiRes = ApiResponse.fromJson(
+    //   res.data as Map<String, dynamic>,
+    //   (data) => AuthResponseDto.fromJson(data),
+    // );
+    // return apiRes.data as AuthResponseDto;
+    return null;
   }
 }

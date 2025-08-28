@@ -1,18 +1,15 @@
-// lib/data/repositories/auth/auth_api_repository.dart
-import 'package:dio/dio.dart';
 import 'package:sharexev2/core/auth/auth_manager.dart';
-import 'package:sharexev2/config/app_config.dart';
-import 'package:sharexev2/data/models/auth/auth_reponse_dto.dart';
-import 'package:sharexev2/data/models/auth/mappers/app_user_mapper.dart';
-import 'package:sharexev2/data/repositories/auth/auth_repository.dart';
 import 'package:sharexev2/data/models/auth/app_user.dart';
-import 'package:sharexev2/core/network/api_response.dart';
+import 'package:sharexev2/data/models/auth/mappers/app_user_mapper.dart';
+import 'package:sharexev2/data/services/auth_service.dart';
+import 'package:sharexev2/data/models/auth/api/login_request_dto.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository.dart';
 
 class AuthApiRepository implements AuthRepository {
-  final Dio _dio;
+  final AuthService _authService;
   final AuthManager _authManager = AuthManager();
 
-  AuthApiRepository(this._dio);
+  AuthApiRepository(this._authService);
 
   @override
   Future<bool> isLoggedIn() async {
@@ -31,21 +28,10 @@ class AuthApiRepository implements AuthRepository {
 
   @override
   Future<AppUser> loginWithEmail(String email, String password) async {
-    final res = await _dio.post(
-      AppConfig.I.auth.login,
-      data: {"email": email, "password": password},
+    final dto = await _authService.login(
+      LoginRequestDTO(email: email, password: password),
     );
 
-    final apiResponse = ApiResponse.fromJson(
-      res.data,
-      (json) => AuthResponseDto.fromJson(json),
-    );
-
-    if (!apiResponse.success || apiResponse.data == null) {
-      throw Exception("Login failed: ${apiResponse.message}");
-    }
-
-    final dto = apiResponse.data!;
     final user = AppUserMapper.fromUserDto(dto.user);
 
     await _authManager.saveSession(
@@ -63,21 +49,12 @@ class AuthApiRepository implements AuthRepository {
     String password,
     String fullName,
   ) async {
-    final res = await _dio.post(
-      AppConfig.I.auth.registerPassenger,
-      data: {"email": email, "password": password, "fullName": fullName},
-    );
+    final dto = await _authService.registerPassenger({
+      "email": email,
+      "password": password,
+      "fullName": fullName,
+    });
 
-    final apiResponse = ApiResponse.fromJson(
-      res.data,
-      (json) => AuthResponseDto.fromJson(json),
-    );
-
-    if (!apiResponse.success || apiResponse.data == null) {
-      throw Exception("Register failed: ${apiResponse.message}");
-    }
-
-    final dto = apiResponse.data!;
     final user = AppUserMapper.fromUserDto(dto.user);
 
     await _authManager.saveSession(
@@ -96,27 +73,14 @@ class AuthApiRepository implements AuthRepository {
     String fullName,
     String licenseNumber,
   ) async {
-    final res = await _dio.post(
-      AppConfig.I.auth.registerDriver,
-      data: {
-        "email": email,
-        "password": password,
-        "fullName": fullName,
-        "licenseNumber": licenseNumber,
-      },
-    );
+    final dto = await _authService.registerDriver({
+      "email": email,
+      "password": password,
+      "fullName": fullName,
+      "licenseNumber": licenseNumber,
+    });
 
-    final apiResponse = ApiResponse.fromJson(
-      res.data,
-      (json) => AuthResponseDto.fromJson(json),
-    );
-
-    if (!apiResponse.success || apiResponse.data == null) {
-      throw Exception("Register driver failed: ${apiResponse.message}");
-    }
-
-    final dto = apiResponse.data!;
-    final user = AppUserMapper.fromUserDto(dto.user);
+    final user = AppUserMapper.fromDriverDto(dto.user.toDriverDTO());
 
     await _authManager.saveSession(
       accessToken: dto.accessToken,
@@ -129,7 +93,21 @@ class AuthApiRepository implements AuthRepository {
 
   @override
   Future<void> refreshToken() async {
-    throw UnimplementedError("Refresh token chưa được implement");
+    final token = _authManager.refreshToken;
+    if (token == null) throw Exception("No refresh token found");
+
+    final dto = await _authService.refreshToken(token);
+    if (dto == null) {
+      await logout();
+      throw Exception("Refresh token failed");
+    }
+
+    final user = AppUserMapper.fromUserDto(dto.user);
+    await _authManager.saveSession(
+      accessToken: dto.accessToken,
+      refreshToken: dto.refreshToken,
+      user: user,
+    );
   }
 
   @override

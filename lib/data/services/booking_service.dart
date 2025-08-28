@@ -4,25 +4,27 @@ import 'package:sharexev2/data/models/booking/booking_dto.dart';
 import 'package:sharexev2/config/app_config.dart';
 
 class BookingService {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+
+  BookingService(this._api);
 
   /// Lấy danh sách booking của passenger
   Future<ApiResponse<List<BookingDTO>>> getPassengerBookings() async {
     final res = await _api.client.get(AppConfig.I.passenger.bookings);
     return ApiResponse.listFromJson<BookingDTO>(
       res.data as Map<String, dynamic>,
-      (e) => BookingDTO.fromJson(e as Map<String, dynamic>),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
   /// Lấy chi tiết booking theo ID
   Future<ApiResponse<BookingDTO>> getBookingDetail(String bookingId) async {
     final res = await _api.client.get(
-      '${AppConfig.I.passenger.bookingDetail}$bookingId',
+      "${AppConfig.I.passenger.bookingDetail}$bookingId",
     );
-    return ApiResponse<BookingDTO>.fromJson(
+    return ApiResponse.fromJson(
       res.data as Map<String, dynamic>,
-      (data) => BookingDTO.fromJson(data),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -32,34 +34,34 @@ class BookingService {
     int seats,
   ) async {
     final res = await _api.client.post(
-      '${AppConfig.I.passenger.createBooking}$rideId',
-      queryParameters: {'seats': seats},
+      "${AppConfig.I.passenger.createBooking}$rideId",
+      queryParameters: {"seats": seats},
     );
-    return ApiResponse<BookingDTO>.fromJson(
+    return ApiResponse.fromJson(
       res.data as Map<String, dynamic>,
-      (data) => BookingDTO.fromJson(data),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
   /// Passenger xác nhận ride
   Future<ApiResponse<BookingDTO>> passengerConfirmRide(String rideId) async {
     final res = await _api.client.put(
-      '${AppConfig.I.passenger.confirmRide}$rideId',
+      "${AppConfig.I.passenger.confirmRide}$rideId",
     );
-    return ApiResponse<BookingDTO>.fromJson(
+    return ApiResponse.fromJson(
       res.data as Map<String, dynamic>,
-      (data) => BookingDTO.fromJson(data),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
   /// Passenger hủy booking
   Future<ApiResponse<BookingDTO>> cancelBooking(String rideId) async {
     final res = await _api.client.put(
-      '${AppConfig.I.passenger.cancelBooking}$rideId',
+      "${AppConfig.I.passenger.cancelBooking}$rideId",
     );
-    return ApiResponse<BookingDTO>.fromJson(
+    return ApiResponse.fromJson(
       res.data as Map<String, dynamic>,
-      (data) => BookingDTO.fromJson(data),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -68,40 +70,40 @@ class BookingService {
     final res = await _api.client.get(AppConfig.I.driver.bookings);
     return ApiResponse.listFromJson<BookingDTO>(
       res.data as Map<String, dynamic>,
-      (e) => BookingDTO.fromJson(e as Map<String, dynamic>),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
   /// Driver chấp nhận booking
-  Future<ApiResponse<String>> acceptBooking(String bookingId) async {
+  Future<ApiResponse<BookingDTO>> acceptBooking(String bookingId) async {
     final res = await _api.client.put(
-      '${AppConfig.I.driver.acceptBooking}$bookingId',
+      "${AppConfig.I.driver.acceptBooking}$bookingId",
     );
-    return ApiResponse<String>.fromJson(
+    return ApiResponse.fromJson(
       res.data as Map<String, dynamic>,
-      (data) => data.toString(),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
   /// Driver từ chối booking
-  Future<ApiResponse<String>> rejectBooking(String bookingId) async {
+  Future<ApiResponse<BookingDTO>> rejectBooking(String bookingId) async {
     final res = await _api.client.put(
-      '${AppConfig.I.driver.rejectBooking}$bookingId',
+      "${AppConfig.I.driver.rejectBooking}$bookingId",
     );
-    return ApiResponse<String>.fromJson(
+    return ApiResponse.fromJson(
       res.data as Map<String, dynamic>,
-      (data) => data.toString(),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 
   /// Driver hoàn thành ride
-  Future<ApiResponse<String>> completeRide(String rideId) async {
+  Future<ApiResponse<BookingDTO>> completeRide(String rideId) async {
     final res = await _api.client.put(
-      '${AppConfig.I.driver.completeRide}$rideId',
+      "${AppConfig.I.driver.completeRide}$rideId",
     );
-    return ApiResponse<String>.fromJson(
+    return ApiResponse.fromJson(
       res.data as Map<String, dynamic>,
-      (data) => data.toString(),
+      (json) => BookingDTO.fromJson(json as Map<String, dynamic>),
     );
   }
 }
