@@ -1,99 +1,96 @@
+import 'package:sharexev2/data/services/auth/auth_service_interface.dart';
+import 'package:sharexev2/data/services/auth/auth_api_service.dart';
+import 'package:sharexev2/data/services/chat/chat_service_interface.dart';
+import 'package:sharexev2/data/services/chat/chat_api_service.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository_interface.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository_impl.dart';
+import 'package:sharexev2/data/repositories/chat/chat_repository_interface.dart';
+import 'package:sharexev2/data/repositories/chat/chat_repository_impl.dart';
 import 'package:sharexev2/core/network/api_client.dart';
-import 'package:sharexev2/data/services/auth_service.dart';
-import 'package:sharexev2/data/services/booking_service.dart';
-import 'package:sharexev2/data/services/chat_service.dart';
-import 'package:sharexev2/data/services/cloudinary_service.dart';
-import 'package:sharexev2/data/services/fcm_service.dart';
-import 'package:sharexev2/data/services/firebase_service.dart';
-import 'package:sharexev2/data/services/google_signin_service.dart';
-import 'package:sharexev2/data/services/location_service.dart';
+import 'package:sharexev2/data/services/auth/firebase_auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sharexev2/data/services/tracking_service.dart';
+import 'package:sharexev2/data/repositories/tracking/tracking_repository_interface.dart';
+import 'package:sharexev2/data/repositories/tracking/tracking_repository_impl.dart';
 import 'package:sharexev2/data/services/notification_service.dart';
-import 'package:sharexev2/data/services/ride_service.dart';
-import 'package:sharexev2/data/services/ride_service_impl.dart';
-import 'package:sharexev2/data/services/user_service.dart';
-import 'package:sharexev2/data/services/websocket_service.dart';
+import 'package:sharexev2/data/repositories/notification/notification_repository_interface.dart';
+import 'package:sharexev2/data/repositories/notification/notification_repository_impl.dart';
+import 'package:flutter/foundation.dart';
 
-/// Service Registry - Quản lý tất cả services trong app
+/// Service Registry - Dependency Injection Container
+/// Quản lý tất cả services và repositories
 class ServiceRegistry {
   static final ServiceRegistry _instance = ServiceRegistry._internal();
   factory ServiceRegistry() => _instance;
   ServiceRegistry._internal();
 
-  // Core services
+  static ServiceRegistry get I => _instance;
+
+  // ===== API Client =====
   late final ApiClient _apiClient = ApiClient();
-  late final FirebaseService _firebaseService = FirebaseService();
-  late final FCMService _fcmService = FCMService();
-  late final GoogleSignInService _googleSignInService = GoogleSignInService();
 
-  // Feature services
-  late final AuthService _authService = AuthService(_apiClient);
-  late final UserService _userService = UserService();
-  late final RideService _rideService = RideServiceImpl();
-  late final BookingService _bookingService = BookingService();
-  late final ChatService _chatService = ChatService();
-  late final WebSocketService _webSocketService = WebSocketService();
-  late final LocationService _locationService = LocationService();
-  late final NotificationService _notificationService = NotificationService();
-  late final CloudinaryService _cloudinaryService = CloudinaryService();
+  // ===== Services =====
+  late final AuthServiceInterface _authService = AuthApiService(_apiClient);
+  late final ChatServiceInterface _chatService = ChatApiService(_apiClient);
+  late final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
+  late final TrackingService _trackingService = TrackingService(_apiClient);
+  late final NotificationService _notificationService = NotificationService(_apiClient);
+  SharedPreferences? _prefs;
 
-  // Getters
+  // ===== Repositories =====
+  late AuthRepositoryInterface _authRepository;
+  late final ChatRepositoryInterface _chatRepository = ChatRepositoryImpl(
+    _chatService,
+  );
+  late final TrackingRepositoryInterface _trackingRepository =
+      TrackingRepositoryImpl(_trackingService);
+  late final NotificationRepositoryInterface _notificationRepository =
+      NotificationRepositoryImpl(_notificationService);
+
+  // ===== Getters =====
   ApiClient get apiClient => _apiClient;
-  FirebaseService get firebaseService => _firebaseService;
-  FCMService get fcmService => _fcmService;
-  GoogleSignInService get googleSignInService => _googleSignInService;
-  
-  AuthService get authService => _authService;
-  UserService get userService => _userService;
-  RideService get rideService => _rideService;
-  BookingService get bookingService => _bookingService;
-  ChatService get chatService => _chatService;
-  WebSocketService get webSocketService => _webSocketService;
-  LocationService get locationService => _locationService;
+  AuthServiceInterface get authService => _authService;
+  ChatServiceInterface get chatService => _chatService;
+  TrackingService get trackingService => _trackingService;
   NotificationService get notificationService => _notificationService;
-  CloudinaryService get cloudinaryService => _cloudinaryService;
+  AuthRepositoryInterface get authRepository => _authRepository;
+  ChatRepositoryInterface get chatRepository => _chatRepository;
+  TrackingRepositoryInterface get trackingRepository => _trackingRepository;
+  NotificationRepositoryInterface get notificationRepository => _notificationRepository;
 
-  /// Initialize all services
+  // ===== Initialization =====
   Future<void> initialize() async {
     try {
-      // Initialize Firebase first
-      await FirebaseService.initialize();
-      
-      // Initialize FCM
-      await _fcmService.initialize();
-      
-      // Initialize location service
-      await _locationService.initialize();
-      
-      print('✅ All services initialized successfully');
+      // Initialize shared preferences and repositories
+      _prefs = await SharedPreferences.getInstance();
+      _authRepository = AuthRepositoryImpl(
+        authApiService: _authService,
+        firebaseAuthService: _firebaseAuthService,
+        prefs: _prefs!,
+      );
+
+      if (kDebugMode) {
+        debugPrint('✅ ServiceRegistry initialized successfully');
+      }
     } catch (e) {
-      print('❌ Error initializing services: $e');
+      if (kDebugMode) {
+        debugPrint('❌ ServiceRegistry initialization failed: $e');
+      }
+      rethrow;
     }
   }
 
-  /// Dispose all services
-  void dispose() {
-    _webSocketService.disconnect();
-    _locationService.dispose();
-    print('🔌 All services disposed');
-  }
-
-  /// Get service status
-  Map<String, bool> getServiceStatus() {
-    return {
-      'Firebase': FirebaseService.isAvailable,
-      'FCM': true, // FCM is always available if Firebase is available
-      'Location': _locationService.currentPosition != null,
-      'WebSocket': _webSocketService.isConnected,
-      'API Client': true, // API client is always available
-    };
-  }
-
-  /// Check if all required services are ready
-  bool get isReady {
-    final status = getServiceStatus();
-    return status.values.every((ready) => ready);
+  // ===== Cleanup =====
+  Future<void> dispose() async {
+    try {
+      // No disposable resources at the moment
+      if (kDebugMode) {
+        debugPrint('✅ ServiceRegistry disposed successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ServiceRegistry disposal failed: $e');
+      }
+    }
   }
 }
-
-/// Global service registry instance
-final serviceRegistry = ServiceRegistry();

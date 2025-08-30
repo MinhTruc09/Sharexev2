@@ -1,6 +1,6 @@
 import 'package:sharexev2/core/network/api_client.dart';
 import 'package:sharexev2/core/network/api_response.dart';
-import 'package:sharexev2/data/models/booking/booking_dto.dart';
+import 'package:sharexev2/data/models/booking/dtos/booking_dto.dart';
 import 'package:sharexev2/config/app_config.dart';
 
 class BookingService {

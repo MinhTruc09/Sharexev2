@@ -1,5 +1,5 @@
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:sharexev2/data/models/auth/app_user.dart';
 import 'package:sharexev2/data/models/auth/mappers/app_user_mapper.dart';
 
@@ -11,7 +11,7 @@ class GoogleSignInService {
     ],
   );
 
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final fb_auth.FirebaseAuth _firebaseAuth = fb_auth.FirebaseAuth.instance;
 
   /// Sign in with Google
   Future<AppUser?> signInWithGoogle() async {
@@ -28,14 +28,14 @@ class GoogleSignInService {
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       // Create a new credential
-      final credential = GoogleAuthProvider.credential(
+      final credential = fb_auth.GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       // Sign in to Firebase with the credential
-      final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
-      final User? user = userCredential.user;
+      final fb_auth.UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
+      final fb_auth.User? user = userCredential.user;
 
       if (user != null) {
         // Convert Firebase user to AppUser

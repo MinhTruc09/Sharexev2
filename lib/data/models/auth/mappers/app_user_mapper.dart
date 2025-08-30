@@ -1,48 +1,66 @@
-// lib/data/mappers/app_user_mapper.dart
+// lib/data/models/auth/mappers/app_user_mapper.dart
+// Backward Compatible Mapper for existing API DTOs
 
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:sharexev2/data/models/auth/api/driver_dto.dart';
-import 'package:sharexev2/data/models/auth/api/user_dto.dart';
-import 'package:sharexev2/data/models/auth/app_user.dart';
+import '../app_user.dart';
+import '../api/user_dto.dart';
+import '../api/driver_dto.dart';
 
+/// Backward compatible mapper for existing code
+/// Maps from old API DTOs to new User entity
 class AppUserMapper {
-  /// Map từ UserDTO (Swagger API - hành khách / user chung)
-  static AppUser fromUserDto(UserDTO dto) {
-    return AppUser(
-      id: dto.id,
-      email: dto.email,
-      fullName: dto.fullName,
-      role: _parseRole(dto.role), // ✅ parse string -> enum
-      phoneNumber: dto.phoneNumber,
-      avatarUrl: dto.avatarUrl,
-    );
+  /// Map từ UserDTO (API) to User Entity
+  static User fromUserDto(UserDTO dto) {
+    try {
+      return User.trusted(
+        id: dto.id,
+        email: dto.email,
+        fullName: dto.fullName,
+        role: _parseRole(dto.role),
+        phoneNumber: dto.phoneNumber.isNotEmpty ? dto.phoneNumber : null,
+        avatarUrl: dto.avatarUrl,
+        isActive: true,
+      );
+    } catch (e) {
+      throw UserMappingException('Failed to map UserDTO to User: $e');
+    }
   }
 
-  /// Map từ DriverDTO (Swagger API - tài xế)
-  static AppUser fromDriverDto(DriverDTO dto) {
-    return AppUser(
-      id: dto.id,
-      email: dto.email,
-      fullName: dto.fullName,
-      phoneNumber: dto.phoneNumber,
-      avatarUrl: dto.avatarImage,
-      role: UserRole.driver, // driver thì gán cứng enum
-    );
+  /// Map từ DriverDTO (API) to User Entity
+  static User fromDriverDto(DriverDTO dto) {
+    try {
+      return User.trusted(
+        id: dto.id,
+        email: dto.email,
+        fullName: dto.fullName,
+        role: UserRole.driver,
+        phoneNumber: dto.phoneNumber.isNotEmpty ? dto.phoneNumber : null,
+        avatarUrl: dto.avatarImage,
+        isActive: dto.status == DriverStatus.APPROVED,
+      );
+    } catch (e) {
+      throw UserMappingException('Failed to map DriverDTO to User: $e');
+    }
   }
 
-  /// Map từ Firebase User (Firebase Auth)
-  static AppUser fromFirebase(fb.User user) {
-    return AppUser(
-      id: null,
-      email: user.email ?? '',
-      fullName: user.displayName ?? '',
-      phoneNumber: user.phoneNumber,
-      avatarUrl: user.photoURL,
-      role: UserRole.passenger, // default gán passenger khi login Firebase
-    );
+  /// Map từ Firebase User to User Entity
+  static User fromFirebase(fb.User user) {
+    try {
+      return User.trusted(
+        id: null,
+        email: user.email ?? '',
+        fullName: user.displayName ?? '',
+        phoneNumber: user.phoneNumber,
+        avatarUrl: user.photoURL,
+        role: UserRole.passenger, // Default to passenger for Firebase users
+        isActive: true,
+      );
+    } catch (e) {
+      throw UserMappingException('Failed to map Firebase User to User: $e');
+    }
   }
 
-  /// Parse string -> enum role
+  /// Parse string role to UserRole enum
   static UserRole _parseRole(String? role) {
     switch (role?.toUpperCase()) {
       case "PASSENGER":
@@ -55,4 +73,14 @@ class AppUserMapper {
         return UserRole.unknown;
     }
   }
+}
+
+/// Exception cho User mapping errors
+class UserMappingException implements Exception {
+  final String message;
+
+  const UserMappingException(this.message);
+
+  @override
+  String toString() => 'UserMappingException: $message';
 }

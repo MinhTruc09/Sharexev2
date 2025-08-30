@@ -1,0 +1,30 @@
+import 'package:sharexev2/core/network/api_response.dart';
+import 'package:sharexev2/data/models/notification/dtos/notification_dto.dart';
+import 'notification_repository_interface.dart';
+import 'notification_repository_impl.dart';
+import 'package:sharexev2/data/services/notification_service.dart';
+import 'package:sharexev2/data/services/service_registry.dart';
+
+class NotificationRepository implements NotificationRepositoryInterface {
+  final NotificationRepositoryImpl _impl;
+
+  NotificationRepository({NotificationService? service})
+      : _impl = NotificationRepositoryImpl(
+          service ?? NotificationService(ServiceRegistry.I.apiClient),
+        );
+
+  @override
+  Future<ApiResponse<List<NotificationDto>>> getNotifications() =>
+      _impl.getNotifications();
+
+  @override
+  Future<ApiResponse<int>> getUnreadCount() => _impl.getUnreadCount();
+
+  @override
+  Future<ApiResponse<void>> markAsRead(String id) => _impl.markAsRead(id);
+
+  @override
+  Future<ApiResponse<void>> markAllAsRead() => _impl.markAllAsRead();
+}
+
+

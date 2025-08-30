@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sharexev2/config/env.dart';
 
 /// ApiClient with pluggable token provider and refresh hook.
@@ -94,6 +95,13 @@ class ApiClient {
         },
       ),
     );
+
+    // Optional detailed logging in debug mode
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(requestBody: true, responseBody: true),
+      );
+    }
 
     return ApiClient._internal(dio);
   }

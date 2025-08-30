@@ -79,4 +79,18 @@ class ApiResponse<T> {
       "success": success,
     };
   }
+
+  /// 🧩 Parse JSON → ApiResponse<T> for primitive types (int, String, bool)
+  static ApiResponse<T> primitiveFromJson<T>(
+    Map<String, dynamic> json,
+    T Function(dynamic value) fromValue,
+  ) {
+    final raw = json['data'];
+    return ApiResponse<T>(
+      message: json['message'] ?? '',
+      statusCode: json['statusCode'] ?? 0,
+      data: raw != null ? fromValue(raw) : null,
+      success: json['success'] ?? false,
+    );
+  }
 }

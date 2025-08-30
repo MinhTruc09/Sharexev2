@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:sharexev2/data/models/auth_models.dart';
+import 'package:sharexev2/data/models/auth/app_user.dart';
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
@@ -40,11 +40,11 @@ class AuthState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        user,
-        error,
-        isLoading,
-        isRegistering,
-        isGoogleSigningIn,
-      ];
+    status,
+    user,
+    error,
+    isLoading,
+    isRegistering,
+    isGoogleSigningIn,
+  ];
 }

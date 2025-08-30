@@ -4,8 +4,8 @@ import 'package:sharexev2/logic/chat/chat_cubit.dart';
 import 'package:sharexev2/logic/chat/chat_state.dart';
 import 'package:sharexev2/config/theme.dart';
 import 'package:sharexev2/presentation/pages/chat/chat_page.dart';
-import 'package:sharexev2/data/services/chat_service.dart';
-import 'package:sharexev2/data/repositories/real_auth_repository.dart';
+import 'package:sharexev2/data/models/chat/chat_room.dart';
+import 'package:sharexev2/core/auth/auth_manager.dart';
 
 class ChatRoomsPage extends StatefulWidget {
   const ChatRoomsPage({super.key});
@@ -19,12 +19,9 @@ class _ChatRoomsPageState extends State<ChatRoomsPage> {
   void initState() {
     super.initState();
     // Initialize chat with mock token
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Try to load a real token from the RealAuthRepository.
-      RealAuthRepository().getAuthToken().then((token) {
-        final useToken = token ?? 'no_token_available';
-        context.read<ChatCubit>().initialize(useToken);
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final token = AuthManager().getToken() ?? 'no_token_available';
+      await context.read<ChatCubit>().initialize(token);
     });
   }
 
@@ -148,15 +145,13 @@ class _ChatRoomsPageState extends State<ChatRoomsPage> {
     );
   }
 
-  Widget _buildChatRoomTile(Map<String, dynamic> room) {
-    final participantName = room['participantName'] ?? 'Unknown';
-    final lastMessage = room['lastMessage'] ?? '';
-    final lastMessageTime =
-        room['lastMessageTime'] != null
-            ? DateTime.parse(room['lastMessageTime'])
-            : DateTime.now();
-    final unreadCount = room['unreadCount'] ?? 0;
-    final roomId = room['roomId'] ?? '';
+  Widget _buildChatRoomTile(ChatRoom room) {
+    final participantName =
+        room.participantName.isNotEmpty ? room.participantName : 'Unknown';
+    final lastMessage = room.lastMessage;
+    final lastMessageTime = room.lastMessageTime ?? DateTime.now();
+    final unreadCount = room.unreadCount;
+    final roomId = room.roomId;
 
     return Container(
       margin: EdgeInsets.symmetric(
@@ -234,17 +229,28 @@ class _ChatRoomsPageState extends State<ChatRoomsPage> {
             ),
             SizedBox(height: AppTheme.spacingXs),
             Text(
-              ChatService.formatTimestamp(lastMessageTime),
+              _formatTimestamp(lastMessageTime),
               style: AppTheme.bodySmall.copyWith(color: Colors.grey.shade500),
             ),
           ],
         ),
         trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
         onTap: () {
-          _openChatRoom(roomId, participantName, room['participantEmail']);
+          _openChatRoom(roomId, participantName, room.participantEmail);
         },
       ),
     );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+    if (diff.inDays >= 1) {
+      return '${timestamp.day}/${timestamp.month}';
+    }
+    if (diff.inHours >= 1) return '${diff.inHours}h ago';
+    if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
+    return 'Just now';
   }
 
   void _openChatRoom(

@@ -14,8 +14,8 @@ class AppConfig {
   String get baseUrl => Env().fullApiUrl;
   String get apiVersion => Env.apiVersion;
 
-  /// Helper build endpoint
-  String _ep(String path) => "$baseUrl/$apiVersion$path";
+  /// Helper build endpoint (API doc không dùng version prefix)
+  String _ep(String path) => "$baseUrl$path";
 
   /// ========== AUTH ==========
   final auth = _AuthEndpoints();
@@ -59,6 +59,14 @@ class _AuthEndpoints {
   String get login => AppConfig.I._ep("/auth/login");
   String get registerPassenger => AppConfig.I._ep("/auth/passenger-register");
   String get registerDriver => AppConfig.I._ep("/auth/driver-register");
+  String get refresh => AppConfig.I._ep("/auth/refresh");
+  String get googleSignIn => AppConfig.I._ep("/auth/google-signin");
+  String get logout => AppConfig.I._ep("/auth/logout");
+  String get verify => AppConfig.I._ep("/auth/verify");
+  String get profile => AppConfig.I._ep("/auth/profile");
+  String get changePassword => AppConfig.I._ep("/auth/change-password");
+  String get registerDevice => AppConfig.I._ep("/auth/device/register");
+  String get unregisterDevice => AppConfig.I._ep("/auth/device/unregister");
 }
 
 class _UserEndpoints {

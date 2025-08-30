@@ -4,7 +4,9 @@ import 'package:sharexev2/data/models/notification/notification_dto.dart';
 import 'package:sharexev2/config/app_config.dart';
 
 class NotificationService {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+
+  NotificationService(this._api);
 
   /// Lấy tất cả notifications
   Future<ApiResponse<List<NotificationDto>>> getNotifications() async {
@@ -35,101 +37,20 @@ class NotificationService {
   }
 
   /// Tạo notification mới (cho admin hoặc system)
-  Future<bool> createNotification({
-    required String userEmail,
-    required String title,
-    required String content,
-    required String type,
-    int? referenceId,
-  }) async {
-    try {
-      // TODO: Implement API call to create notification
-      // For now, just return success
-      return true;
-    } catch (e) {
-      print('Error creating notification: $e');
-      return false;
-    }
-  }
+  // Server-side creation may be admin-only; implement when backend exposes it
 
   /// Gửi push notification qua FCM
-  Future<bool> sendPushNotification({
-    required String fcmToken,
-    required String title,
-    required String body,
-    Map<String, dynamic>? data,
-  }) async {
-    try {
-      // TODO: Implement FCM server call
-      // For now, just return success
-      print('Sending push notification to: $fcmToken');
-      print('Title: $title, Body: $body');
-      return true;
-    } catch (e) {
-      print('Error sending push notification: $e');
-      return false;
-    }
-  }
+  // Push notification sending is usually done by backend; keep client FCM in FCMService
 
   /// Subscribe user to notification topics
-  Future<bool> subscribeToTopics(String userId, List<String> topics) async {
-    try {
-      // TODO: Implement topic subscription
-      for (String topic in topics) {
-        print('Subscribing user $userId to topic: $topic');
-      }
-      return true;
-    } catch (e) {
-      print('Error subscribing to topics: $e');
-      return false;
-    }
-  }
+  // Topic subscription handled locally by FCMService
 
   /// Unsubscribe user from notification topics
-  Future<bool> unsubscribeFromTopics(String userId, List<String> topics) async {
-    try {
-      // TODO: Implement topic unsubscription
-      for (String topic in topics) {
-        print('Unsubscribing user $userId from topic: $topic');
-      }
-      return true;
-    } catch (e) {
-      print('Error unsubscribing from topics: $e');
-      return false;
-    }
-  }
+  // Topic unsubscription handled locally by FCMService
 
   /// Get notification settings for user
-  Future<Map<String, dynamic>> getNotificationSettings(String userId) async {
-    try {
-      // TODO: Implement API call to get notification settings
-      // For now, return default settings
-      return {
-        'pushEnabled': true,
-        'emailEnabled': true,
-        'smsEnabled': false,
-        'chatNotifications': true,
-        'tripUpdates': true,
-        'promotional': false,
-      };
-    } catch (e) {
-      print('Error getting notification settings: $e');
-      return {};
-    }
-  }
+  // Settings endpoints are not defined in API docs; omit until backend supports
 
   /// Update notification settings for user
-  Future<bool> updateNotificationSettings(
-    String userId,
-    Map<String, dynamic> settings,
-  ) async {
-    try {
-      // TODO: Implement API call to update notification settings
-      print('Updating notification settings for user $userId: $settings');
-      return true;
-    } catch (e) {
-      print('Error updating notification settings: $e');
-      return false;
-    }
-  }
+  // Update settings omitted (no API in docs)
 }

@@ -18,6 +18,8 @@ class AuthManager {
 
   AppUser? get currentUser => _currentUser;
 
+  String? get refreshToken => _refreshToken;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _accessToken = prefs.getString(_kAccessToken);
