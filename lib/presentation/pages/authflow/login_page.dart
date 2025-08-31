@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sharexev2/data/repositories/real_auth_repository.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/logic/auth/auth_cubit.dart';
 import 'package:sharexev2/logic/auth/auth_state.dart';
 import 'package:sharexev2/presentation/widgets/common/auth_container.dart';
@@ -16,7 +16,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AuthCubit(RealAuthRepository()),
+      create: (_) => AuthCubit(ServiceLocator.get()),
       child: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state.status == AuthStatus.authenticated) {

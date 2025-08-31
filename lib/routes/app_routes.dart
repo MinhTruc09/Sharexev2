@@ -12,6 +12,9 @@ import 'package:sharexev2/presentation/pages/authflow/register_page.dart';
 // Home pages
 import 'package:sharexev2/presentation/pages/home/new_home_passenger_page.dart';
 import 'package:sharexev2/presentation/pages/home_driver_page.dart';
+// Grab-like home pages
+import 'package:sharexev2/presentation/pages/home/grab_passenger_home.dart';
+import 'package:sharexev2/presentation/pages/home/grab_driver_home.dart';
 
 // Profile pages
 import 'package:sharexev2/presentation/pages/profile/profile_page.dart';
@@ -177,7 +180,7 @@ class AppRoute {
         builder:
             (_) => Theme(
               data: passengerTheme,
-              child: const NewHomePassengerPage(),
+              child: const GrabPassengerHome(),
             ),
       );
     } else if (routeName == passengerProfile) {
@@ -208,7 +211,7 @@ class AppRoute {
     // Driver routes - Use driver theme
     else if (routeName == homeDriver) {
       return MaterialPageRoute(
-        builder: (_) => Theme(data: driverTheme, child: const HomeDriverPage()),
+        builder: (_) => Theme(data: driverTheme, child: const GrabDriverHome()),
       );
     } else if (routeName == driverProfile) {
       return MaterialPageRoute(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/logic/home/home_driver_cubit.dart';
 
 class HomeDriverPage extends StatelessWidget {
@@ -8,7 +9,11 @@ class HomeDriverPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => HomeDriverCubit()..init(),
+      create: (_) => HomeDriverCubit(
+        rideRepository: ServiceLocator.get(),
+        bookingRepository: ServiceLocator.get(),
+        userRepository: ServiceLocator.get(),
+      )..init(),
       child: BlocBuilder<HomeDriverCubit, HomeDriverState>(
         builder: (context, state) {
           if (state.status == HomeDriverStatus.loading) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/logic/home/home_passenger_cubit.dart';
 import 'package:sharexev2/config/theme.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/presentation/widgets/common/custom_bottom_nav.dart';
 import 'package:sharexev2/presentation/widgets/home/search_bottom_sheet.dart';
 import 'package:sharexev2/presentation/widgets/home/trip_card.dart';
@@ -14,9 +15,9 @@ class NewHomePassengerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => HomePassengerCubit(
-        rideRepository: null, // TODO: Inject repositories
-        bookingRepository: null,
-        userRepository: null,
+        rideRepository: ServiceLocator.get(),
+        bookingRepository: ServiceLocator.get(),
+        userRepository: ServiceLocator.get(),
       )..init(),
       child: const NewHomePassengerView(),
     );

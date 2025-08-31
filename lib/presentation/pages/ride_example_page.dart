@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/logic/ride/ride_cubit.dart';
 
 class RideExamplePage extends StatelessWidget {
@@ -8,7 +9,10 @@ class RideExamplePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RideCubit(),
+      create: (context) => RideCubit(
+        rideRepository: ServiceLocator.get(),
+        bookingRepository: ServiceLocator.get(),
+      ),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Ride Example - Clean Architecture'),

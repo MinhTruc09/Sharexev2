@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/config/theme.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/logic/map/map_bloc.dart';
 import 'package:sharexev2/logic/map/map_event.dart';
 import 'package:sharexev2/logic/map/map_state.dart';
@@ -21,7 +22,10 @@ class TripDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => TripDetailCubit()..initializeTrip(tripData),
+      create: (_) => TripDetailCubit(
+        bookingRepository: ServiceLocator.get(),
+        rideRepository: ServiceLocator.get(),
+      )..initializeTrip(tripData),
       child: TripDetailView(tripData: tripData),
     );
   }

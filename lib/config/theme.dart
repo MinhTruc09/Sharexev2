@@ -1,23 +1,92 @@
 // theme.dart
 import 'package:flutter/material.dart';
 
-// Color constants
+// Grab-like Color System
 class AppColors {
-  static const Color primary = Color(0xFF6C63FF);
-  static const Color secondary = Color(0xFF3F51B5);
-  static const Color passengerPrimary = Color(0xFF4A90E2);
-  static const Color passengerSecondary = Color(0xFF7BB3F0);
-  static const Color driverPrimary = Color(0xFF2C3E50);
-  static const Color driverSecondary = Color(0xFF34495E);
-  static const Color success = Color(0xFF38A169);
-  static const Color error = Color(0xFFE53E3E);
-  static const Color warning = Color(0xFFD69E2E);
-  static const Color info = Color(0xFF3182CE);
+  // Grab Brand Colors
+  static const Color grabGreen = Color(0xFF00B14F);
+  static const Color grabDarkGreen = Color(0xFF009639);
+  static const Color grabOrange = Color(0xFFFF6B35);
+
+  // Role-specific colors
+  static const Color passengerPrimary = Color(0xFF00B14F); // Grab Green
+  static const Color passengerSecondary = Color(0xFF00D95F);
+  static const Color driverPrimary = Color(0xFF1E40AF); // Driver Blue
+  static const Color driverSecondary = Color(0xFF3B82F6);
+
+  // Neutral colors (Grab-like)
   static const Color surface = Colors.white;
-  static const Color background = Color(0xFFF7FAFC);
-  static const Color textPrimary = Color(0xFF1A202C);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color textTertiary = Color(0xFFA0AEC0);
+  static const Color background = Color(0xFFF8F9FA);
+  static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color textPrimary = Color(0xFF1A1A1A);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textTertiary = Color(0xFF9CA3AF);
+  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color borderMedium = Color(0xFFD1D5DB);
+
+  // Status colors
+  static const Color success = Color(0xFF10B981);
+  static const Color error = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color info = Color(0xFF3B82F6);
+
+  // Shadow colors
+  static const Color shadowLight = Color(0x0A000000);
+  static const Color shadowMedium = Color(0x1A000000);
+  static const Color shadowDark = Color(0x25000000);
+}
+
+// Grab-like Gradients
+class AppGradients {
+  static const LinearGradient grabPrimary = LinearGradient(
+    colors: [AppColors.grabGreen, AppColors.grabDarkGreen],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient driverPrimary = LinearGradient(
+    colors: [AppColors.driverPrimary, Color(0xFF1E3A8A)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient cardShadow = LinearGradient(
+    colors: [AppColors.shadowLight, Colors.transparent],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+}
+
+// Spacing System (Grab-like)
+class AppSpacing {
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 16.0;
+  static const double lg = 24.0;
+  static const double xl = 32.0;
+  static const double xxl = 48.0;
+
+  // Specific spacing
+  static const double cardPadding = 16.0;
+  static const double screenPadding = 20.0;
+  static const double buttonHeight = 48.0;
+  static const double iconSize = 24.0;
+  static const double avatarSize = 40.0;
+}
+
+// Border Radius (Grab-like)
+class AppRadius {
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 16.0;
+  static const double xl = 24.0;
+  static const double circle = 999.0;
+
+  // Specific radius
+  static const double card = 12.0;
+  static const double button = 8.0;
+  static const double bottomSheet = 16.0;
 }
 
 // Base theme configuration

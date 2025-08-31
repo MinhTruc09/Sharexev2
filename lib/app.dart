@@ -20,12 +20,10 @@ import 'package:sharexev2/logic/trip/trip_detail_cubit.dart';
 import 'package:sharexev2/logic/trip/trip_review_cubit.dart';
 import 'package:sharexev2/logic/location/location_cubit.dart';
 import 'package:sharexev2/logic/trip_tracking/trip_tracking_cubit.dart';
-import 'package:sharexev2/data/services/auth_service.dart';
-import 'package:sharexev2/data/repositories/auth/auth_repository_impl.dart';
-import 'package:sharexev2/data/repositories/booking/booking_repository_impl.dart';
-import 'package:sharexev2/data/services/firebase_auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sharexev2/core/network/api_client.dart';
+// Removed unused imports - now using ServiceLocator for DI
+
+// Dependency Injection
+import 'package:sharexev2/core/di/service_locator.dart';
 
 
 class App extends StatelessWidget {
@@ -38,58 +36,58 @@ class App extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         // Core BLoCs
-        BlocProvider(create: (_) => SplashCubit(AuthService(ApiClient()))),
+        BlocProvider(create: (_) => SplashCubit(ServiceLocator.get())),
         BlocProvider(create: (_) => OnboardingCubit()),
-        BlocProvider(create: (_) => RoleSelectionCubit(AuthService(ApiClient()))),
+        BlocProvider(create: (_) => RoleSelectionCubit(ServiceLocator.get())),
 
         // Auth BLoCs
-        BlocProvider(create: (_) => AuthCubit(AuthService(ApiClient()))), // TODO: Replace with AuthRepository when DI is ready
+        BlocProvider(create: (_) => AuthCubit(ServiceLocator.get())),
         BlocProvider(
           create: (_) => RegistrationCubit(
-            authRepository: null, // TODO: Inject AuthRepository when DI is ready
+            authRepository: ServiceLocator.get(),
             role: 'PASSENGER',
           ),
         ),
 
         // Home BLoCs
         BlocProvider(create: (_) => HomePassengerCubit(
-          rideRepository: null, // TODO: Inject RideRepository when DI is ready
-          bookingRepository: null, // TODO: Inject BookingRepository when DI is ready
-          userRepository: null, // TODO: Inject UserRepository when DI is ready
+          rideRepository: ServiceLocator.get(),
+          bookingRepository: ServiceLocator.get(),
+          userRepository: ServiceLocator.get(),
         )),
         BlocProvider(create: (_) => HomeDriverCubit(
-          rideRepository: null, // TODO: Inject RideRepository when DI is ready
-          bookingRepository: null, // TODO: Inject BookingRepository when DI is ready
-          userRepository: null, // TODO: Inject UserRepository when DI is ready
+          rideRepository: ServiceLocator.get(),
+          bookingRepository: ServiceLocator.get(),
+          userRepository: ServiceLocator.get(),
         )),
 
         // Feature BLoCs
-        BlocProvider(create: (_) => BookingCubit(null)), // TODO: Inject BookingRepository when DI is ready
+        BlocProvider(create: (_) => BookingCubit(ServiceLocator.get())),
         BlocProvider(create: (_) => ChatCubit(
-          chatRepository: null, // TODO: Inject ChatRepository when DI is ready
+          chatRepository: ServiceLocator.get(),
         )),
         BlocProvider(create: (_) => MapBloc()),
         BlocProvider(create: (_) => ProfileCubit(
-          userRepository: null, // TODO: Inject UserRepository when DI is ready
-          authRepository: null, // TODO: Inject AuthRepository when DI is ready
+          userRepository: ServiceLocator.get(),
+          authRepository: ServiceLocator.get(),
         )),
         BlocProvider(create: (_) => RideCubit(
-          rideRepository: null, // TODO: Inject RideRepository when DI is ready
-          bookingRepository: null, // TODO: Inject BookingRepository when DI is ready
+          rideRepository: ServiceLocator.get(),
+          bookingRepository: ServiceLocator.get(),
         )),
         BlocProvider(create: (_) => TripDetailCubit(
-          bookingRepository: null, // TODO: Inject repositories when DI is ready
-          rideRepository: null,
+          bookingRepository: ServiceLocator.get(),
+          rideRepository: ServiceLocator.get(),
         )),
         BlocProvider(create: (_) => TripReviewCubit()),
 
         // New Grab-like features
         BlocProvider(create: (_) => LocationCubit(
-          locationRepository: null, // TODO: Inject LocationRepository when DI is ready
+          locationRepository: ServiceLocator.get(),
         )),
         BlocProvider(create: (_) => TripTrackingCubit(
-          bookingRepository: null, // TODO: Inject repositories when DI is ready
-          locationRepository: null,
+          bookingRepository: ServiceLocator.get(),
+          locationRepository: ServiceLocator.get(),
         )),
 
       ],

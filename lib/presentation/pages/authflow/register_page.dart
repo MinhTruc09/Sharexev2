@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sharexev2/data/repositories/real_auth_repository.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/logic/registration/registration_cubit.dart';
 import 'package:sharexev2/data/models/registration_models.dart';
 import 'package:sharexev2/presentation/widgets/common/auth_container.dart';
@@ -16,7 +16,10 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => RegistrationCubit(RealAuthRepository(), role),
+      create: (_) => RegistrationCubit(
+        authRepository: ServiceLocator.get(),
+        role: role,
+      ),
       child: BlocConsumer<RegistrationCubit, RegistrationState>(
         listener: (context, state) {
           // Handle success
@@ -88,6 +91,8 @@ class RegisterPage extends StatelessWidget {
         return 'Tạo tài khoản';
       case RegistrationStep.stepTwo:
         return 'Thông tin bổ sung';
+      default:
+        return 'Đăng ký';
     }
   }
 
@@ -101,6 +106,8 @@ class RegisterPage extends StatelessWidget {
         } else {
           return 'Upload giấy tờ để xét duyệt';
         }
+      default:
+        return 'Hoàn tất đăng ký';
     }
   }
 

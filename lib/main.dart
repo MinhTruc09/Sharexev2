@@ -13,6 +13,7 @@ import 'package:sharexev2/data/services/service_registry.dart';
 import 'package:sharexev2/core/network/api_client.dart';
 // auth repository interfaces are used by specific modules when needed
 import 'package:sharexev2/core/auth/auth_manager.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/firebase_options.dart';
 
 // Global navigation service instance
@@ -43,6 +44,9 @@ Future<void> main() async {
 
   // Initialize Firebase with error handling
   await _initializeFirebase();
+
+  // Initialize Dependency Injection
+  await ServiceLocator.setup();
 
   // Initialize Service Registry (DI)
   await ServiceRegistry.I.initialize();
