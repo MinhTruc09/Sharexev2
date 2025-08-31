@@ -1,5 +1,5 @@
-import '../tracking_payload_dto.dart';
-import '../tracking_payload.dart';
+import '../dtos/tracking_payload_dto.dart';
+import '../entities/tracking_payload.dart';
 
 class TrackingPayloadMapper {
   static TrackingPayload fromDto(TrackingPayloadDto dto) {

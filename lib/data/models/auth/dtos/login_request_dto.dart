@@ -41,40 +41,4 @@ class LoginRequestDto {
   }
 }
 
-/// DTO cho Google login request
-class GoogleLoginRequestDto {
-  final String idToken;
-  final String role; // 'passenger' or 'driver'
-  final String? deviceId;
-  final String? deviceName;
-
-  const GoogleLoginRequestDto({
-    required this.idToken,
-    required this.role,
-    this.deviceId,
-    this.deviceName,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'idToken': idToken,
-      'role': role,
-      if (deviceId != null) 'deviceId': deviceId,
-      if (deviceName != null) 'deviceName': deviceName,
-    };
-  }
-
-  factory GoogleLoginRequestDto.fromJson(Map<String, dynamic> json) {
-    return GoogleLoginRequestDto(
-      idToken: json['idToken'] as String,
-      role: json['role'] as String,
-      deviceId: json['deviceId'] as String?,
-      deviceName: json['deviceName'] as String?,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'GoogleLoginRequestDto(role: $role, deviceId: $deviceId)';
-  }
-}
+// GoogleLoginRequestDto moved to separate file: google_login_request_dto.dart

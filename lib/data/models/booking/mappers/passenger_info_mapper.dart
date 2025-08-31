@@ -1,5 +1,6 @@
-import 'package:sharexev2/data/models/booking/passenger_info_dto.dart';
-import 'package:sharexev2/data/models/booking/passenger_info.dart';
+import '../dtos/passenger_info_dto.dart';
+import '../entities/passenger_info.dart';
+import '../booking_status.dart';
 
 class PassengerInfoMapper {
   static PassengerInfo fromDto(PassengerInfoDto dto) {
@@ -9,8 +10,12 @@ class PassengerInfoMapper {
       email: dto.email,
       phone: dto.phone,
       avatarUrl: dto.avatarUrl,
-      status: dto.status,
+      status: _mapStatus(dto.status),
       seatsBooked: dto.seatsBooked,
     );
+  }
+
+  static BookingStatus _mapStatus(BookingStatus statusValue) {
+    return statusValue;
   }
 }

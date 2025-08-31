@@ -1,27 +1,75 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sharexev2/data/models/ride.dart';
-import 'package:sharexev2/data/services/ride_service_impl.dart';
+import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
+import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
+import 'package:sharexev2/data/models/booking/entities/booking_entity.dart';
+import 'package:sharexev2/data/models/auth/entities/user_entity.dart';
+import 'package:sharexev2/domain/usecases/ride_usecases.dart';
+import 'package:sharexev2/domain/usecases/booking_usecases.dart';
+import 'package:sharexev2/domain/usecases/user_usecases.dart';
+import 'package:sharexev2/core/app_registry.dart';
+import 'package:sharexev2/core/network/api_response.dart';
+import 'package:sharexev2/data/services/index.dart';
 
 part 'home_passenger_state.dart';
 
 class HomePassengerCubit extends Cubit<HomePassengerState> {
-  final RideService _rideService = RideService();
+  // New Clean Architecture use cases
+  late final RideUseCases _rideUseCases;
+  late final BookingUseCases _bookingUseCases;
+  late final UserUseCases _userUseCases;
 
-  HomePassengerCubit() : super(const HomePassengerState());
+  HomePassengerCubit() : super(const HomePassengerState()) {
+    _initializeUseCases();
+  }
+
+  void _initializeUseCases() {
+    _rideUseCases = AppRegistry.I.rideUseCases;
+    _bookingUseCases = AppRegistry.I.bookingUseCases;
+    _userUseCases = AppRegistry.I.userUseCases;
+  }
 
   Future<void> init() async {
     emit(state.copyWith(status: HomePassengerStatus.loading));
     try {
-      // Try load from API, fallback to local generated data
-      List<Ride> rideHistory = [];
-      try {
-        final res = await _rideService.getRideHistory();
-        rideHistory = (res.data ?? []).cast<Ride>();
-      } catch (_) {
-        // ignore and leave rideHistory empty
-      }
+      // Load real data using Clean Architecture
+      final futures = await Future.wait([
+        _bookingUseCases.getBookingHistory(),
+        _userUseCases.getPassengerProfile(),
+        _rideUseCases.getRecommendedRides(userLocation: 'Hà Nội'),
+      ]);
 
-      final nearbyTrips = await _loadNearbyTrips();
+      final bookingHistory = futures[0] as ApiResponse<List<BookingEntity>>;
+      final userProfile = futures[1] as ApiResponse<UserEntity>;
+      final recommendedRides = futures[2] as ApiResponse<List<RideEntity>>;
+
+      // Convert booking history to ride history format
+      final rideHistory = bookingHistory.data?.map((booking) => {
+        'id': booking.id.toString(),
+        'pickupAddress': booking.departure,
+        'dropoffAddress': booking.destination,
+        'pickupLat': 21.0285, // Default Hanoi coordinates
+        'pickupLng': 105.8542,
+        'dropoffLat': 10.8231, // Default HCMC coordinates
+        'dropoffLng': 106.6297,
+        'price': booking.totalPrice,
+        'duration': 3600, // Default 1 hour
+        'distance': 100000, // Default 100km
+        'status': _mapBookingStatusToRideStatus(booking.status),
+        'driverName': booking.driverName,
+        'driverPhone': booking.driverPhone,
+        'vehicleInfo': booking.vehicle?.fullInfo ?? 'Unknown Vehicle',
+        'createdAt': booking.createdAt,
+      }).toList() ?? [];
+
+      final nearbyTrips = recommendedRides.data?.map((ride) => {
+        'id': ride.id,
+        'departure': ride.departure,
+        'destination': ride.destination,
+        'startTime': ride.startTime.toIso8601String(),
+        'pricePerSeat': ride.pricePerSeat,
+        'availableSeats': ride.availableSeats,
+        'driverName': ride.driverName,
+      }).toList() ?? [];
 
       emit(
         state.copyWith(
@@ -42,6 +90,23 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
       emit(
         state.copyWith(status: HomePassengerStatus.error, error: e.toString()),
       );
+    }
+  }
+
+  RideStatus _mapBookingStatusToRideStatus(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.pending:
+        return RideStatus.active;
+      case BookingStatus.accepted:
+        return RideStatus.driverConfirmed;
+      case BookingStatus.inProgress:
+        return RideStatus.inProgress;
+      case BookingStatus.completed:
+        return RideStatus.completed;
+      case BookingStatus.cancelled:
+        return RideStatus.cancelled;
+      default:
+        return RideStatus.active;
     }
   }
 

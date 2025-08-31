@@ -1,6 +1,6 @@
 import 'package:sharexev2/core/network/api_client.dart';
 import 'package:sharexev2/core/network/api_response.dart';
-import 'package:sharexev2/data/models/notification/notification_dto.dart';
+import 'package:sharexev2/data/models/notification/dtos/notification_dto.dart';
 import 'package:sharexev2/config/app_config.dart';
 
 class NotificationService {

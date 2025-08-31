@@ -9,17 +9,18 @@ import '../../models/auth/app_user.dart';
 import '../../models/auth/entities/auth_session.dart';
 import '../../models/auth/entities/auth_credentials.dart';
 import '../../models/auth/entities/user_role.dart';
-import '../../models/auth/dtos/register_request_dto.dart';
+import '../../models/auth/dtos/register_passenger_request_dto.dart';
+import '../../models/auth/dtos/register_driver_request_dto.dart';
 import '../../models/auth/mappers/auth_mapper.dart';
 import '../../models/auth/dtos/user_dto.dart';
-import '../../services/auth/auth_service_interface.dart';
-import '../../services/auth/firebase_auth_service.dart';
+import '../../services/auth_service.dart' as auth_service;
+import '../../services/firebase_auth_service.dart';
 import 'auth_repository_interface.dart';
 
 /// Implementation của AuthRepositoryInterface
 /// Combines API service, Firebase service, và local storage
 class AuthRepositoryImpl implements AuthRepositoryInterface {
-  final AuthServiceInterface _authApiService;
+  final auth_service.AuthServiceInterface _authApiService;
   final FirebaseAuthService _firebaseAuthService;
   final SharedPreferences _prefs;
 
@@ -30,7 +31,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
   static const String _keyDeviceToken = 'device_token';
 
   AuthRepositoryImpl({
-    required AuthServiceInterface authApiService,
+    required auth_service.AuthServiceInterface authApiService,
     required FirebaseAuthService firebaseAuthService,
     required SharedPreferences prefs,
   }) : _authApiService = authApiService,
@@ -120,7 +121,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       await saveSession(session, user);
 
       return AuthResult.success(user, session);
-    } on AuthServiceException catch (e) {
+    } on auth_service.AuthServiceException catch (e) {
       return AuthResult.failure(AuthFailure.service(e.message, code: e.code));
     } catch (e) {
       return AuthResult.failure(AuthFailure.unknown('Login failed: $e'));
@@ -142,7 +143,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       await saveSession(session, user);
 
       return AuthResult.success(user, session);
-    } on AuthServiceException catch (e) {
+    } on auth_service.AuthServiceException catch (e) {
       return AuthResult.failure(AuthFailure.service(e.message, code: e.code));
     } catch (e) {
       return AuthResult.failure(AuthFailure.unknown('Google login failed: $e'));
@@ -173,7 +174,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       await saveSession(newSession, user);
 
       return AuthResult.success(user, newSession);
-    } on AuthServiceException catch (e) {
+    } on auth_service.AuthServiceException catch (e) {
       return AuthResult.failure(AuthFailure.service(e.message, code: e.code));
     } catch (e) {
       return AuthResult.failure(
@@ -211,7 +212,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       await saveSession(session, user);
 
       return AuthResult.success(user, session);
-    } on AuthServiceException catch (e) {
+    } on auth_service.AuthServiceException catch (e) {
       return AuthResult.failure(AuthFailure.service(e.message, code: e.code));
     } catch (e) {
       return AuthResult.failure(
@@ -253,7 +254,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       await saveSession(session, user);
 
       return AuthResult.success(user, session);
-    } on AuthServiceException catch (e) {
+    } on auth_service.AuthServiceException catch (e) {
       return AuthResult.failure(AuthFailure.service(e.message, code: e.code));
     } catch (e) {
       return AuthResult.failure(
@@ -349,7 +350,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       );
 
       return updatedUser;
-    } on AuthServiceException catch (e) {
+    } on auth_service.AuthServiceException catch (e) {
       throw AuthRepositoryException('Failed to update profile: ${e.message}');
     } catch (e) {
       throw AuthRepositoryException('Failed to update profile: $e');
@@ -372,7 +373,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
         currentPassword,
         newPassword,
       );
-    } on AuthServiceException catch (e) {
+    } on auth_service.AuthServiceException catch (e) {
       throw AuthRepositoryException('Failed to change password: ${e.message}');
     } catch (e) {
       throw AuthRepositoryException('Failed to change password: $e');
@@ -396,11 +397,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       final session = await getCurrentSession();
       if (session == null) return; // Silently fail if no session
 
-      await _authApiService.registerDevice(
-        session.accessToken,
-        deviceToken,
-        'mobile', // or detect platform
-      );
+      await _authApiService.registerDevice(deviceToken, 'current_user'); // TODO: Get actual user ID
       // Save device token locally for later unregistration
       await _prefs.setString(_keyDeviceToken, deviceToken);
     } catch (e) {
@@ -418,7 +415,7 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       final deviceToken = _prefs.getString(_keyDeviceToken);
       if (deviceToken == null) return;
 
-      await _authApiService.unregisterDevice(session.accessToken, deviceToken);
+      await _authApiService.unregisterDevice(deviceToken);
       await _prefs.remove(_keyDeviceToken);
     } catch (e) {
       // Log error but don't throw - device unregistration is not critical

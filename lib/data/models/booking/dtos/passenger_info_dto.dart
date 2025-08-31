@@ -1,6 +1,6 @@
 // DTO for passenger information returned by booking APIs.
 
-import 'package:sharexev2/data/models/booking/dtos/booking_status.dart';
+import 'package:sharexev2/data/models/booking/booking_status.dart';
 
 class PassengerInfoDto {
   final int id;
@@ -26,7 +26,7 @@ class PassengerInfoDto {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       avatarUrl: json['avatarUrl'],
-      status: BookingStatusX.fromString(json['status'] ?? ''),
+      status: BookingStatus.fromValue(json['status'] ?? ''),
       seatsBooked: json['seatsBooked'] ?? 0,
     );
   }

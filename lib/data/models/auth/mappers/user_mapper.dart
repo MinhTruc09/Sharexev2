@@ -3,6 +3,7 @@
 
 import '../app_user.dart'; // Import User entity
 import '../dtos/user_dto.dart';
+import '../dtos/driver_dto.dart';
 
 /// Mapper cho User-related conversions
 class UserMapper {
@@ -38,11 +39,11 @@ class UserMapper {
         email: dto.email,
         fullName: dto.fullName,
         phoneNumber: dto.phoneNumber,
-        avatarUrl: dto.avatarUrl,
+        avatarUrl: dto.avatarImage,
         role: UserRole.driver, // Always driver for DriverDto
-        createdAt: _parseDateTime(dto.createdAt),
-        updatedAt: _parseDateTime(dto.updatedAt),
-        isActive: _parseDriverStatus(dto.driverStatus),
+        createdAt: DateTime.now(), // DriverDto doesn't have createdAt
+        updatedAt: DateTime.now(), // DriverDto doesn't have updatedAt
+        isActive: dto.status == DriverApiStatus.approved,
       );
     } catch (e) {
       throw UserMappingException('Failed to map DriverDto to User: $e');
@@ -157,26 +158,7 @@ class UserMapper {
     }
   }
 
-  /// Parse driver status from string
-  static bool _parseDriverStatus(String? driverStatus) {
-    if (driverStatus == null) return true; // Default to active
-
-    switch (driverStatus.toLowerCase()) {
-      case 'active':
-      case 'available':
-      case 'verified':
-      case 'approved':
-        return true;
-      case 'inactive':
-      case 'unavailable':
-      case 'suspended':
-      case 'pending':
-      case 'rejected':
-        return false;
-      default:
-        return true; // Default to active
-    }
-  }
+// _parseDriverStatus method removed - no longer needed
 
   // ===== Validation Helpers =====
 

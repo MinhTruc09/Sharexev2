@@ -339,7 +339,7 @@ final ThemeData passengerTheme = ThemeData(
   ),
   
   // Card Theme
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     elevation: 2,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(BaseTheme.radiusL),
@@ -410,7 +410,7 @@ final ThemeData driverTheme = ThemeData(
   ),
   
   // Card Theme
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     elevation: 2,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(BaseTheme.radiusL),

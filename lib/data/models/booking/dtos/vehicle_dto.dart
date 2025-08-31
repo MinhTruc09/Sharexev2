@@ -1,4 +1,4 @@
-class VehicleDTO {
+class VehicleDto {
   final String licensePlate;
   final String brand;
   final String model;
@@ -9,7 +9,7 @@ class VehicleDTO {
   final String licenseImagePublicId;
   final String vehicleImagePublicId;
 
-  VehicleDTO({
+  VehicleDto({
     required this.licensePlate,
     required this.brand,
     required this.model,
@@ -21,8 +21,8 @@ class VehicleDTO {
     required this.vehicleImagePublicId,
   });
 
-  factory VehicleDTO.fromJson(Map<String, dynamic> json) {
-    return VehicleDTO(
+  factory VehicleDto.fromJson(Map<String, dynamic> json) {
+    return VehicleDto(
       licensePlate: json['licensePlate'] ?? '',
       brand: json['brand'] ?? '',
       model: json['model'] ?? '',

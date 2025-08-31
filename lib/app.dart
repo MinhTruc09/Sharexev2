@@ -18,10 +18,9 @@ import 'package:sharexev2/logic/roleselection/role_selection_cubit.dart';
 import 'package:sharexev2/logic/splash/splash_cubit.dart';
 import 'package:sharexev2/logic/trip/trip_detail_cubit.dart';
 import 'package:sharexev2/logic/trip/trip_review_cubit.dart';
-import 'package:sharexev2/data/repositories/auth/auth_repository.dart';
 import 'package:sharexev2/data/services/auth_service.dart';
-import 'package:sharexev2/data/repositories/role_repository.dart';
 import 'package:sharexev2/core/network/api_client.dart';
+
 
 class App extends StatelessWidget {
   final bool isFirstOpen;
@@ -35,13 +34,12 @@ class App extends StatelessWidget {
         // Core BLoCs
         BlocProvider(create: (_) => SplashCubit(AuthService(ApiClient()))),
         BlocProvider(create: (_) => OnboardingCubit()),
-        BlocProvider(create: (_) => RoleSelectionCubit(LocalRoleRepository())),
+        BlocProvider(create: (_) => RoleSelectionCubit(AuthService(ApiClient()))),
 
         // Auth BLoCs
-        // Use repository abstraction (RealAuthRepository is the canonical implementation)
-        BlocProvider(create: (_) => AuthCubit(AuthRepository)),
+        BlocProvider(create: (_) => AuthCubit(AuthService(ApiClient()))),
         BlocProvider(
-          create: (_) => RegistrationCubit(AuthRepository, 'PASSENGER'),
+          create: (_) => RegistrationCubit(AuthService(ApiClient()), 'PASSENGER'),
         ),
 
         // Home BLoCs
@@ -97,9 +95,9 @@ class _ThemeProviderState extends State<ThemeProvider> {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         // Update theme when user role changes
-        if (state.user != null && state.user?.role != _currentRole) {
+        if (state.user != null && state.user!.role.name != _currentRole) {
           setState(() {
-            _currentRole = state.user?.role ?? 'PASSENGER';
+            _currentRole = state.user!.role.name;
           });
         }
       },
@@ -133,7 +131,7 @@ extension ThemeExtension on BuildContext {
   ButtonStyle get textButtonStyle => theme.textButtonTheme.style!;
 
   // Input styles
-  InputDecorationTheme get inputDecorationTheme => theme.inputDecorationTheme;
+  InputDecorationTheme get inputDecorationTheme => theme.inputDecorationTheme as InputDecorationTheme;
 
   // Card styles
   CardThemeData get cardTheme => theme.cardTheme;

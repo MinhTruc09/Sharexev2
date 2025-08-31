@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sharexev2/data/models/ride.dart';
+import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
 import 'package:intl/intl.dart';
 
 class RideCard extends StatelessWidget {
-  final Ride ride;
+  final RideEntity ride;
   final VoidCallback? onTap;
 
   const RideCard({
@@ -34,7 +34,7 @@ class RideCard extends StatelessWidget {
                 children: [
                   _buildStatusChip(ride.status),
                   Text(
-                    DateFormat('dd/MM/yyyy HH:mm').format(ride.createdAt),
+                    DateFormat('dd/MM/yyyy HH:mm').format(ride.startTime),
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontSize: 12,
@@ -81,7 +81,7 @@ class RideCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          ride.pickupAddress,
+                          ride.departure,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -93,7 +93,7 @@ class RideCard extends StatelessWidget {
                         const SizedBox(height: 24),
                         
                         Text(
-                          ride.dropoffAddress,
+                          ride.destination,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -112,24 +112,24 @@ class RideCard extends StatelessWidget {
               // Trip details
               Row(
                 children: [
-                  Expanded(
-                    child: _buildDetailItem(
-                      icon: Icons.access_time,
-                      label: '${ride.duration} phút',
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildDetailItem(
-                      icon: Icons.straighten,
-                      label: '${ride.distance.toStringAsFixed(1)} km',
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildDetailItem(
-                      icon: Icons.payments,
-                      label: '${NumberFormat('#,###').format(ride.price)}đ',
-                    ),
-                  ),
+                                     Expanded(
+                     child: _buildDetailItem(
+                       icon: Icons.access_time,
+                       label: '${ride.estimatedDuration.toStringAsFixed(0)} phút',
+                     ),
+                   ),
+                   Expanded(
+                     child: _buildDetailItem(
+                       icon: Icons.straighten,
+                       label: '${ride._calculateDistance(ride.startLat, ride.startLng, ride.endLat, ride.endLng).toStringAsFixed(1)} km',
+                     ),
+                   ),
+                   Expanded(
+                     child: _buildDetailItem(
+                       icon: Icons.payments,
+                       label: '${NumberFormat('#,###').format(ride.pricePerSeat)}đ',
+                     ),
+                   ),
                 ],
               ),
               

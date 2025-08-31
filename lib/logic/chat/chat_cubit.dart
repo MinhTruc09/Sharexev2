@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/logic/chat/chat_state.dart';
-import 'package:sharexev2/data/models/chat/chat_message.dart';
-import 'package:sharexev2/data/repositories/chat/chat_repository.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
+import 'package:sharexev2/data/repositories/chat/chat_repository_interface.dart';
+import 'package:sharexev2/data/repositories/chat/chat_repository_impl.dart';
 import 'package:sharexev2/data/services/service_registry.dart';
 import 'package:sharexev2/data/services/websocket_service.dart';
+import 'package:sharexev2/core/auth/auth_manager.dart';
 
 class ChatCubit extends Cubit<ChatState> {
-  final WebSocketService _webSocketService = WebSocketService();
-  final ChatRepository _chatRepository = ChatRepository(service: ServiceRegistry.I.chatService);
+  final ChatRepositoryInterface _chatRepository = ChatRepositoryImpl(
+    chatService: ServiceRegistry.I.chatService,
+    authManager: AuthManager(),
+  );
   Timer? _typingTimer;
   String? _currentToken;
 

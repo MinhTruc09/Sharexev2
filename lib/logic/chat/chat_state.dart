@@ -1,17 +1,16 @@
-import 'package:sharexev2/data/models/chat/chat_message.dart';
-import 'package:sharexev2/data/models/chat/chat_room.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
 
 enum ChatStatus { initial, loading, loaded, sending, error }
 
 class ChatState {
   final ChatStatus status;
   final String? error;
-  final List<ChatMessage> messages;
+  final List<ChatMessageEntity> messages;
   final String? currentRoomId;
   final bool isConnected;
   final bool isTyping;
   final String? typingUser;
-  final List<ChatRoom> chatRooms;
+  final List<ChatRoomEntity> chatRooms;
   final int unreadCount;
 
   const ChatState({
@@ -29,12 +28,12 @@ class ChatState {
   ChatState copyWith({
     ChatStatus? status,
     String? error,
-    List<ChatMessage>? messages,
+    List<ChatMessageEntity>? messages,
     String? currentRoomId,
     bool? isConnected,
     bool? isTyping,
     String? typingUser,
-    List<ChatRoom>? chatRooms,
+    List<ChatRoomEntity>? chatRooms,
     int? unreadCount,
   }) {
     return ChatState(
@@ -51,19 +50,19 @@ class ChatState {
   }
 
   // Helper getters
-  List<ChatMessage> get sortedMessages {
-    final sorted = List<ChatMessage>.from(messages);
+  List<ChatMessageEntity> get sortedMessages {
+    final sorted = List<ChatMessageEntity>.from(messages);
     sorted.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return sorted;
   }
 
-  ChatMessage? get lastMessage {
+  ChatMessageEntity? get lastMessage {
     if (messages.isEmpty) return null;
     return sortedMessages.last;
   }
 
   int get unreadMessagesCount {
-    return messages.where((msg) => !msg.read && !msg.isFromMe).length;
+    return messages.where((msg) => !msg.read).length;
   }
 
   bool get hasMessages => messages.isNotEmpty;

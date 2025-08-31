@@ -1,112 +1,132 @@
+import 'package:sharexev2/core/auth/auth_manager.dart';
 import 'package:sharexev2/core/network/api_response.dart';
-import 'package:sharexev2/data/models/chat/entities/chat_message.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
 import 'package:sharexev2/data/models/chat/mappers/chat_message_mapper.dart';
-import 'package:sharexev2/data/models/chat/mappers/chat_room_mapper.dart';
-import 'package:sharexev2/data/models/chat/dtos/chat_room_dto.dart';
-import 'package:sharexev2/data/models/chat/dtos/chat_message_dto.dart';
-import 'package:sharexev2/data/models/chat/entities/chat_room.dart';
 import 'package:sharexev2/data/services/chat/chat_service_interface.dart';
-import 'package:sharexev2/data/services/chat/chat_api_service.dart';
-import 'package:sharexev2/data/services/service_registry.dart';
-import 'chat_repository_interface.dart';
+import 'chat_repository.dart';
 
+/// Chat Repository Implementation
 class ChatRepositoryImpl implements ChatRepositoryInterface {
-  final ChatServiceInterface _service;
+  final ChatServiceInterface _chatService;
+  final AuthManager _authManager;
 
-  ChatRepositoryImpl([ChatServiceInterface? service]) : _service = service ?? ChatApiService(ServiceRegistry.I.apiClient);
+  ChatRepositoryImpl({
+    required ChatServiceInterface chatService,
+    required AuthManager authManager,
+  })  : _chatService = chatService,
+        _authManager = authManager;
 
-  Future<ApiResponse<List<ChatRoom>>> getChatRooms(String token) async {
-    final resp = await _service.getChatRooms(token);
-    final dtos = resp.data ?? [];
-    final rooms = dtos
-        .map((json) {
-          final dto = ChatRoomDTO.fromJson(json as Map<String, dynamic>);
-          return ChatRoomMapper.fromDto(dto);
-        })
-        .toList();
+  @override
+  Future<ApiResponse<List<ChatMessageEntity>>> getChatMessages(String roomId) async {
+    try {
+      final token = _authManager.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse<List<ChatMessageEntity>>(
+          message: 'Token không hợp lệ',
+          statusCode: 401,
+          data: null,
+          success: false,
+        );
+      }
 
-    return ApiResponse<List<ChatRoom>>(
-      message: resp.message,
-      statusCode: resp.statusCode,
-      data: rooms,
-      success: resp.success,
-    );
+      final response = await _chatService.getChatMessages(token, roomId);
+      
+      if (response.success && response.data != null) {
+        final messages = ChatMessageMapper.fromDtoList(response.data!);
+        return ApiResponse<List<ChatMessageEntity>>(
+          message: response.message,
+          statusCode: response.statusCode,
+          data: messages,
+          success: true,
+        );
+      }
+
+      return ApiResponse<List<ChatMessageEntity>>(
+        message: response.message,
+        statusCode: response.statusCode,
+        data: null,
+        success: false,
+      );
+    } catch (e) {
+      return ApiResponse<List<ChatMessageEntity>>(
+        message: 'Lỗi: $e',
+        statusCode: 500,
+        data: null,
+        success: false,
+      );
+    }
   }
 
-  Future<ApiResponse<List<ChatMessage>>> fetchMessages(
-    String roomId,
-    String token,
-  ) async {
-    final resp = await _service.fetchMessages(roomId, token);
-    final dtos = resp.data ?? [];
-    final messages = dtos.map((dto) => ChatMessageMapper.fromDto(dto)).toList();
+  @override
+  Future<ApiResponse<ChatMessageEntity>> sendTestMessage(String roomId, ChatMessageEntity message) async {
+    try {
+      final token = _authManager.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse<ChatMessageEntity>(
+          message: 'Token không hợp lệ',
+          statusCode: 401,
+          data: null,
+          success: false,
+        );
+      }
 
-    return ApiResponse<List<ChatMessage>>(
-      message: resp.message,
-      statusCode: resp.statusCode,
-      data: messages,
-      success: resp.success,
-    );
+      final messageDto = ChatMessageMapper.toDto(message);
+      final response = await _chatService.sendTestMessage(roomId, messageDto, token);
+      
+      if (response.success && response.data != null) {
+        final sentMessage = ChatMessageMapper.fromDto(response.data!);
+        return ApiResponse<ChatMessageEntity>(
+          message: response.message,
+          statusCode: response.statusCode,
+          data: sentMessage,
+          success: true,
+        );
+      }
+
+      return ApiResponse<ChatMessageEntity>(
+        message: response.message,
+        statusCode: response.statusCode,
+        data: null,
+        success: false,
+      );
+    } catch (e) {
+      return ApiResponse<ChatMessageEntity>(
+        message: 'Lỗi: $e',
+        statusCode: 500,
+        data: null,
+        success: false,
+      );
+    }
   }
 
-  Future<ApiResponse<String>> createChatRoom(String participantEmail, String token) async {
-    final resp = await _service.createChatRoom(participantEmail, token);
-    return ApiResponse<String>(
-      message: resp.message,
-      statusCode: resp.statusCode,
-      data: resp.data,
-      success: resp.success,
-    );
-  }
+  @override
+  Future<ApiResponse<void>> markMessagesAsRead(String roomId) async {
+    try {
+      final token = _authManager.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse<void>(
+          message: 'Token không hợp lệ',
+          statusCode: 401,
+          data: null,
+          success: false,
+        );
+      }
 
-  Future<ApiResponse<void>> markMessagesAsRead(String roomId, String token) async {
-    final resp = await _service.markMessagesAsRead(roomId, token);
-    return ApiResponse<void>(
-      message: resp.message,
-      statusCode: resp.statusCode,
-      data: null,
-      success: resp.success,
-    );
-  }
-
-  Future<ApiResponse<String>> getChatRoomId(String otherUserEmail, String token) async {
-    final resp = await _service.getChatRoomId(otherUserEmail, token);
-    return ApiResponse<String>(
-      message: resp.message,
-      statusCode: resp.statusCode,
-      data: resp.data,
-      success: resp.success,
-    );
-  }
-
-  Future<ApiResponse<ChatMessage>> sendMessage(
-    String roomId,
-    ChatMessage message,
-    String token,
-  ) async {
-    final dto = ChatMessageMapper.toDto(message);
-    final resp = await _service.sendMessage(roomId, dto, token);
-    final entity = resp.data != null ? ChatMessageMapper.fromDto(resp.data!) : null;
-    return ApiResponse<ChatMessage>(
-      message: resp.message,
-      statusCode: resp.statusCode,
-      data: entity,
-      success: resp.success,
-    );
-  }
-
-  Future<ApiResponse<ChatMessage>> sendTestMessage(
-    String roomId,
-    Map<String, dynamic> messageData,
-    String token,
-  ) async {
-    final resp = await _service.sendTestMessage(roomId, messageData, token);
-    final entity = resp.data != null ? ChatMessageMapper.fromDto(resp.data!) : null;
-    return ApiResponse<ChatMessage>(
-      message: resp.message,
-      statusCode: resp.statusCode,
-      data: entity,
-      success: resp.success,
-    );
+      final response = await _chatService.markMessagesAsRead(roomId, token);
+      
+      return ApiResponse<void>(
+        message: response.message,
+        statusCode: response.statusCode,
+        data: null,
+        success: response.success,
+      );
+    } catch (e) {
+      return ApiResponse<void>(
+        message: 'Lỗi: $e',
+        statusCode: 500,
+        data: null,
+        success: false,
+      );
+    }
   }
 }

@@ -1,5 +1,5 @@
 import 'package:sharexev2/core/network/api_response.dart';
-import 'package:sharexev2/data/models/chat/entities/chat_message.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_room.dart';
 
 /// Interface cho ChatRepository
@@ -9,7 +9,7 @@ abstract class ChatRepositoryInterface {
   Future<ApiResponse<List<ChatRoom>>> getChatRooms(String token);
 
   /// Lấy danh sách tin nhắn của một phòng chat
-  Future<ApiResponse<List<ChatMessage>>> fetchMessages(
+  Future<ApiResponse<List<ChatMessageEntity>>> fetchMessages(
     String roomId,
     String token,
   );
@@ -33,14 +33,14 @@ abstract class ChatRepositoryInterface {
   );
 
   /// Gửi tin nhắn mới
-  Future<ApiResponse<ChatMessage>> sendMessage(
+  Future<ApiResponse<ChatMessageEntity>> sendMessage(
     String roomId,
-    ChatMessage message,
+    ChatMessageEntity message,
     String token,
   );
 
   /// Gửi tin nhắn test (cho development/testing)
-  Future<ApiResponse<ChatMessage>> sendTestMessage(
+  Future<ApiResponse<ChatMessageEntity>> sendTestMessage(
     String roomId,
     Map<String, dynamic> messageData,
     String token,

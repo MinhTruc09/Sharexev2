@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:sharexev2/core/config/env.dart';
+import 'package:sharexev2/config/env.dart';
 
 import '../auth/auth_manager.dart';
 // <-- dùng Env
@@ -84,7 +82,7 @@ class ApiDebugHelper {
     try {
       final headers = {'Content-Type': 'application/json'};
       if (requireAuth) {
-        final token = await _authManager.getToken();
+        final token = _authManager.getToken();
         if (token != null) {
           headers['Authorization'] = 'Bearer $token';
         }

@@ -41,6 +41,9 @@ class AppConfig {
   /// ========== TRACKING ==========
   final tracking = _TrackingEndpoints();
 
+  /// ========== ADMIN ==========
+  final admin = _AdminEndpoints();
+
   /// WebSocket URL
   String get webSocketUrl => Env().webSocketUrl;
 
@@ -125,4 +128,12 @@ class _NotificationEndpoints {
 
 class _TrackingEndpoints {
   String get sendTest => AppConfig.I._ep("/tracking/test/"); // + {rideId}
+}
+
+class _AdminEndpoints {
+  String get usersByRole => AppConfig.I._ep("/admin/user/role");
+  String get userDetail => AppConfig.I._ep("/admin/user/"); // + {id}
+  String get approveUser => AppConfig.I._ep("/admin/user/approved/"); // + {id}
+  String get rejectUser => AppConfig.I._ep("/admin/user/reject/"); // + {id}
+  String get deleteUser => AppConfig.I._ep("/admin/user/delete/"); // + {id}
 }

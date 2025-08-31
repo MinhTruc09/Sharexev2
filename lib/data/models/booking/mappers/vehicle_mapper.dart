@@ -1,8 +1,8 @@
-import 'package:sharexev2/data/models/booking/vehicle_dto.dart';
-import 'package:sharexev2/data/models/booking/vehicle.dart';
+import '../dtos/vehicle_dto.dart';
+import '../entities/vehicle.dart';
 
 class VehicleMapper {
-  static Vehicle fromDto(VehicleDTO dto) {
+  static Vehicle fromDto(VehicleDto dto) {
     return Vehicle(
       licensePlate: dto.licensePlate,
       brand: dto.brand,

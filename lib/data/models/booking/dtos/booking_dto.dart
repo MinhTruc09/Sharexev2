@@ -1,8 +1,8 @@
-import 'package:sharexev2/data/models/booking/dtos/booking_status.dart';
-import 'package:sharexev2/data/models/booking/dtos/passenger_info_dto.dart';
-import 'package:sharexev2/data/models/booking/dtos/vehicle_dto.dart';
+import '../booking_status.dart';
+import 'passenger_info_dto.dart';
+import 'vehicle_dto.dart';
 
-class BookingDTO {
+class BookingDto {
   final int id;
   final int rideId;
   final int seatsBooked;
@@ -24,7 +24,7 @@ class BookingDTO {
   final String driverAvatarUrl;
   final String driverStatus;
 
-  final VehicleDTO? vehicle;
+  final VehicleDto? vehicle;
 
   final int passengerId;
   final String passengerName;
@@ -34,7 +34,7 @@ class BookingDTO {
 
   final List<PassengerInfoDto> fellowPassengers;
 
-  BookingDTO({
+  BookingDto({
     required this.id,
     required this.rideId,
     required this.seatsBooked,
@@ -63,12 +63,12 @@ class BookingDTO {
     required this.fellowPassengers,
   });
 
-  factory BookingDTO.fromJson(Map<String, dynamic> json) {
-    return BookingDTO(
+  factory BookingDto.fromJson(Map<String, dynamic> json) {
+    return BookingDto(
       id: json['id'] ?? 0,
       rideId: json['rideId'] ?? 0,
       seatsBooked: json['seatsBooked'] ?? 0,
-      status: BookingStatusX.fromString(json['status'] ?? ''),
+      status: BookingStatus.fromValue(json['status'] ?? ''),
       createdAt: json['createdAt'] ?? '',
       totalPrice: (json['totalPrice'] ?? 0).toDouble(),
       departure: json['departure'] ?? '',
@@ -85,7 +85,7 @@ class BookingDTO {
       driverAvatarUrl: json['driverAvatarUrl'] ?? '',
       driverStatus: json['driverStatus'] ?? '',
       vehicle:
-          json['vehicle'] != null ? VehicleDTO.fromJson(json['vehicle']) : null,
+          json['vehicle'] != null ? VehicleDto.fromJson(json['vehicle']) : null,
       passengerId: json['passengerId'] ?? 0,
       passengerName: json['passengerName'] ?? '',
       passengerPhone: json['passengerPhone'] ?? '',

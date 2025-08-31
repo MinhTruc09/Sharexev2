@@ -1,6 +1,8 @@
 import 'package:sharexev2/core/utils/date_time_ext.dart';
 
-class ChatMessageDTO {
+/// ChatMessageDto theo API docs
+/// https://carpooling-j5xn.onrender.com/api/chat/test/{roomId}
+class ChatMessageDto {
   final String token;
   final String senderEmail;
   final String receiverEmail;
@@ -10,7 +12,7 @@ class ChatMessageDTO {
   final DateTime timestamp;
   final bool read;
 
-  ChatMessageDTO({
+  ChatMessageDto({
     required this.token,
     required this.senderEmail,
     required this.receiverEmail,
@@ -24,8 +26,8 @@ class ChatMessageDTO {
   /// Getter tiện lợi hiển thị "x phút trước"
   String get timeAgo => timestamp.timeAgo;
 
-  factory ChatMessageDTO.fromJson(Map<String, dynamic> json) {
-    return ChatMessageDTO(
+  factory ChatMessageDto.fromJson(Map<String, dynamic> json) {
+    return ChatMessageDto(
       token: json['token'] ?? '',
       senderEmail: json['senderEmail'] ?? '',
       receiverEmail: json['receiverEmail'] ?? '',
@@ -48,5 +50,10 @@ class ChatMessageDTO {
       "timestamp": timestamp.toIso8601String(),
       "read": read,
     };
+  }
+
+  @override
+  String toString() {
+    return 'ChatMessageDTO(token: $token, senderEmail: $senderEmail, content: $content, roomId: $roomId)';
   }
 }

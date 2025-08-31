@@ -7,7 +7,9 @@ import '../entities/auth_session.dart';
 import '../entities/auth_credentials.dart';
 import '../dtos/auth_response_dto.dart';
 import '../dtos/login_request_dto.dart';
-import '../dtos/register_request_dto.dart';
+import '../dtos/google_login_request_dto.dart';
+import '../dtos/register_passenger_request_dto.dart';
+import '../dtos/register_driver_request_dto.dart';
 import '../dtos/refresh_token_request_dto.dart';
 
 /// Mapper cho Auth-related conversions
@@ -113,7 +115,7 @@ class AuthMapper {
         email: normalizedCredentials.email,
         password: normalizedCredentials.password,
         fullName: normalizedCredentials.fullName,
-        phoneNumber: normalizedCredentials.phoneNumber,
+        phoneNumber: normalizedCredentials.phoneNumber ?? '',
         deviceId: deviceId,
         deviceName: deviceName,
       );
@@ -170,8 +172,12 @@ class AuthMapper {
         email: normalizedCredentials.email,
         password: normalizedCredentials.password,
         fullName: normalizedCredentials.fullName,
-        phoneNumber: normalizedCredentials.phoneNumber!,
-        licenseNumber: normalizedCredentials.licenseNumber!,
+        phoneNumber: normalizedCredentials.phoneNumber ?? '',
+        licensePlate: normalizedCredentials.licenseNumber ?? '', // Map licenseNumber to licensePlate
+        brand: 'Unknown', // Default values - should be provided by UI
+        model: 'Unknown',
+        color: 'Unknown',
+        numberOfSeats: 4,
         deviceId: deviceId,
         deviceName: deviceName,
       );

@@ -1,25 +1,38 @@
 part of 'ride_cubit.dart';
 
+enum RideStatus {
+  initial,
+  loading,
+  loaded,
+  created,
+  cancelled,
+  error,
+}
+
 class RideState {
-  final bool isLoading;
+  final RideStatus status;
   final String? error;
-  final List<dynamic> rides;
+  final List<RideEntity> rides;
+  final RideEntity? currentRide;
 
   const RideState({
-    this.isLoading = false,
+    this.status = RideStatus.initial,
     this.error,
     this.rides = const [],
+    this.currentRide,
   });
 
   RideState copyWith({
-    bool? isLoading,
+    RideStatus? status,
     String? error,
-    List<dynamic>? rides,
+    List<RideEntity>? rides,
+    RideEntity? currentRide,
   }) {
     return RideState(
-      isLoading: isLoading ?? this.isLoading,
+      status: status ?? this.status,
       error: error ?? this.error,
       rides: rides ?? this.rides,
+      currentRide: currentRide ?? this.currentRide,
     );
   }
 }

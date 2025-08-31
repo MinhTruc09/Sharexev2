@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:sharexev2/config/theme.dart';
-import 'package:sharexev2/data/models/chat_message.dart';
-import 'package:sharexev2/data/services/chat_service.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
 
 class ChatBubble extends StatelessWidget {
-  final ChatMessage message;
+  final ChatMessageEntity message;
   final bool showAvatar;
   final bool showTimestamp;
+  final String currentUserEmail;
 
   const ChatBubble({
     super.key,
     required this.message,
+    required this.currentUserEmail,
     this.showAvatar = true,
     this.showTimestamp = true,
   });
 
+  bool get isFromMe => message.isSentBy(currentUserEmail);
+
   @override
   Widget build(BuildContext context) {
-    final isFromMe = message.isFromMe;
-    
     return Container(
       margin: EdgeInsets.symmetric(
         vertical: AppTheme.spacingXs,
@@ -141,7 +142,7 @@ class ChatBubble extends StatelessWidget {
   Widget _buildAvatar() {
     return CircleAvatar(
       radius: 16,
-      backgroundColor: message.isFromMe 
+      backgroundColor: isFromMe 
           ? AppTheme.passengerPrimary 
           : AppTheme.driverPrimary,
       child: Text(

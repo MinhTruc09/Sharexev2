@@ -3,21 +3,21 @@
 
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import '../app_user.dart';
-import '../api/user_dto.dart';
-import '../api/driver_dto.dart';
+import '../dtos/user_dto.dart';
+import '../dtos/driver_dto.dart';
 
 /// Backward compatible mapper for existing code
 /// Maps from old API DTOs to new User entity
 class AppUserMapper {
-  /// Map từ UserDTO (API) to User Entity
-  static User fromUserDto(UserDTO dto) {
+  /// Map từ UserDto (API) to User Entity
+  static User fromUserDto(UserDto dto) {
     try {
       return User.trusted(
         id: dto.id,
         email: dto.email,
         fullName: dto.fullName,
         role: _parseRole(dto.role),
-        phoneNumber: dto.phoneNumber.isNotEmpty ? dto.phoneNumber : null,
+        phoneNumber: dto.phoneNumber?.isNotEmpty == true ? dto.phoneNumber : null,
         avatarUrl: dto.avatarUrl,
         isActive: true,
       );
@@ -27,7 +27,7 @@ class AppUserMapper {
   }
 
   /// Map từ DriverDTO (API) to User Entity
-  static User fromDriverDto(DriverDTO dto) {
+  static User fromDriverDto(DriverDto dto) {
     try {
       return User.trusted(
         id: dto.id,
@@ -36,10 +36,10 @@ class AppUserMapper {
         role: UserRole.driver,
         phoneNumber: dto.phoneNumber.isNotEmpty ? dto.phoneNumber : null,
         avatarUrl: dto.avatarImage,
-        isActive: dto.status == DriverStatus.APPROVED,
+        isActive: dto.status == DriverApiStatus.approved,
       );
     } catch (e) {
-      throw UserMappingException('Failed to map DriverDTO to User: $e');
+      throw UserMappingException('Failed to map DriverDto to User: $e');
     }
   }
 
