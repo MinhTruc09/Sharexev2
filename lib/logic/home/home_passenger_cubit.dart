@@ -1,65 +1,56 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
-import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
 import 'package:sharexev2/data/models/booking/entities/booking_entity.dart';
 import 'package:sharexev2/data/models/auth/entities/user_entity.dart';
-import 'package:sharexev2/domain/usecases/ride_usecases.dart';
-import 'package:sharexev2/domain/usecases/booking_usecases.dart';
-import 'package:sharexev2/domain/usecases/user_usecases.dart';
-import 'package:sharexev2/core/app_registry.dart';
+import 'package:sharexev2/data/repositories/ride/ride_repository_interface.dart';
+import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
+import 'package:sharexev2/data/repositories/user/user_repository_interface.dart';
 import 'package:sharexev2/core/network/api_response.dart';
-import 'package:sharexev2/data/services/index.dart';
 
 part 'home_passenger_state.dart';
 
 class HomePassengerCubit extends Cubit<HomePassengerState> {
-  // New Clean Architecture use cases
-  late final RideUseCases _rideUseCases;
-  late final BookingUseCases _bookingUseCases;
-  late final UserUseCases _userUseCases;
+  // Repository Pattern - Clean Architecture
+  final dynamic _rideRepository; // TODO: Type as RideRepositoryInterface when DI is ready
+  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
+  final dynamic _userRepository; // TODO: Type as UserRepositoryInterface when DI is ready
 
-  HomePassengerCubit() : super(const HomePassengerState()) {
-    _initializeUseCases();
-  }
-
-  void _initializeUseCases() {
-    _rideUseCases = AppRegistry.I.rideUseCases;
-    _bookingUseCases = AppRegistry.I.bookingUseCases;
-    _userUseCases = AppRegistry.I.userUseCases;
-  }
+  HomePassengerCubit({
+    required dynamic rideRepository,
+    required dynamic bookingRepository,
+    required dynamic userRepository,
+  }) : _rideRepository = rideRepository,
+       _bookingRepository = bookingRepository,
+       _userRepository = userRepository,
+       super(const HomePassengerState());
 
   Future<void> init() async {
     emit(state.copyWith(status: HomePassengerStatus.loading));
     try {
-      // Load real data using Clean Architecture
-      final futures = await Future.wait([
-        _bookingUseCases.getBookingHistory(),
-        _userUseCases.getPassengerProfile(),
-        _rideUseCases.getRecommendedRides(userLocation: 'Hà Nội'),
-      ]);
+      // Load real data using Repository Pattern
+      ApiResponse<List<BookingEntity>> bookingHistory;
+      ApiResponse<UserEntity> userProfile;
+      ApiResponse<List<RideEntity>> recommendedRides;
 
-      final bookingHistory = futures[0] as ApiResponse<List<BookingEntity>>;
-      final userProfile = futures[1] as ApiResponse<UserEntity>;
-      final recommendedRides = futures[2] as ApiResponse<List<RideEntity>>;
+      if (_bookingRepository != null) {
+        bookingHistory = await _bookingRepository.getPassengerBookings();
+      } else {
+        bookingHistory = ApiResponse<List<BookingEntity>>(message: 'No booking repository', statusCode: 404, data: [], success: false);
+      }
 
-      // Convert booking history to ride history format
-      final rideHistory = bookingHistory.data?.map((booking) => {
-        'id': booking.id.toString(),
-        'pickupAddress': booking.departure,
-        'dropoffAddress': booking.destination,
-        'pickupLat': 21.0285, // Default Hanoi coordinates
-        'pickupLng': 105.8542,
-        'dropoffLat': 10.8231, // Default HCMC coordinates
-        'dropoffLng': 106.6297,
-        'price': booking.totalPrice,
-        'duration': 3600, // Default 1 hour
-        'distance': 100000, // Default 100km
-        'status': _mapBookingStatusToRideStatus(booking.status),
-        'driverName': booking.driverName,
-        'driverPhone': booking.driverPhone,
-        'vehicleInfo': booking.vehicle?.fullInfo ?? 'Unknown Vehicle',
-        'createdAt': booking.createdAt,
-      }).toList() ?? [];
+      if (_userRepository != null) {
+        userProfile = await _userRepository.getProfile();
+      } else {
+        userProfile = ApiResponse<UserEntity>(message: 'No user repository', statusCode: 404, data: null, success: false);
+      }
+
+      if (_rideRepository != null) {
+        recommendedRides = await _rideRepository.getAvailableRides();
+      } else {
+        recommendedRides = ApiResponse<List<RideEntity>>(message: 'No ride repository', statusCode: 404, data: [], success: false);
+      }
+
+      // Booking history is handled separately in state
 
       final nearbyTrips = recommendedRides.data?.map((ride) => {
         'id': ride.id,
@@ -74,7 +65,7 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
       emit(
         state.copyWith(
           status: HomePassengerStatus.ready,
-          rideHistory: rideHistory,
+          rideHistory: recommendedRides.data ?? [],
           popularDestinations: [
             'Sân bay Nội Bài',
             'Hồ Gươm',
@@ -202,14 +193,34 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
 
     emit(state.copyWith(status: HomePassengerStatus.booking));
     try {
-      final ride = await _rideService.createRideLocal(
-        pickupAddress: state.pickupAddress!,
-        dropoffAddress: state.dropoffAddress!,
-        pickupLat: state.pickupLat!,
-        pickupLng: state.pickupLng!,
-        dropoffLat: state.dropoffLat!,
-        dropoffLng: state.dropoffLng!,
+      // Create ride using Clean Architecture
+      final rideRequest = RideEntity(
+        id: DateTime.now().millisecondsSinceEpoch,
+        driverName: 'Tài xế mẫu',
+        driverEmail: 'driver@example.com',
+        departure: state.pickupAddress!,
+        startLat: state.pickupLat!,
+        startLng: state.pickupLng!,
+        startAddress: state.pickupAddress!,
+        startWard: 'Phường mẫu',
+        startDistrict: 'Quận mẫu',
+        startProvince: 'Hà Nội',
+        endLat: state.dropoffLat!,
+        endLng: state.dropoffLng!,
+        endAddress: state.dropoffAddress!,
+        endWard: 'Phường đích',
+        endDistrict: 'Quận đích',
+        endProvince: 'Hà Nội',
+        destination: state.dropoffAddress!,
+        startTime: DateTime.now(),
+        pricePerSeat: 50000, // Default price
+        totalSeat: 4,
+        availableSeats: 4,
+        status: RideStatus.active,
       );
+
+      // TODO: Use _rideUseCases.createRide(rideRequest) when implemented
+      final ride = rideRequest;
 
       emit(
         state.copyWith(
@@ -230,16 +241,14 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     }
   }
 
-  void _simulateRideProgress(Ride ride) async {
+  void _simulateRideProgress(RideEntity ride) async {
     // Simulate driver found after 3 seconds
     await Future.delayed(const Duration(seconds: 3));
     if (state.currentRide?.id == ride.id) {
       final updatedRide = ride.copyWith(
-        status: RideStatus.driverFound,
-        driverId: 'driver_mock',
+        status: RideStatus.driverConfirmed,
         driverName: 'Nguyễn Văn Tài',
-        driverPhone: '0901234567',
-        vehicleInfo: 'Toyota Vios - 30A-12345',
+        driverEmail: 'driver@example.com',
       );
       emit(state.copyWith(currentRide: updatedRide));
     }
@@ -324,23 +333,29 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
       await Future.delayed(const Duration(milliseconds: 1500));
 
       // Create a new ride from trip data
-      final ride = Ride(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        pickupAddress: tripData['origin'] ?? '',
-        dropoffAddress: tripData['destination'] ?? '',
-        pickupLat: 0.0, // Would be real coordinates
-        pickupLng: 0.0,
-        dropoffLat: 0.0,
-        dropoffLng: 0.0,
-        price: (tripData['price'] ?? 0).toDouble() * 1000, // Convert to VND
-        duration: 30, // Estimated duration
-        distance: 10.0, // Estimated distance
-        status: RideStatus.searching,
-        driverId: tripData['driverId'],
-        driverName: tripData['driverName'],
-        driverPhone: '0901234567',
-        vehicleInfo: tripData['vehicleType'] ?? 'Xe hơi',
-        createdAt: DateTime.now(),
+      final ride = RideEntity(
+        id: DateTime.now().millisecondsSinceEpoch,
+        driverName: tripData['driverName'] ?? 'Tài xế',
+        driverEmail: 'driver@example.com',
+        departure: tripData['origin'] ?? '',
+        startLat: 0.0, // Would be real coordinates
+        startLng: 0.0,
+        startAddress: tripData['origin'] ?? '',
+        startWard: 'Phường',
+        startDistrict: 'Quận',
+        startProvince: 'Hà Nội',
+        endLat: 0.0,
+        endLng: 0.0,
+        endAddress: tripData['destination'] ?? '',
+        endWard: 'Phường đích',
+        endDistrict: 'Quận đích',
+        endProvince: 'Hà Nội',
+        destination: tripData['destination'] ?? '',
+        startTime: DateTime.now(),
+        pricePerSeat: (tripData['price'] ?? 0).toDouble() * 1000, // Convert to VND
+        totalSeat: 4,
+        availableSeats: 4,
+        status: RideStatus.active,
       );
 
       emit(

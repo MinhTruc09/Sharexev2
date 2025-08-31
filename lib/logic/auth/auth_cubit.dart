@@ -1,33 +1,37 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/core/services/navigation_service.dart';
-import 'package:sharexev2/data/repositories/auth_repository.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository_interface.dart';
+import 'package:sharexev2/data/models/auth/entities/auth_credentials.dart';
+import 'package:sharexev2/data/models/auth/entities/user_role.dart';
+import 'package:sharexev2/data/models/auth/app_user.dart';
 import 'package:sharexev2/logic/auth/auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final AuthRepository _authService;
+  final dynamic _authRepository; // TODO: Type as AuthRepositoryInterface when DI is ready
   final NavigationService _navigationService = NavigationService();
 
-  AuthCubit(this._authService) : super(const AuthState());
+  AuthCubit(this._authRepository) : super(const AuthState());
 
   // Kiểm tra trạng thái đăng nhập khi khởi động app
   Future<void> checkAuthStatus() async {
     emit(state.copyWith(status: AuthStatus.loading, isLoading: true));
 
     try {
-      final isLoggedIn = await _authService.isLoggedIn();
+      final isLoggedIn = await _authRepository.isLoggedIn();
 
       if (isLoggedIn) {
-        final user = await _authService.getCurrentUser();
+        final currentUser = await _authRepository.getCurrentUser();
         emit(
           state.copyWith(
             status: AuthStatus.authenticated,
-            user: user,
+            user: currentUser,
             isLoading: false,
           ),
         );
 
-        // Navigate to appropriate home screen based on user role
-        _navigateToHome(user?.role ?? 'PASSENGER');
+        // Navigate to home screen based on user role
+        final role = currentUser?.role.name ?? 'PASSENGER';
+        _navigateToHome(role);
       } else {
         emit(
           state.copyWith(status: AuthStatus.unauthenticated, isLoading: false),
@@ -57,23 +61,26 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      final authResponse = await _authService.loginWithEmail(
-        email,
-        password,
-        role,
-        additionalData: additionalData,
+      final credentials = AuthCredentials(
+        email: email,
+        password: password,
       );
+      final authResult = await _authRepository.loginWithCredentials(credentials);
 
-      emit(
-        state.copyWith(
-          status: AuthStatus.authenticated,
-          user: authResponse.user,
-          isLoading: false,
-        ),
-      );
+      if (authResult.isSuccess && authResult.user != null) {
+        emit(
+          state.copyWith(
+            status: AuthStatus.authenticated,
+            user: authResult.user,
+            isLoading: false,
+          ),
+        );
 
-      // Navigate to home screen after successful login
-      _navigateToHomeAndClear(role);
+        // Navigate to home screen based on user role
+        _navigateToHomeAndClear(authResult.user!.role.name);
+      } else {
+        throw Exception(authResult.failure?.message ?? 'Login failed');
+      }
     } catch (e) {
       emit(
         state.copyWith(
@@ -90,18 +97,29 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isGoogleSigningIn: true, error: null));
 
     try {
-      final authResponse = await _authService.loginWithGoogle(role);
-
-      emit(
-        state.copyWith(
-          status: AuthStatus.authenticated,
-          user: authResponse.user,
-          isGoogleSigningIn: false,
-        ),
+      // TODO: Get real Google ID token from Google Sign In
+      final idToken = 'google_token_placeholder';
+      final userRole = UserRole.values.firstWhere(
+        (r) => r.name.toLowerCase() == role.toLowerCase(),
+        orElse: () => UserRole.passenger,
       );
 
-      // Navigate to home screen after successful Google login
-      _navigateToHomeAndClear(role);
+      final authResult = await _authRepository.loginWithGoogle(idToken, userRole);
+
+      if (authResult.isSuccess && authResult.user != null) {
+        emit(
+          state.copyWith(
+            status: AuthStatus.authenticated,
+            user: authResult.user,
+            isGoogleSigningIn: false,
+          ),
+        );
+
+        // Navigate to home screen based on user role
+        _navigateToHomeAndClear(authResult.user!.role.name);
+      } else {
+        throw Exception(authResult.failure?.message ?? 'Google login failed');
+      }
     } catch (e) {
       emit(
         state.copyWith(
@@ -118,30 +136,43 @@ class AuthCubit extends Cubit<AuthState> {
     String email,
     String password,
     String name,
+    String phoneNumber,
     String role, {
     Map<String, dynamic>? additionalData,
   }) async {
     emit(state.copyWith(isRegistering: true, error: null));
 
     try {
-      final authResponse = await _authService.register(
-        email,
-        password,
-        name,
-        role,
-        additionalData: additionalData,
+      final userRole = UserRole.values.firstWhere(
+        (r) => r.name.toLowerCase() == role.toLowerCase(),
+        orElse: () => UserRole.passenger,
       );
 
-      emit(
-        state.copyWith(
-          status: AuthStatus.authenticated,
-          user: authResponse.user,
-          isRegistering: false,
-        ),
+      final registerCredentials = RegisterCredentials(
+        email: email,
+        password: password,
+        fullName: name,
+        phoneNumber: phoneNumber,
       );
 
-      // Navigate to home screen after successful registration
-      _navigateToHomeAndClear(role);
+      final authResult = userRole == UserRole.driver
+          ? await _authRepository.registerDriver(registerCredentials)
+          : await _authRepository.registerPassenger(registerCredentials);
+
+      if (authResult.isSuccess && authResult.user != null) {
+        emit(
+          state.copyWith(
+            status: AuthStatus.authenticated,
+            user: authResult.user,
+            isRegistering: false,
+          ),
+        );
+
+        // Navigate to home screen after successful registration
+        _navigateToHomeAndClear(authResult.user!.role.name);
+      } else {
+        throw Exception(authResult.failure?.message ?? 'Registration failed');
+      }
     } catch (e) {
       emit(
         state.copyWith(
@@ -158,7 +189,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isLoading: true));
 
     try {
-      await _authService.logout();
+      await _authRepository.clearSession();
 
       emit(
         state.copyWith(
@@ -184,11 +215,14 @@ class AuthCubit extends Cubit<AuthState> {
   // Refresh token
   Future<void> refreshToken() async {
     try {
-      await _authService.refreshToken();
+      final authResult = await _authRepository.refreshToken();
 
-      // Lấy lại thông tin user sau khi refresh
-      final user = await _authService.getCurrentUser();
-      emit(state.copyWith(user: user));
+      if (authResult.isSuccess && authResult.user != null) {
+        emit(state.copyWith(user: authResult.user));
+      } else {
+        // Nếu refresh thất bại, đăng xuất
+        await logout();
+      }
     } catch (e) {
       // Nếu refresh thất bại, đăng xuất
       await logout();
@@ -252,4 +286,7 @@ class AuthCubit extends Cubit<AuthState> {
   }) {
     _navigationService.navigateToTripReview(tripData: tripData, role: role);
   }
+
+  // MARK: - Helper Methods
+  // All DTO to Entity conversion is now handled by AuthRepository
 }

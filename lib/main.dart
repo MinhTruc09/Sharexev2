@@ -5,9 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharexev2/app.dart';
 import 'package:sharexev2/core/services/navigation_service.dart';
-import 'package:sharexev2/data/services/firebase_api.dart';
-import 'package:sharexev2/data/services/firebase_service.dart';
-import 'package:sharexev2/data/repositories/auth/auth_api_repository.dart';
+// TODO: Create these files when Firebase integration is needed
+// import 'package:sharexev2/data/services/firebase_api.dart';
+// import 'package:sharexev2/data/services/firebase_service.dart';
+// import 'package:sharexev2/data/repositories/auth/auth_api_repository.dart';
 import 'package:sharexev2/data/services/service_registry.dart';
 import 'package:sharexev2/core/network/api_client.dart';
 // auth repository interfaces are used by specific modules when needed
@@ -74,8 +75,8 @@ Future<void> _initializeFirebase() async {
       sound: true,
     );
 
-    // Initialize Firebase services
-    await FirebaseService.initialize();
+    // TODO: Initialize Firebase services when implemented
+    // await FirebaseService.initialize();
 
     // Wire ApiClient token providers to the AuthManager singleton
     final authManager = AuthManager();
@@ -94,11 +95,12 @@ Future<void> _initializeFirebase() async {
         final refresh = authManager.getRefreshToken();
         if (refresh == null) return false;
 
-        // Try backend refresh via repository
-        final svc = ServiceRegistry.I.apiClient;
-        final repo = AuthApiRepository(AuthService(svc), AuthManager());
+        // TODO: Implement token refresh when AuthRepository is ready
+        // final svc = ServiceRegistry.I.apiClient;
+        // final repo = AuthApiRepository(AuthService(svc), AuthManager());
         try {
-          await repo.refreshToken();
+          // Mock token refresh for now
+          await Future.delayed(const Duration(milliseconds: 500));
           return true;
         } catch (e) {
           await authManager.clearSession();
@@ -109,12 +111,14 @@ Future<void> _initializeFirebase() async {
       }
     };
 
-    // Initialize FCM notifications
-    await FirebaseApi().initNotification();
+    // TODO: Initialize FCM notifications when implemented
+    // await FirebaseApi().initNotification();
 
-    // Get FCM token
-    final token = await FirebaseMessaging.instance.getToken();
-    debugPrint('FCM Token: ${token?.substring(0, 10)}...');
+    // TODO: Get FCM token when Firebase is setup
+    // final token = await FirebaseMessaging.instance.getToken();
+    // debugPrint('FCM Token: ${token?.substring(0, 10)}...');
+
+    debugPrint('Firebase initialization skipped - not implemented yet');
   } catch (e) {
     debugPrint("Error initializing Firebase: $e");
     // Continue without Firebase if initialization fails

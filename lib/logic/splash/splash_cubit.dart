@@ -27,7 +27,11 @@ class SplashCubit extends Cubit<SplashState> {
       bool isLoggedIn = await authService.isLoggedIn();
 
       if (isLoggedIn) {
-        String? role = await authService.getCurrentUserRole();
+        // TODO: Implement getCurrentUserRole in AuthService
+        // String? role = await authService.getCurrentUserRole();
+
+        // Mock user role for now
+        String? role = 'PASSENGER';
 
         if (role == 'PASSENGER') {
           emit(

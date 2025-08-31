@@ -2,29 +2,25 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/logic/chat/chat_state.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
-import 'package:sharexev2/data/repositories/chat/chat_repository_interface.dart';
-import 'package:sharexev2/data/repositories/chat/chat_repository_impl.dart';
-import 'package:sharexev2/data/services/service_registry.dart';
-import 'package:sharexev2/data/services/websocket_service.dart';
-import 'package:sharexev2/core/auth/auth_manager.dart';
 
 class ChatCubit extends Cubit<ChatState> {
-  final ChatRepositoryInterface _chatRepository = ChatRepositoryImpl(
-    chatService: ServiceRegistry.I.chatService,
-    authManager: AuthManager(),
-  );
+  final dynamic _chatRepository; // TODO: Type as ChatRepositoryInterface when DI is ready
   Timer? _typingTimer;
   String? _currentToken;
 
-  ChatCubit() : super(const ChatState()) {
-    _setupWebSocketCallbacks();
+  ChatCubit({
+    required dynamic chatRepository,
+  }) : _chatRepository = chatRepository,
+       super(const ChatState()) {
+    // _setupWebSocketCallbacks(); // TODO: Implement WebSocket
   }
 
   void _setupWebSocketCallbacks() {
-    _webSocketService.onMessageReceived = _handleNewMessage;
-    _webSocketService.onConnected = _handleConnected;
-    _webSocketService.onDisconnected = _handleDisconnected;
-    _webSocketService.onError = _handleError;
+    // TODO: Implement WebSocket callbacks
+    // _webSocketService.onMessageReceived = _handleNewMessage;
+    // _webSocketService.onConnected = _handleConnected;
+    // _webSocketService.onDisconnected = _handleDisconnected;
+    // _webSocketService.onError = _handleError;
   }
 
   // Initialize chat with token
@@ -42,6 +38,24 @@ class ChatCubit extends Cubit<ChatState> {
 
       final roomsResp = await _chatRepository.getChatRooms(_currentToken!);
       final rooms = roomsResp.data ?? [];
+
+      // Convert ChatRoom to ChatRoomEntity
+      final roomEntities = rooms.map((room) => ChatRoomEntity(
+        id: room.roomId,
+        otherUserEmail: room.participantEmail,
+        otherUserName: room.participantName,
+        unreadCount: room.unreadCount,
+        lastMessage: room.lastMessage.isNotEmpty ? ChatMessageEntity(
+          senderEmail: '',
+          receiverEmail: '',
+          senderName: '',
+          content: room.lastMessage,
+          roomId: room.roomId,
+          timestamp: room.lastMessageTime ?? DateTime.now(),
+          read: true,
+        ) : null,
+      )).toList();
+
       final totalUnread = rooms.fold<int>(
         0,
         (sum, room) => sum + (room.unreadCount),
@@ -50,7 +64,7 @@ class ChatCubit extends Cubit<ChatState> {
       emit(
         state.copyWith(
           status: ChatStatus.loaded,
-          chatRooms: rooms,
+          chatRooms: roomEntities,
           unreadCount: totalUnread,
         ),
       );
@@ -71,7 +85,7 @@ class ChatCubit extends Cubit<ChatState> {
       final messages = resp.data ?? [];
 
       // Connect to WebSocket
-      await _webSocketService.connect(_currentToken!, roomId);
+      // await _webSocketService.connect(_currentToken!, roomId); // TODO: Implement WebSocket
 
       // Mark messages as read
       await _chatRepository.markMessagesAsRead(roomId, _currentToken!);
@@ -106,13 +120,12 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       emit(state.copyWith(status: ChatStatus.sending));
 
-      final message = ChatMessage(
-        messageId: 'temp_${DateTime.now().millisecondsSinceEpoch}',
-        roomId: state.currentRoomId!,
-        senderEmail: ChatMessage.getCurrentUserEmail(),
-        senderName: ChatMessage.getCurrentUserName(),
+      final message = ChatMessageEntity(
+        senderEmail: 'current_user@example.com', // TODO: Get from auth
         receiverEmail: receiverEmail ?? '',
+        senderName: 'Current User', // TODO: Get from auth
         content: content,
+        roomId: state.currentRoomId!,
         timestamp: DateTime.now(),
         read: false,
       );
@@ -124,7 +137,7 @@ class ChatCubit extends Cubit<ChatState> {
       );
 
       // Send via WebSocket
-      _webSocketService.sendMessage(message);
+      // _webSocketService.sendMessage(message); // TODO: Implement WebSocket
     } catch (e) {
       emit(
         state.copyWith(
@@ -136,17 +149,18 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   // Handle new message from WebSocket
-  void _handleNewMessage(ChatMessage message) {
+  void _handleNewMessage(ChatMessageEntity message) {
     // Avoid duplicate messages using explicit loop to sidestep nullability warnings
     int existingIndex = -1;
     for (var i = 0; i < state.messages.length; i++) {
-      if (state.messages[i].messageId == message.messageId) {
+      if (state.messages[i].content == message.content &&
+          state.messages[i].timestamp == message.timestamp) {
         existingIndex = i;
         break;
       }
     }
 
-    List<ChatMessage> updatedMessages;
+    List<ChatMessageEntity> updatedMessages;
     if (existingIndex != -1) {
       // Update existing message (e.g., temp message with real ID)
       updatedMessages = [...state.messages];
@@ -169,7 +183,7 @@ class ChatCubit extends Cubit<ChatState> {
     emit(state.copyWith(isConnected: false));
 
     // Attempt to reconnect
-    _webSocketService.reconnect();
+    // _webSocketService.reconnect(); // TODO: Implement WebSocket
   }
 
   // Handle WebSocket errors
@@ -187,7 +201,7 @@ class ChatCubit extends Cubit<ChatState> {
   void startTyping() {
     if (!state.isTyping) {
       emit(state.copyWith(isTyping: true));
-      _webSocketService.sendTypingIndicator(true);
+      // _webSocketService.sendTypingIndicator(true); // TODO: Implement WebSocket
     }
 
     // Reset typing timer
@@ -199,7 +213,7 @@ class ChatCubit extends Cubit<ChatState> {
   void stopTyping() {
     if (state.isTyping) {
       emit(state.copyWith(isTyping: false));
-      _webSocketService.sendTypingIndicator(false);
+      // _webSocketService.sendTypingIndicator(false); // TODO: Implement WebSocket
     }
     _typingTimer?.cancel();
   }
@@ -209,12 +223,12 @@ class ChatCubit extends Cubit<ChatState> {
     if (_currentToken == null) throw Exception('No authentication token');
 
     try {
-      final roomId = await _chatRepository.createChatRoom(
+      final response = await _chatRepository.createChatRoom(
         participantEmail,
         _currentToken!,
       );
       await loadChatRooms(); // Refresh chat rooms list
-      return roomId;
+      return response.data ?? '';
     } catch (e) {
       emit(
         state.copyWith(
@@ -228,7 +242,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   // Leave current room
   void leaveRoom() {
-    _webSocketService.disconnect();
+    // _webSocketService.disconnect(); // TODO: Implement WebSocket
     emit(state.copyWith(currentRoomId: null, messages: [], isConnected: false));
   }
 
@@ -245,11 +259,11 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   // Search messages
-  List<ChatMessage> searchMessages(String query) {
+  List<ChatMessageEntity> searchMessages(String query) {
     if (query.isEmpty) return state.messages;
 
     final lower = query.toLowerCase();
-    final results = <ChatMessage>[];
+    final results = <ChatMessageEntity>[];
     for (final message in state.messages) {
       final content = message.content.toLowerCase();
       final sender = message.senderName.toLowerCase();
@@ -263,7 +277,7 @@ class ChatCubit extends Cubit<ChatState> {
   @override
   Future<void> close() {
     _typingTimer?.cancel();
-    _webSocketService.disconnect();
+    // _webSocketService.disconnect(); // TODO: Implement WebSocket
     return super.close();
   }
 }

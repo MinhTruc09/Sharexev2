@@ -23,7 +23,7 @@ class VehicleSeatSelectionBloc extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => BookingCubit()..initializeSeats(
+      create: (_) => BookingCubit(null)..initializeSeats( // TODO: Inject repository
         vehicleType: vehicleType,
         totalSeats: totalSeats,
         reservedSeats: reservedSeats,

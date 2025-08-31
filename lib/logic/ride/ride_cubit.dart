@@ -1,17 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sharexev2/domain/usecases/ride_usecases.dart';
-import 'package:sharexev2/core/app_registry.dart';
-import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
+import 'package:sharexev2/data/repositories/ride/ride_repository_interface.dart';
+import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
+import 'package:sharexev2/data/models/ride/entities/ride_entity.dart' as ride_entity;
+import 'package:sharexev2/data/models/booking/entities/booking_entity.dart';
 import 'package:sharexev2/core/network/api_response.dart';
 
 part 'ride_state.dart';
 
 class RideCubit extends Cubit<RideState> {
-  late final RideUseCases _rideUseCases;
+  final dynamic _rideRepository; // TODO: Type as RideRepositoryInterface when DI is ready
+  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
 
-  RideCubit() : super(const RideState()) {
-    _rideUseCases = AppRegistry.I.rideUseCases;
-  }
+  RideCubit({
+    required dynamic rideRepository,
+    required dynamic bookingRepository,
+  }) : _rideRepository = rideRepository,
+       _bookingRepository = bookingRepository,
+       super(const RideState());
 
   /// Tạo chuyến đi mới
   Future<void> createRide({
@@ -22,39 +27,52 @@ class RideCubit extends Cubit<RideState> {
     required int totalSeats,
   }) async {
     emit(state.copyWith(status: RideStatus.loading));
-    
+
     try {
-      final result = await _rideUseCases.createRide(
-        departure: departure,
-        destination: destination,
-        startLat: 21.0285, // From location picker
-        startLng: 105.8542,
-        startAddress: 'Hà Nội',
-        startWard: 'Phường 1',
-        startDistrict: 'Quận Ba Đình',
-        startProvince: 'Hà Nội',
-        endLat: 10.8231,
-        endLng: 106.6297,
-        endAddress: 'TP.HCM',
-        endWard: 'Phường 1',
-        endDistrict: 'Quận 1',
-        endProvince: 'TP.HCM',
-        startTime: startTime,
-        pricePerSeat: pricePerSeat,
-        totalSeats: totalSeats,
-        driverName: 'Current User Name',
-        driverEmail: 'user@email.com',
-      );
-      
-      if (result.success && result.data != null) {
-        emit(state.copyWith(
-          status: RideStatus.created,
-          currentRide: result.data!,
-        ));
+      if (_rideRepository != null) {
+        final newRide = ride_entity.RideEntity(
+          id: DateTime.now().millisecondsSinceEpoch,
+          driverName: 'Current User Name', // TODO: Get from auth
+          driverEmail: 'user@email.com', // TODO: Get from auth
+          departure: departure,
+          startLat: 21.0285, // From location picker
+          startLng: 105.8542,
+          startAddress: departure,
+          startWard: 'Phường 1',
+          startDistrict: 'Quận Ba Đình',
+          startProvince: 'Hà Nội',
+          endLat: 10.8231,
+          endLng: 106.6297,
+          endAddress: destination,
+          endWard: 'Phường 1',
+          endDistrict: 'Quận 1',
+          endProvince: 'TP.HCM',
+          destination: destination,
+          startTime: startTime,
+          pricePerSeat: pricePerSeat,
+          totalSeat: totalSeats,
+          availableSeats: totalSeats,
+          status: ride_entity.RideStatus.active,
+        );
+
+        final result = await _rideRepository.createRide(newRide);
+
+        if (result.success && result.data != null) {
+          emit(state.copyWith(
+            status: RideStatus.created,
+            currentRide: result.data!,
+          ));
+        } else {
+          emit(state.copyWith(
+            status: RideStatus.error,
+            error: result.message,
+          ));
+        }
       } else {
+        // Fallback when no repository
         emit(state.copyWith(
           status: RideStatus.error,
-          error: result.message,
+          error: 'No ride repository available',
         ));
       }
     } catch (e) {
@@ -76,13 +94,14 @@ class RideCubit extends Cubit<RideState> {
     emit(state.copyWith(status: RideStatus.loading));
     
     try {
-      final result = await _rideUseCases.searchRides(
-        departure: departure,
-        destination: destination,
-        startDate: startDate,
-        minSeats: minSeats,
-        maxPrice: maxPrice,
-      );
+      final result = _rideRepository != null
+          ? await _rideRepository.searchRides(
+              departure: departure,
+              destination: destination,
+              startTime: startDate?.toIso8601String(),
+              seats: minSeats,
+            )
+          : ApiResponse<List<ride_entity.RideEntity>>(message: 'No repository', statusCode: 404, data: [], success: false);
       
       if (result.success && result.data != null) {
         emit(state.copyWith(
@@ -112,11 +131,9 @@ class RideCubit extends Cubit<RideState> {
     emit(state.copyWith(status: RideStatus.loading));
     
     try {
-      final result = await _rideUseCases.getRecommendedRides(
-        userLocation: userLocation,
-        preferredDestination: preferredDestination,
-        requiredSeats: requiredSeats,
-      );
+      final result = _rideRepository != null
+          ? await _rideRepository.getAvailableRides()
+          : ApiResponse<List<ride_entity.RideEntity>>(message: 'No repository', statusCode: 404, data: [], success: false);
       
       if (result.success && result.data != null) {
         emit(state.copyWith(
@@ -142,7 +159,9 @@ class RideCubit extends Cubit<RideState> {
     emit(state.copyWith(status: RideStatus.loading));
     
     try {
-      final result = await _rideUseCases.cancelRide(rideId);
+      final result = _rideRepository != null
+          ? await _rideRepository.cancelRide(rideId)
+          : ApiResponse<bool>(message: 'No repository', statusCode: 404, data: false, success: false);
       
       if (result.success) {
         emit(state.copyWith(
@@ -168,7 +187,9 @@ class RideCubit extends Cubit<RideState> {
     emit(state.copyWith(status: RideStatus.loading));
     
     try {
-      final result = await _rideUseCases.getRideById(rideId);
+      final result = _rideRepository != null
+          ? await _rideRepository.getRideById(rideId)
+          : ApiResponse<ride_entity.RideEntity>(message: 'No repository', statusCode: 404, data: null, success: false);
       
       if (result.success && result.data != null) {
         emit(state.copyWith(

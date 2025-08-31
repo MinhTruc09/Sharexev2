@@ -1,16 +1,19 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/models/registration_models.dart';
-import 'package:sharexev2/data/repositories/auth_repository.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository_interface.dart';
 
 part 'registration_state.dart';
 
 class RegistrationCubit extends Cubit<RegistrationState> {
-  final AuthRepository _authService;
+  final dynamic _authRepository; // TODO: Type as AuthRepositoryInterface when DI is ready
   final String role;
 
-  RegistrationCubit(this._authService, this.role)
-    : super(RegistrationState(role: role));
+  RegistrationCubit({
+    required dynamic authRepository,
+    required this.role,
+  }) : _authRepository = authRepository,
+       super(RegistrationState(role: role));
 
   void updateEmail(String email) {
     emit(state.copyWith(data: state.data.copyWith(email: email), error: null));
@@ -139,13 +142,16 @@ class RegistrationCubit extends Cubit<RegistrationState> {
         });
       }
 
-      final authResponse = await _authService.register(
-        state.data.email!,
-        state.data.password!,
-        state.data.fullName!,
-        role,
-        additionalData: additionalData,
-      );
+      if (_authRepository != null) {
+        // TODO: Implement registration through repository
+        // final authResponse = await _authRepository.register(...);
+
+        // Mock successful registration for now
+        await Future.delayed(const Duration(seconds: 2));
+      } else {
+        // Mock registration when no repository
+        await Future.delayed(const Duration(seconds: 2));
+      }
 
       // For drivers, set pending approval status
       if (role == 'DRIVER') {

@@ -11,5 +11,5 @@ export 'repositories/index.dart';
 export 'services/index.dart';
 
 // ========== REGISTRIES ==========
-export 'repositories/repository_registry.dart';
+// export 'repositories/repository_registry.dart'; // Removed - not used anymore
 export 'services/service_registry.dart';

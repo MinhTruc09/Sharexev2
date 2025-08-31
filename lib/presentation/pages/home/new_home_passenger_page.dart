@@ -13,7 +13,11 @@ class NewHomePassengerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => HomePassengerCubit()..init(),
+      create: (_) => HomePassengerCubit(
+        rideRepository: null, // TODO: Inject repositories
+        bookingRepository: null,
+        userRepository: null,
+      )..init(),
       child: const NewHomePassengerView(),
     );
   }

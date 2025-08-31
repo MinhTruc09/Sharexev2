@@ -12,8 +12,8 @@ enum RideStatus {
 class RideState {
   final RideStatus status;
   final String? error;
-  final List<RideEntity> rides;
-  final RideEntity? currentRide;
+  final List<ride_entity.RideEntity> rides;
+  final ride_entity.RideEntity? currentRide;
 
   const RideState({
     this.status = RideStatus.initial,
@@ -25,8 +25,8 @@ class RideState {
   RideState copyWith({
     RideStatus? status,
     String? error,
-    List<RideEntity>? rides,
-    RideEntity? currentRide,
+    List<ride_entity.RideEntity>? rides,
+    ride_entity.RideEntity? currentRide,
   }) {
     return RideState(
       status: status ?? this.status,

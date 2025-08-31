@@ -1,9 +1,21 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
+import 'package:sharexev2/data/repositories/ride/ride_repository_interface.dart';
+import 'package:sharexev2/data/models/booking/entities/booking_entity.dart';
+import 'package:sharexev2/data/models/ride/entities/ride_entity.dart' as ride_entity;
 
 part 'trip_detail_state.dart';
 
 class TripDetailCubit extends Cubit<TripDetailState> {
-  TripDetailCubit() : super(const TripDetailState());
+  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
+  final dynamic _rideRepository; // TODO: Type as RideRepositoryInterface when DI is ready
+
+  TripDetailCubit({
+    required dynamic bookingRepository,
+    required dynamic rideRepository,
+  }) : _bookingRepository = bookingRepository,
+       _rideRepository = rideRepository,
+       super(const TripDetailState());
 
   void initializeTrip(Map<String, dynamic> tripData) {
     emit(state.copyWith(

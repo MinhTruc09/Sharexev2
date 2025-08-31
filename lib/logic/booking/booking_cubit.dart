@@ -1,8 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
+import 'package:sharexev2/data/models/booking/entities/booking_entity.dart' as booking_entity;
+import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
-  BookingCubit() : super(const BookingState());
+  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
+
+  BookingCubit(this._bookingRepository) : super(const BookingState());
 
   void initializeSeats({
     required String vehicleType,
@@ -64,6 +69,106 @@ class BookingCubit extends Cubit<BookingState> {
       totalPrice: 0.0,
     ));
   }
+
+  // ===== Repository Integration Methods =====
+
+  /// Load passenger bookings from repository
+  Future<void> loadPassengerBookings() async {
+    emit(state.copyWith(status: BookingStatus.selecting, error: null));
+
+    try {
+      final response = await _bookingRepository.getPassengerBookings();
+
+      if (response.success && response.data != null) {
+        emit(state.copyWith(
+          status: BookingStatus.initial,
+          bookingData: {
+            'bookings': response.data!.length,
+            'bookingsList': response.data,
+          },
+        ));
+      } else {
+        emit(state.copyWith(
+          status: BookingStatus.error,
+          error: response.message,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: BookingStatus.error,
+        error: e.toString(),
+      ));
+    }
+  }
+
+  /// Create booking through repository
+  Future<void> createBooking(int rideId) async {
+    if (state.selectedSeats.isEmpty) {
+      emit(state.copyWith(error: 'Please select at least one seat'));
+      return;
+    }
+
+    emit(state.copyWith(status: BookingStatus.selecting, error: null));
+
+    try {
+      final response = await _bookingRepository.createBooking(
+        rideId,
+        state.selectedSeats.length,
+      );
+
+      if (response.success && response.data != null) {
+        emit(state.copyWith(
+          status: BookingStatus.confirmed,
+          bookingData: {
+            'vehicleType': state.vehicleType,
+            'selectedSeats': state.selectedSeats,
+            'totalPrice': state.totalPrice,
+            'pricePerSeat': state.pricePerSeat,
+            'bookingTime': DateTime.now().toIso8601String(),
+            'bookingEntity': response.data!.id,
+          },
+        ));
+      } else {
+        emit(state.copyWith(
+          status: BookingStatus.error,
+          error: response.message,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: BookingStatus.error,
+        error: e.toString(),
+      ));
+    }
+  }
+
+  /// Cancel booking through repository
+  Future<void> cancelBooking(int rideId) async {
+    emit(state.copyWith(status: BookingStatus.selecting, error: null));
+
+    try {
+      final response = await _bookingRepository.cancelBooking(rideId);
+
+      if (response.success) {
+        emit(state.copyWith(
+          status: BookingStatus.initial,
+          bookingData: null,
+        ));
+      } else {
+        emit(state.copyWith(
+          status: BookingStatus.error,
+          error: response.message,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: BookingStatus.error,
+        error: e.toString(),
+      ));
+    }
+  }
+
+  // ===== Legacy UI Methods (for seat selection) =====
 
   void confirmBooking() {
     if (state.selectedSeats.isEmpty) {

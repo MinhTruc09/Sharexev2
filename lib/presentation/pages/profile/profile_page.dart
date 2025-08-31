@@ -17,7 +17,10 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ProfileCubit()..initializeProfile(role),
+      create: (_) => ProfileCubit(
+        userRepository: null, // TODO: Inject repositories
+        authRepository: null,
+      )..initializeProfile(role),
       child: ProfileView(role: role),
     );
   }

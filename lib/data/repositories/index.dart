@@ -19,4 +19,4 @@ export 'ride/ride_repository_impl.dart';
 export 'user/user_repository_impl.dart';
 
 // ========== REGISTRY ==========
-export 'repository_registry.dart';
+// export 'repository_registry.dart'; // Removed - not used anymore

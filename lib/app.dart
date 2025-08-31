@@ -18,7 +18,13 @@ import 'package:sharexev2/logic/roleselection/role_selection_cubit.dart';
 import 'package:sharexev2/logic/splash/splash_cubit.dart';
 import 'package:sharexev2/logic/trip/trip_detail_cubit.dart';
 import 'package:sharexev2/logic/trip/trip_review_cubit.dart';
+import 'package:sharexev2/logic/location/location_cubit.dart';
+import 'package:sharexev2/logic/trip_tracking/trip_tracking_cubit.dart';
 import 'package:sharexev2/data/services/auth_service.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository_impl.dart';
+import 'package:sharexev2/data/repositories/booking/booking_repository_impl.dart';
+import 'package:sharexev2/data/services/firebase_auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharexev2/core/network/api_client.dart';
 
 
@@ -37,23 +43,55 @@ class App extends StatelessWidget {
         BlocProvider(create: (_) => RoleSelectionCubit(AuthService(ApiClient()))),
 
         // Auth BLoCs
-        BlocProvider(create: (_) => AuthCubit(AuthService(ApiClient()))),
+        BlocProvider(create: (_) => AuthCubit(AuthService(ApiClient()))), // TODO: Replace with AuthRepository when DI is ready
         BlocProvider(
-          create: (_) => RegistrationCubit(AuthService(ApiClient()), 'PASSENGER'),
+          create: (_) => RegistrationCubit(
+            authRepository: null, // TODO: Inject AuthRepository when DI is ready
+            role: 'PASSENGER',
+          ),
         ),
 
         // Home BLoCs
-        BlocProvider(create: (_) => HomePassengerCubit()),
-        BlocProvider(create: (_) => HomeDriverCubit()),
+        BlocProvider(create: (_) => HomePassengerCubit(
+          rideRepository: null, // TODO: Inject RideRepository when DI is ready
+          bookingRepository: null, // TODO: Inject BookingRepository when DI is ready
+          userRepository: null, // TODO: Inject UserRepository when DI is ready
+        )),
+        BlocProvider(create: (_) => HomeDriverCubit(
+          rideRepository: null, // TODO: Inject RideRepository when DI is ready
+          bookingRepository: null, // TODO: Inject BookingRepository when DI is ready
+          userRepository: null, // TODO: Inject UserRepository when DI is ready
+        )),
 
         // Feature BLoCs
-        BlocProvider(create: (_) => BookingCubit()),
-        BlocProvider(create: (_) => ChatCubit()),
+        BlocProvider(create: (_) => BookingCubit(null)), // TODO: Inject BookingRepository when DI is ready
+        BlocProvider(create: (_) => ChatCubit(
+          chatRepository: null, // TODO: Inject ChatRepository when DI is ready
+        )),
         BlocProvider(create: (_) => MapBloc()),
-        BlocProvider(create: (_) => ProfileCubit()),
-        BlocProvider(create: (_) => RideCubit()),
-        BlocProvider(create: (_) => TripDetailCubit()),
+        BlocProvider(create: (_) => ProfileCubit(
+          userRepository: null, // TODO: Inject UserRepository when DI is ready
+          authRepository: null, // TODO: Inject AuthRepository when DI is ready
+        )),
+        BlocProvider(create: (_) => RideCubit(
+          rideRepository: null, // TODO: Inject RideRepository when DI is ready
+          bookingRepository: null, // TODO: Inject BookingRepository when DI is ready
+        )),
+        BlocProvider(create: (_) => TripDetailCubit(
+          bookingRepository: null, // TODO: Inject repositories when DI is ready
+          rideRepository: null,
+        )),
         BlocProvider(create: (_) => TripReviewCubit()),
+
+        // New Grab-like features
+        BlocProvider(create: (_) => LocationCubit(
+          locationRepository: null, // TODO: Inject LocationRepository when DI is ready
+        )),
+        BlocProvider(create: (_) => TripTrackingCubit(
+          bookingRepository: null, // TODO: Inject repositories when DI is ready
+          locationRepository: null,
+        )),
+
       ],
       child: ThemeProvider(
         child: MaterialApp(

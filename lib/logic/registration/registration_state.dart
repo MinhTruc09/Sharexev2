@@ -12,7 +12,7 @@ class RegistrationState {
   const RegistrationState({
     this.status = RegistrationStatus.initial,
     this.currentStep = RegistrationStep.stepOne,
-    this.data = const RegistrationData(),
+    this.data = const RegistrationData(role: 'PASSENGER'),
     required this.role,
     this.error,
   });

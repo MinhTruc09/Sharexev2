@@ -21,8 +21,8 @@ class HomePassengerState {
   final List<String> recentSearches;
 
   // Ride data
-  final Ride? currentRide;
-  final List<Ride> rideHistory;
+  final RideEntity? currentRide;
+  final List<RideEntity> rideHistory;
 
   // New features for enhanced UI
   final List<Map<String, dynamic>> nearbyTrips;
@@ -74,8 +74,8 @@ class HomePassengerState {
     bool? isSearching,
     List<String>? popularDestinations,
     List<String>? recentSearches,
-    Ride? currentRide,
-    List<Ride>? rideHistory,
+    RideEntity? currentRide,
+    List<RideEntity>? rideHistory,
     List<Map<String, dynamic>>? nearbyTrips,
     bool? hasActiveTrip,
     Map<String, dynamic>? activeTripData,

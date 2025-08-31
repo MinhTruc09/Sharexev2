@@ -25,7 +25,7 @@ class VehicleSeatSelection extends StatelessWidget {
     return BlocProvider(
       create:
           (_) =>
-              BookingCubit()..initializeSeats(
+              BookingCubit(null)..initializeSeats( // TODO: Inject repository
                 vehicleType: vehicleType,
                 totalSeats: totalSeats,
                 reservedSeats: reservedSeats,
