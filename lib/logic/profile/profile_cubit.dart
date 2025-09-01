@@ -56,15 +56,9 @@ class ProfileCubit extends Cubit<ProfileState> {
           ));
         }
       } else {
-        // Fallback to mock data when no repository
         emit(state.copyWith(
-          status: ProfileStatus.loaded,
-          userData: {
-            'name': 'Nguyễn Văn A',
-            'email': 'nguyenvana@example.com',
-            'phone': '0901234567',
-            'avatar': null,
-          },
+          status: ProfileStatus.error,
+          error: 'User repository không khả dụng',
         ));
       }
     } catch (e) {
@@ -165,12 +159,9 @@ class ProfileCubit extends Cubit<ProfileState> {
           ));
         }
       } else {
-        // Fallback to mock save when no repository
-        await Future.delayed(const Duration(seconds: 1));
         emit(state.copyWith(
-          status: ProfileStatus.saved,
-          isEditing: false,
-          error: null,
+          status: ProfileStatus.error,
+          error: 'User repository không khả dụng',
         ));
       }
     } catch (e) {
@@ -189,19 +180,14 @@ class ProfileCubit extends Cubit<ProfileState> {
       if (_authRepository != null) {
         // TODO: Implement changePassword in AuthRepository
         // final response = await _authRepository.changePassword(oldPassword, newPassword);
-
-        // For now, simulate success
-        await Future.delayed(const Duration(seconds: 1));
         emit(state.copyWith(
-          status: ProfileStatus.saved,
-          error: null,
+          status: ProfileStatus.error,
+          error: 'Change password API chưa được triển khai',
         ));
       } else {
-        // Fallback when no repository
-        await Future.delayed(const Duration(seconds: 1));
         emit(state.copyWith(
-          status: ProfileStatus.saved,
-          error: null,
+          status: ProfileStatus.error,
+          error: 'Auth repository không khả dụng',
         ));
       }
     } catch (e) {

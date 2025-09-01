@@ -27,10 +27,13 @@ class _PassengerFavoritesViewState extends State<PassengerFavoritesView> {
       final locationsJson = prefs.getString('passenger_favorite_locations') ?? '[]';
       final locations = List<Map<String, dynamic>>.from(json.decode(locationsJson));
       
-      // If no favorites exist, create some sample data
+      // If no favorites exist, show empty state instead of mock data
       if (locations.isEmpty) {
-        locations.addAll(_generateSampleLocations());
-        await _saveFavoriteLocations(locations);
+        setState(() {
+          _favoriteLocations = [];
+          _isLoading = false;
+        });
+        return;
       }
       
       setState(() {
@@ -39,7 +42,7 @@ class _PassengerFavoritesViewState extends State<PassengerFavoritesView> {
       });
     } catch (e) {
       setState(() {
-        _favoriteLocations = _generateSampleLocations();
+        _favoriteLocations = []; // Empty list instead of mock data
         _isLoading = false;
       });
     }
@@ -50,54 +53,7 @@ class _PassengerFavoritesViewState extends State<PassengerFavoritesView> {
     await prefs.setString('passenger_favorite_locations', json.encode(locations));
   }
 
-  List<Map<String, dynamic>> _generateSampleLocations() {
-    return [
-      {
-        'id': 1,
-        'name': 'Nhà',
-        'address': '123 Nguyễn Văn Cừ, Quận 5, TP.HCM',
-        'lat': 10.762622,
-        'lng': 106.660172,
-        'type': 'home',
-        'icon': Icons.home,
-        'color': AppColors.grabGreen,
-        'createdAt': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-      },
-      {
-        'id': 2,
-        'name': 'Công ty',
-        'address': '456 Lê Lợi, Quận 1, TP.HCM',
-        'lat': 10.772622,
-        'lng': 106.670172,
-        'type': 'work',
-        'icon': Icons.work,
-        'color': AppColors.driverPrimary,
-        'createdAt': DateTime.now().subtract(const Duration(days: 25)).toIso8601String(),
-      },
-      {
-        'id': 3,
-        'name': 'Sân bay Tân Sơn Nhất',
-        'address': 'Sân bay Tân Sơn Nhất, Tân Bình, TP.HCM',
-        'lat': 10.818622,
-        'lng': 106.651972,
-        'type': 'airport',
-        'icon': Icons.flight,
-        'color': AppColors.grabOrange,
-        'createdAt': DateTime.now().subtract(const Duration(days: 20)).toIso8601String(),
-      },
-      {
-        'id': 4,
-        'name': 'Trường đại học',
-        'address': 'Đại học Bách Khoa, Quận 10, TP.HCM',
-        'lat': 10.772822,
-        'lng': 106.657172,
-        'type': 'school',
-        'icon': Icons.school,
-        'color': AppColors.passengerSecondary,
-        'createdAt': DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-      },
-    ];
-  }
+  // Remove mock data function - use real data from repository
 
   @override
   Widget build(BuildContext context) {

@@ -143,14 +143,32 @@ class RegistrationCubit extends Cubit<RegistrationState> {
       }
 
       if (_authRepository != null) {
-        // TODO: Implement registration through repository
-        // final authResponse = await _authRepository.register(...);
-
-        // Mock successful registration for now
-        await Future.delayed(const Duration(seconds: 2));
+        // Use real registration through repository
+        if (role == 'DRIVER') {
+          // TODO: Implement driver registration with proper DTO mapping
+          // final driverRequest = RegisterDriverRequestDto(...);
+          // final authResponse = await _authRepository.registerDriver(driverRequest);
+          emit(state.copyWith(
+            status: RegistrationStatus.error,
+            error: 'Driver registration API chưa được triển khai',
+          ));
+          return;
+        } else {
+          // TODO: Implement passenger registration with proper DTO mapping
+          // final passengerRequest = RegisterPassengerRequestDto(...);
+          // final authResponse = await _authRepository.registerPassenger(passengerRequest);
+          emit(state.copyWith(
+            status: RegistrationStatus.error,
+            error: 'Passenger registration API chưa được triển khai',
+          ));
+          return;
+        }
       } else {
-        // Mock registration when no repository
-        await Future.delayed(const Duration(seconds: 2));
+        emit(state.copyWith(
+          status: RegistrationStatus.error,
+          error: 'Auth repository không khả dụng',
+        ));
+        return;
       }
 
       // For drivers, set pending approval status

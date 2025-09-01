@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/config/theme.dart';
-import 'package:sharexev2/logic/trip/trip_detail_cubit.dart';
+import 'package:sharexev2/logic/booking/booking_cubit.dart';
+import 'package:sharexev2/logic/booking/booking_state.dart';
 import 'package:sharexev2/presentation/widgets/booking/vehicle_seat_selection.dart';
 
 class TripSeatSelectionSection extends StatelessWidget {
@@ -14,7 +15,7 @@ class TripSeatSelectionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TripDetailCubit, TripDetailState>(
+    return BlocBuilder<BookingCubit, BookingState>(
       builder: (context, state) {
         return Padding(
           padding: const EdgeInsets.all(16),
@@ -39,11 +40,21 @@ class TripSeatSelectionSection extends StatelessWidget {
                 reservedSeats: _getReservedSeats(),
                 pricePerSeat: (tripData['price'] ?? 0).toDouble(),
                 onSeatsSelected: (seats, price) {
-                  context.read<TripDetailCubit>().selectSeats(seats);
+                  // Initialize seats in BookingCubit if not already done
+                  context.read<BookingCubit>().initializeSeats(
+                    vehicleType: _getVehicleType(tripData['vehicleType']),
+                    totalSeats: _getTotalSeats(tripData['vehicleType']),
+                    reservedSeats: _getReservedSeats(),
+                    pricePerSeat: (tripData['price'] ?? 0).toDouble(),
+                  );
+                  // Select seats
+                  for (int seat in seats) {
+                    context.read<BookingCubit>().toggleSeatSelection(seat - 1);
+                  }
                 },
               ),
               
-              if (state.hasSelectedSeats) ...[
+              if (state.selectedSeats.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 _buildSelectionSummary(state),
               ],
@@ -54,7 +65,7 @@ class TripSeatSelectionSection extends StatelessWidget {
     );
   }
 
-  Widget _buildSelectionSummary(TripDetailState state) {
+  Widget _buildSelectionSummary(BookingState state) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

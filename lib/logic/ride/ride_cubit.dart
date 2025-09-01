@@ -30,49 +30,25 @@ class RideCubit extends Cubit<RideState> {
 
     try {
       if (_rideRepository != null) {
-        final newRide = ride_entity.RideEntity(
-          id: DateTime.now().millisecondsSinceEpoch,
-          driverName: 'Current User Name', // TODO: Get from auth
-          driverEmail: 'user@email.com', // TODO: Get from auth
-          departure: departure,
-          startLat: 21.0285, // From location picker
-          startLng: 105.8542,
-          startAddress: departure,
-          startWard: 'Phường 1',
-          startDistrict: 'Quận Ba Đình',
-          startProvince: 'Hà Nội',
-          endLat: 10.8231,
-          endLng: 106.6297,
-          endAddress: destination,
-          endWard: 'Phường 1',
-          endDistrict: 'Quận 1',
-          endProvince: 'TP.HCM',
-          destination: destination,
-          startTime: startTime,
-          pricePerSeat: pricePerSeat,
-          totalSeat: totalSeats,
-          availableSeats: totalSeats,
-          status: ride_entity.RideStatus.active,
-        );
-
-        final result = await _rideRepository.createRide(newRide);
-
-        if (result.success && result.data != null) {
-          emit(state.copyWith(
-            status: RideStatus.created,
-            currentRide: result.data!,
-          ));
-        } else {
-          emit(state.copyWith(
-            status: RideStatus.error,
-            error: result.message,
-          ));
-        }
-      } else {
-        // Fallback when no repository
+        // TODO: Create proper RideRequestDTO and use service
+        // final rideRequest = RideRequestDTO(
+        //   departure: departure,
+        //   destination: destination,
+        //   startTime: startTime,
+        //   pricePerSeat: pricePerSeat,
+        //   totalSeat: totalSeats,
+        //   ... other required fields
+        // );
+        // final result = await _rideRepository.createRide(rideRequest);
+        
         emit(state.copyWith(
           status: RideStatus.error,
-          error: 'No ride repository available',
+          error: 'Create ride API chưa được triển khai đầy đủ',
+        ));
+      } else {
+        emit(state.copyWith(
+          status: RideStatus.error,
+          error: 'Ride repository không khả dụng',
         ));
       }
     } catch (e) {

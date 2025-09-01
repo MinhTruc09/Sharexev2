@@ -14,14 +14,17 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
   final dynamic _rideRepository; // TODO: Type as RideRepositoryInterface when DI is ready
   final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
   final dynamic _userRepository; // TODO: Type as UserRepositoryInterface when DI is ready
+  final dynamic _locationRepository; // TODO: Type as LocationRepositoryInterface when DI is ready
 
   HomePassengerCubit({
     required dynamic rideRepository,
     required dynamic bookingRepository,
     required dynamic userRepository,
+    required dynamic locationRepository,
   }) : _rideRepository = rideRepository,
        _bookingRepository = bookingRepository,
        _userRepository = userRepository,
+       _locationRepository = locationRepository,
        super(const HomePassengerState());
 
   Future<void> init() async {
@@ -159,15 +162,28 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
 
     emit(state.copyWith(isSearching: true));
     try {
-      // TODO: replace with Places API call when available
-      final results = await Future.value(
-        [
-          'Sân bay Nội Bài',
-          'Trung tâm Lotte',
-          'Vincom Mega Mall',
-        ].where((p) => p.toLowerCase().contains(query.toLowerCase())).toList(),
-      );
-      emit(state.copyWith(searchResults: results, isSearching: false));
+      // Use real location repository for search
+      if (_locationRepository != null) {
+        final response = await _locationRepository.searchPlaces(query);
+        if (response.success && response.data != null) {
+          emit(state.copyWith(
+            searchResults: response.data!.map((location) => location.address).toList(),
+            isSearching: false,
+          ));
+        } else {
+          emit(state.copyWith(
+            searchResults: [],
+            isSearching: false,
+            error: response.message ?? 'Không tìm thấy địa điểm',
+          ));
+        }
+      } else {
+        emit(state.copyWith(
+          searchResults: [],
+          isSearching: false,
+          error: 'Location service không khả dụng',
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(isSearching: false, error: 'Lỗi tìm kiếm: $e'));
     }
@@ -193,64 +209,60 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
 
     emit(state.copyWith(status: HomePassengerStatus.booking));
     try {
-      // Create ride using Clean Architecture
-      final rideRequest = RideEntity(
-        id: DateTime.now().millisecondsSinceEpoch,
-        driverName: 'Tài xế mẫu',
-        driverEmail: 'driver@example.com',
-        departure: state.pickupAddress!,
-        startLat: state.pickupLat!,
-        startLng: state.pickupLng!,
-        startAddress: state.pickupAddress!,
-        startWard: 'Phường mẫu',
-        startDistrict: 'Quận mẫu',
-        startProvince: 'Hà Nội',
-        endLat: state.dropoffLat!,
-        endLng: state.dropoffLng!,
-        endAddress: state.dropoffAddress!,
-        endWard: 'Phường đích',
-        endDistrict: 'Quận đích',
-        endProvince: 'Hà Nội',
-        destination: state.dropoffAddress!,
-        startTime: DateTime.now(),
-        pricePerSeat: 50000, // Default price
-        totalSeat: 4,
-        availableSeats: 4,
-        status: RideStatus.active,
-      );
-
-      // TODO: Use _rideUseCases.createRide(rideRequest) when implemented
-      final ride = rideRequest;
-
-      emit(
-        state.copyWith(
-          status: HomePassengerStatus.rideBooked,
-          currentRide: ride,
-        ),
-      );
-
-      // Simulate finding driver
-      _simulateRideProgress(ride);
-    } catch (e) {
-      emit(
-        state.copyWith(
+      // Use real booking repository to create booking
+      if (_bookingRepository != null) {
+        // First, find available ride
+        if (_rideRepository != null) {
+          final ridesResponse = await _rideRepository.searchRides(
+            departure: state.pickupAddress!,
+            destination: state.dropoffAddress!,
+            startTime: DateTime.now(),
+            seats: 1,
+          );
+          
+          if (ridesResponse.success && ridesResponse.data != null && ridesResponse.data!.isNotEmpty) {
+            final selectedRide = ridesResponse.data!.first;
+            
+            // Create booking using real repository
+            final bookingResponse = await _bookingRepository.createBooking(
+              selectedRide.id,
+              1, // seats
+            );
+            
+            if (bookingResponse.success && bookingResponse.data != null) {
+              emit(state.copyWith(
+                status: HomePassengerStatus.rideBooked,
+                currentRide: selectedRide,
+              ));
+            } else {
+              emit(state.copyWith(
+                status: HomePassengerStatus.error,
+                error: bookingResponse.message ?? 'Lỗi đặt chuyến',
+              ));
+            }
+          } else {
+            emit(state.copyWith(
+              status: HomePassengerStatus.error,
+              error: 'Không tìm thấy chuyến đi phù hợp',
+            ));
+          }
+        } else {
+          emit(state.copyWith(
+            status: HomePassengerStatus.error,
+            error: 'Ride service không khả dụng',
+          ));
+        }
+      } else {
+        emit(state.copyWith(
           status: HomePassengerStatus.error,
-          error: 'Lỗi đặt chuyến: $e',
-        ),
-      );
-    }
-  }
-
-  void _simulateRideProgress(RideEntity ride) async {
-    // Simulate driver found after 3 seconds
-    await Future.delayed(const Duration(seconds: 3));
-    if (state.currentRide?.id == ride.id) {
-      final updatedRide = ride.copyWith(
-        status: RideStatus.driverConfirmed,
-        driverName: 'Nguyễn Văn Tài',
-        driverEmail: 'driver@example.com',
-      );
-      emit(state.copyWith(currentRide: updatedRide));
+          error: 'Booking service không khả dụng',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: HomePassengerStatus.error,
+        error: 'Lỗi đặt chuyến: $e',
+      ));
     }
   }
 
@@ -267,6 +279,8 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
       );
     }
   }
+
+  // Remove mock simulation function - use real booking flow instead
 
   void clearError() {
     emit(state.copyWith(error: null));
@@ -301,21 +315,44 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     emit(state.copyWith(isSearching: true));
 
     try {
-      // Simulate search API call
-      await Future.delayed(const Duration(milliseconds: 1000));
-
-      // Filter nearby trips based on search criteria
-      final filteredTrips =
-          state.nearbyTrips.where((trip) {
-            if (searchData['to'] != null && searchData['to'].isNotEmpty) {
-              return trip['destination'].toString().toLowerCase().contains(
-                searchData['to'].toString().toLowerCase(),
-              );
-            }
-            return true;
+      // Use real ride repository for search
+      if (_rideRepository != null) {
+        final response = await _rideRepository.searchRides(
+          departure: searchData['from'],
+          destination: searchData['to'],
+          startTime: searchData['date'] ?? DateTime.now(),
+          seats: searchData['passengerCount'] ?? 1,
+        );
+        
+        if (response.success && response.data != null) {
+          final trips = response.data!.map((ride) => {
+            'id': ride.id,
+            'departure': ride.departure,
+            'destination': ride.destination,
+            'startTime': ride.startTime.toIso8601String(),
+            'pricePerSeat': ride.pricePerSeat,
+            'availableSeats': ride.availableSeats,
+            'driverName': ride.driverName,
           }).toList();
-
-      emit(state.copyWith(isSearching: false, nearbyTrips: filteredTrips));
+          
+          emit(state.copyWith(
+            isSearching: false,
+            nearbyTrips: trips,
+          ));
+        } else {
+          emit(state.copyWith(
+            isSearching: false,
+            nearbyTrips: [],
+            error: response.message ?? 'Không tìm thấy chuyến đi',
+          ));
+        }
+      } else {
+        emit(state.copyWith(
+          isSearching: false,
+          nearbyTrips: [],
+          error: 'Ride service không khả dụng',
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(isSearching: false, error: 'Lỗi tìm kiếm: $e'));
     }

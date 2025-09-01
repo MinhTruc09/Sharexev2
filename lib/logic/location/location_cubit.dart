@@ -36,22 +36,10 @@ class LocationCubit extends Cubit<LocationState> {
           ));
         }
       } else {
-        // Mock location for testing
-        final mockLocation = LocationData(
-          latitude: 21.0285,
-          longitude: 105.8542,
-          address: 'Hà Nội, Việt Nam',
-          ward: 'Phường Điện Biên',
-          district: 'Quận Ba Đình',
-          province: 'Hà Nội',
-          accuracy: 10.0,
-          timestamp: DateTime.now(),
-        );
-        
+        // Show error instead of mock data
         emit(state.copyWith(
-          status: LocationStatus.loaded,
-          currentLocation: mockLocation,
-          error: null,
+          status: LocationStatus.error,
+          error: 'Location service không khả dụng',
         ));
       }
     } catch (e) {
@@ -88,25 +76,11 @@ class LocationCubit extends Cubit<LocationState> {
           ));
         }
       } else {
-        // Mock search results
-        final mockResults = [
-          LocationData(
-            latitude: 21.0285,
-            longitude: 105.8542,
-            address: 'Sân bay Nội Bài, Hà Nội',
-            timestamp: DateTime.now(),
-          ),
-          LocationData(
-            latitude: 21.0245,
-            longitude: 105.8412,
-            address: 'Hồ Gươm, Hà Nội',
-            timestamp: DateTime.now(),
-          ),
-        ];
-        
+        // Show error instead of mock data
         emit(state.copyWith(
-          searchResults: mockResults,
+          searchResults: [],
           isSearching: false,
+          error: 'Location service không khả dụng',
         ));
       }
     } catch (e) {
@@ -145,19 +119,9 @@ class LocationCubit extends Cubit<LocationState> {
           ));
         }
       } else {
-        // Mock route
-        final mockRoute = RouteData(
-          waypoints: [origin, destination],
-          distanceKm: 15.5,
-          durationMinutes: 25,
-          estimatedFare: 85000,
-          polyline: 'mock_polyline_data',
-        );
-        
         emit(state.copyWith(
-          status: LocationStatus.loaded,
-          currentRoute: mockRoute,
-          error: null,
+          status: LocationStatus.error,
+          error: 'Location repository không khả dụng',
         ));
       }
     } catch (e) {

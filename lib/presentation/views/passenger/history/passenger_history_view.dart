@@ -37,10 +37,13 @@ class _PassengerHistoryViewState extends State<PassengerHistoryView>
       final tripsJson = prefs.getString('passenger_trip_history') ?? '[]';
       final trips = List<Map<String, dynamic>>.from(json.decode(tripsJson));
       
-      // If no trips exist, create some sample data
+      // If no trips exist, show empty state instead of mock data
       if (trips.isEmpty) {
-        trips.addAll(_generateSampleTrips());
-        await _saveTripHistory(trips);
+        setState(() {
+          _allTrips = [];
+          _isLoading = false;
+        });
+        return;
       }
       
       setState(() {
@@ -49,7 +52,7 @@ class _PassengerHistoryViewState extends State<PassengerHistoryView>
       });
     } catch (e) {
       setState(() {
-        _allTrips = _generateSampleTrips();
+        _allTrips = []; // Empty list instead of mock data
         _isLoading = false;
       });
     }
@@ -60,62 +63,7 @@ class _PassengerHistoryViewState extends State<PassengerHistoryView>
     await prefs.setString('passenger_trip_history', json.encode(trips));
   }
 
-  List<Map<String, dynamic>> _generateSampleTrips() {
-    return [
-      {
-        'id': 1,
-        'departure': 'Sân bay Tân Sơn Nhất',
-        'destination': 'Quận 1, TP.HCM',
-        'date': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
-        'price': 150000,
-        'status': 'completed',
-        'driverName': 'Nguyễn Văn A',
-        'vehicleInfo': 'Toyota Vios - 51A-12345',
-        'rating': 4.8,
-        'duration': 45,
-        'distance': 25.5,
-      },
-      {
-        'id': 2,
-        'departure': 'Bến xe Miền Đông',
-        'destination': 'Đại học Bách Khoa',
-        'date': DateTime.now().subtract(const Duration(days: 3)).toIso8601String(),
-        'price': 80000,
-        'status': 'completed',
-        'driverName': 'Trần Thị B',
-        'vehicleInfo': 'Honda City - 59B-67890',
-        'rating': 4.9,
-        'duration': 30,
-        'distance': 15.2,
-      },
-      {
-        'id': 3,
-        'departure': 'Chợ Bến Thành',
-        'destination': 'Landmark 81',
-        'date': DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
-        'price': 120000,
-        'status': 'cancelled',
-        'driverName': 'Lê Văn C',
-        'vehicleInfo': 'Hyundai Accent - 60C-11111',
-        'rating': 0,
-        'duration': 0,
-        'distance': 0,
-      },
-      {
-        'id': 4,
-        'departure': 'Quận 7',
-        'destination': 'Quận 3',
-        'date': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
-        'price': 100000,
-        'status': 'pending',
-        'driverName': 'Phạm Văn D',
-        'vehicleInfo': 'Mazda 3 - 51D-22222',
-        'rating': 0,
-        'duration': 0,
-        'distance': 18.7,
-      },
-    ];
-  }
+  // Remove mock data function - use real data from repository
 
   @override
   Widget build(BuildContext context) {

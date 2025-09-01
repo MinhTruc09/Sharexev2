@@ -7,6 +7,7 @@ import '../../data/services/auth_service.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/services/ride_service.dart';
 import '../../data/services/user_service.dart';
+import '../../data/services/firebase_auth_service.dart' as firebase;
 
 // Repository interfaces
 import '../../data/repositories/auth/auth_repository_interface.dart';
@@ -21,9 +22,6 @@ import '../../data/repositories/auth/auth_repository_impl.dart';
 import '../../data/repositories/booking/booking_repository_impl.dart';
 import '../../data/repositories/ride/ride_repository_impl.dart';
 import '../../data/repositories/user/user_repository_impl.dart';
-
-// Mock implementations (for services not yet implemented)
-import 'mock_implementations.dart';
 
 // Auth manager
 import '../auth/auth_manager.dart';
@@ -86,44 +84,53 @@ class ServiceLocator {
       () => UserService(get<ApiClient>()),
     );
 
+    // Firebase Auth Service
+    _getIt.registerLazySingleton<firebase.FirebaseAuthService>(
+      () => firebase.FirebaseAuthService(),
+    );
+
     print('✅ Core services registered');
   }
   
   /// Register repositories
   static void _registerRepositories() {
-    // ✅ Using REAL implementations now
+    // ✅ Using REAL implementations based on API documentation
 
-    // Auth Repository (Mock for now)
+    // Auth Repository - Real implementation
     _getIt.registerLazySingleton<AuthRepositoryInterface>(
-      () => MockAuthRepository(),
+      () => AuthRepositoryImpl(
+        authApiService: get<AuthService>(),
+        firebaseAuthService: get<firebase.FirebaseAuthService>(),
+        prefs: get<SharedPreferences>(),
+      ),
     );
 
-    // Booking Repository (Mock for now)
+    // Booking Repository - TODO: Implement BookingRepositoryInterface
     _getIt.registerLazySingleton<BookingRepositoryInterface>(
-      () => MockBookingRepository(),
+      () => throw UnimplementedError('BookingRepositoryInterface not yet implemented'),
     );
 
-    // Ride Repository (Mock for now)
+    // Ride Repository - Real implementation
     _getIt.registerLazySingleton<RideRepositoryInterface>(
-      () => MockRideRepository(),
+      () => RideRepositoryImpl(get<RideService>()),
     );
 
-    // User Repository (Mock for now)
+    // User Repository - Real implementation
     _getIt.registerLazySingleton<UserRepositoryInterface>(
-      () => MockUserRepository(),
+      () => UserRepositoryImpl(get<UserService>()),
     );
 
-    // Chat Repository (Mock for now)
+    // Chat Repository - TODO: Implement real chat repository
     _getIt.registerLazySingleton<ChatRepositoryInterface>(
-      () => MockChatRepository(),
+      () => throw UnimplementedError('Chat repository not yet implemented'),
     );
 
-    // Location Repository (Mock implementation)
+    // Location Repository - TODO: Implement real location repository
     _getIt.registerLazySingleton<LocationRepositoryInterface>(
-      () => MockLocationRepository(),
+      () => throw UnimplementedError('Location repository not yet implemented'),
     );
 
-    print('✅ Mock repositories registered');
+    print('✅ Real repositories registered');
   }
   
   /// Reset all dependencies (useful for testing)

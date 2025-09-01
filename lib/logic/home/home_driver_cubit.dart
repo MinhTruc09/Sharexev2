@@ -73,38 +73,21 @@ class HomeDriverCubit extends Cubit<HomeDriverState> {
   }) async {
     emit(state.copyWith(status: HomeDriverStatus.loading));
     try {
-      final newRide = RideEntity(
-        id: DateTime.now().millisecondsSinceEpoch,
-        driverName: state.driverProfile?.fullName ?? 'Tài xế',
-        driverEmail: state.driverProfile?.email ?? 'driver@example.com',
-        departure: departure,
-        startLat: 21.0285, // Default Hanoi coordinates
-        startLng: 105.8542,
-        startAddress: departure,
-        startWard: 'Phường',
-        startDistrict: 'Quận',
-        startProvince: 'Hà Nội',
-        endLat: 21.0285,
-        endLng: 105.8542,
-        endAddress: destination,
-        endWard: 'Phường đích',
-        endDistrict: 'Quận đích',
-        endProvince: 'Hà Nội',
-        destination: destination,
-        startTime: startTime,
-        pricePerSeat: pricePerSeat,
-        totalSeat: totalSeats,
-        availableSeats: totalSeats,
-        status: RideStatus.active,
-      );
-
-      // TODO: Use _rideUseCases.createRide(newRide) when implemented
-      final updatedRides = [...state.myRides, newRide];
-
-      emit(state.copyWith(
-        status: HomeDriverStatus.ready,
-        myRides: updatedRides,
-      ));
+      if (_rideRepository != null) {
+        // TODO: Create proper RideRequestDTO and use repository
+        // final rideRequest = RideRequestDTO(...);
+        // final response = await _rideRepository.createRide(rideRequest);
+        
+        emit(state.copyWith(
+          status: HomeDriverStatus.error,
+          error: 'Create ride API chưa được triển khai',
+        ));
+      } else {
+        emit(state.copyWith(
+          status: HomeDriverStatus.error,
+          error: 'Ride repository không khả dụng',
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(status: HomeDriverStatus.error, error: e.toString()));
     }
@@ -113,12 +96,17 @@ class HomeDriverCubit extends Cubit<HomeDriverState> {
   // Accept booking
   Future<void> acceptBooking(String bookingId) async {
     try {
-      // TODO: Use _bookingUseCases.acceptBooking(bookingId) when implemented
-      final updatedBookings = state.pendingBookings
-          .where((booking) => booking.id.toString() != bookingId)
-          .toList();
-
-      emit(state.copyWith(pendingBookings: updatedBookings));
+      if (_bookingRepository != null) {
+        final response = await _bookingRepository.acceptBooking(bookingId);
+        if (response.success) {
+          // Reload bookings after successful accept
+          await init();
+        } else {
+          emit(state.copyWith(error: response.message ?? 'Không thể chấp nhận booking'));
+        }
+      } else {
+        emit(state.copyWith(error: 'Booking repository không khả dụng'));
+      }
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
@@ -127,12 +115,17 @@ class HomeDriverCubit extends Cubit<HomeDriverState> {
   // Reject booking
   Future<void> rejectBooking(String bookingId) async {
     try {
-      // TODO: Use _bookingUseCases.rejectBooking(bookingId) when implemented
-      final updatedBookings = state.pendingBookings
-          .where((booking) => booking.id.toString() != bookingId)
-          .toList();
-
-      emit(state.copyWith(pendingBookings: updatedBookings));
+      if (_bookingRepository != null) {
+        final response = await _bookingRepository.rejectBooking(bookingId);
+        if (response.success) {
+          // Reload bookings after successful reject
+          await init();
+        } else {
+          emit(state.copyWith(error: response.message ?? 'Không thể từ chối booking'));
+        }
+      } else {
+        emit(state.copyWith(error: 'Booking repository không khả dụng'));
+      }
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
@@ -141,18 +134,13 @@ class HomeDriverCubit extends Cubit<HomeDriverState> {
   // Complete ride
   Future<void> completeRide(String rideId) async {
     try {
-      final updatedRides = state.myRides.map((ride) {
-        if (ride.id.toString() == rideId) {
-          return ride.copyWith(status: RideStatus.completed);
-        }
-        return ride;
-      }).toList();
-
-      emit(state.copyWith(
-        myRides: updatedRides,
-        totalEarnings: _calculateEarnings(updatedRides),
-        completedTrips: _countCompletedTrips(updatedRides),
-      ));
+      if (_rideRepository != null) {
+        // TODO: Implement complete ride through repository
+        // final response = await _rideRepository.completeRide(rideId);
+        emit(state.copyWith(error: 'Complete ride API chưa được triển khai'));
+      } else {
+        emit(state.copyWith(error: 'Ride repository không khả dụng'));
+      }
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }

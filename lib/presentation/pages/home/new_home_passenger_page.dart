@@ -36,7 +36,6 @@ class _NewHomePassengerViewState extends State<NewHomePassengerView>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   int _currentNavIndex = 0;
-  List<Map<String, dynamic>> _nearbyTrips = [];
   bool _hasActiveTrip = false;
 
   @override
@@ -54,7 +53,7 @@ class _NewHomePassengerViewState extends State<NewHomePassengerView>
       curve: Curves.easeInOut,
     ));
     _animationController.forward();
-    _loadNearbyTrips();
+    // Remove mock data loading - use cubit instead
   }
 
   @override
@@ -63,49 +62,7 @@ class _NewHomePassengerViewState extends State<NewHomePassengerView>
     super.dispose();
   }
 
-  void _loadNearbyTrips() {
-    // Mock data for nearby trips
-    setState(() {
-      _nearbyTrips = [
-        {
-          'destination': 'Quận 7, TP.HCM',
-          'origin': 'Quận 1, TP.HCM',
-          'departureTime': '14:30 - Hôm nay',
-          'price': 45,
-          'availableSeats': 3,
-          'driverName': 'Nguyễn Văn A',
-          'driverInitials': 'NA',
-          'rating': 4.8,
-          'vehicleType': 'Xe hơi',
-          'notes': 'Xe mới, điều hòa mát',
-        },
-        {
-          'destination': 'Quận Thủ Đức, TP.HCM',
-          'origin': 'Quận 3, TP.HCM',
-          'departureTime': '15:00 - Hôm nay',
-          'price': 35,
-          'availableSeats': 2,
-          'driverName': 'Trần Thị B',
-          'driverInitials': 'TB',
-          'rating': 4.9,
-          'vehicleType': 'Xe van',
-          'notes': 'Đi đúng giờ, an toàn',
-        },
-        {
-          'destination': 'Quận Bình Thạnh, TP.HCM',
-          'origin': 'Quận 5, TP.HCM',
-          'departureTime': '16:30 - Hôm nay',
-          'price': 25,
-          'availableSeats': 4,
-          'driverName': 'Lê Văn C',
-          'driverInitials': 'LC',
-          'rating': 4.7,
-          'vehicleType': 'Xe hơi',
-          'notes': 'Giá rẻ, thân thiện',
-        },
-      ];
-    });
-  }
+  // Remove mock data function - use cubit data instead
 
   @override
   Widget build(BuildContext context) {
@@ -440,41 +397,68 @@ class _NewHomePassengerViewState extends State<NewHomePassengerView>
   }
 
   Widget _buildNearbyTripsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Các chuyến đi gần bạn',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+    return BlocBuilder<HomePassengerCubit, HomePassengerState>(
+      builder: (context, state) {
+        final nearbyTrips = state.nearbyTrips ?? [];
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Các chuyến đi gần bạn',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (state.status == HomePassengerStatus.loading)
+                const Center(child: CircularProgressIndicator())
+              else if (nearbyTrips.isEmpty)
+                const Center(
+                  child: Text(
+                    'Không có chuyến đi nào gần đây',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: nearbyTrips.length,
+                  itemBuilder: (context, index) {
+                    final trip = nearbyTrips[index];
+                    return TripCard(
+                      tripData: {
+                        'destination': trip['destination'] ?? '',
+                        'origin': trip['origin'] ?? '',
+                        'departureTime': trip['departureTime'] ?? '',
+                        'price': trip['price'] ?? 0,
+                        'availableSeats': trip['availableSeats'] ?? 0,
+                        'driverName': trip['driverName'] ?? '',
+                        'driverInitials': (trip['driverName'] as String?)?.substring(0, 2).toUpperCase() ?? 'NA',
+                        'rating': trip['rating'] ?? 4.8,
+                        'vehicleType': trip['vehicleType'] ?? 'Xe hơi',
+                        'notes': trip['notes'] ?? 'Chuyến đi an toàn',
+                      },
+                      role: 'PASSENGER',
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoute.tripDetail,
+                          arguments: trip,
+                        );
+                      },
+                    );
+                  },
+                ),
+              const SizedBox(height: 24),
+            ],
           ),
-          const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _nearbyTrips.length,
-            itemBuilder: (context, index) {
-              return TripCard(
-                tripData: _nearbyTrips[index],
-                role: 'PASSENGER',
-                onTap: () {
-                  // Navigate directly to trip detail page
-                  Navigator.pushNamed(
-                    context,
-                    AppRoute.tripDetail,
-                    arguments: _nearbyTrips[index],
-                  );
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        );
+      },
     );
   }
 

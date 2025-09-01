@@ -16,10 +16,8 @@ import 'package:sharexev2/logic/registration/registration_cubit.dart';
 import 'package:sharexev2/logic/ride/ride_cubit.dart';
 import 'package:sharexev2/logic/roleselection/role_selection_cubit.dart';
 import 'package:sharexev2/logic/splash/splash_cubit.dart';
-import 'package:sharexev2/logic/trip/trip_detail_cubit.dart';
-import 'package:sharexev2/logic/trip/trip_review_cubit.dart';
 import 'package:sharexev2/logic/location/location_cubit.dart';
-import 'package:sharexev2/logic/trip_tracking/trip_tracking_cubit.dart';
+import 'package:sharexev2/logic/tracking/tracking_cubit.dart';
 // Removed unused imports - now using ServiceLocator for DI
 
 // Dependency Injection
@@ -54,6 +52,7 @@ class App extends StatelessWidget {
           rideRepository: ServiceLocator.get(),
           bookingRepository: ServiceLocator.get(),
           userRepository: ServiceLocator.get(),
+          locationRepository: ServiceLocator.get(),
         )),
         BlocProvider(create: (_) => HomeDriverCubit(
           rideRepository: ServiceLocator.get(),
@@ -66,7 +65,7 @@ class App extends StatelessWidget {
         BlocProvider(create: (_) => ChatCubit(
           chatRepository: ServiceLocator.get(),
         )),
-        BlocProvider(create: (_) => MapBloc()),
+        BlocProvider(create: (_) => MapBloc(locationRepository: ServiceLocator.get())),
         BlocProvider(create: (_) => ProfileCubit(
           userRepository: ServiceLocator.get(),
           authRepository: ServiceLocator.get(),
@@ -75,17 +74,12 @@ class App extends StatelessWidget {
           rideRepository: ServiceLocator.get(),
           bookingRepository: ServiceLocator.get(),
         )),
-        BlocProvider(create: (_) => TripDetailCubit(
-          bookingRepository: ServiceLocator.get(),
-          rideRepository: ServiceLocator.get(),
-        )),
-        BlocProvider(create: (_) => TripReviewCubit()),
-
         // New Grab-like features
         BlocProvider(create: (_) => LocationCubit(
           locationRepository: ServiceLocator.get(),
         )),
-        BlocProvider(create: (_) => TripTrackingCubit(
+        BlocProvider(create: (_) => TrackingCubit(
+          trackingRepository: ServiceLocator.get(),
           bookingRepository: ServiceLocator.get(),
           locationRepository: ServiceLocator.get(),
         )),
