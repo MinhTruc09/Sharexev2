@@ -6,4 +6,14 @@ class BookingMapper {
   static BookingEntity fromDto(BookingDto dto) {
     return BookingEntityMapper.fromDto(dto);
   }
+
+  /// Convert DTO to Entity (alias)
+  static BookingEntity dtoToEntity(BookingDto dto) {
+    return fromDto(dto);
+  }
+
+  /// Convert list of DTOs to list of Entities
+  static List<BookingEntity> fromDtoList(List<BookingDto> dtos) {
+    return dtos.map((dto) => fromDto(dto)).toList();
+  }
 }

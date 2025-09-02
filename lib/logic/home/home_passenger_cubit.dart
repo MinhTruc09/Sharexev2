@@ -5,22 +5,23 @@ import 'package:sharexev2/data/models/auth/entities/user_entity.dart';
 import 'package:sharexev2/data/repositories/ride/ride_repository_interface.dart';
 import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
 import 'package:sharexev2/data/repositories/user/user_repository_interface.dart';
+import 'package:sharexev2/data/repositories/location/location_repository_interface.dart';
 import 'package:sharexev2/core/network/api_response.dart';
 
 part 'home_passenger_state.dart';
 
 class HomePassengerCubit extends Cubit<HomePassengerState> {
   // Repository Pattern - Clean Architecture
-  final dynamic _rideRepository; // TODO: Type as RideRepositoryInterface when DI is ready
-  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
-  final dynamic _userRepository; // TODO: Type as UserRepositoryInterface when DI is ready
-  final dynamic _locationRepository; // TODO: Type as LocationRepositoryInterface when DI is ready
+  final RideRepositoryInterface? _rideRepository;
+  final BookingRepositoryInterface? _bookingRepository;
+  final UserRepositoryInterface? _userRepository;
+  final LocationRepositoryInterface? _locationRepository;
 
   HomePassengerCubit({
-    required dynamic rideRepository,
-    required dynamic bookingRepository,
-    required dynamic userRepository,
-    required dynamic locationRepository,
+    required RideRepositoryInterface? rideRepository,
+    required BookingRepositoryInterface? bookingRepository,
+    required UserRepositoryInterface? userRepository,
+    required LocationRepositoryInterface? locationRepository,
   }) : _rideRepository = rideRepository,
        _bookingRepository = bookingRepository,
        _userRepository = userRepository,
@@ -216,7 +217,7 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
           final ridesResponse = await _rideRepository.searchRides(
             departure: state.pickupAddress!,
             destination: state.dropoffAddress!,
-            startTime: DateTime.now(),
+            startTime: DateTime.now().toIso8601String(),
             seats: 1,
           );
           
@@ -288,6 +289,78 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
 
   void clearSearchResults() {
     emit(state.copyWith(searchResults: []));
+  }
+
+  // Add missing methods
+  void showSearchBottomSheet() {
+    // TODO: Implement search bottom sheet
+    emit(state.copyWith(status: HomePassengerStatus.loading));
+  }
+
+  void swapLocations() {
+    final currentPickup = state.pickupAddress;
+    final currentDropoff = state.dropoffAddress;
+    
+    emit(state.copyWith(
+      pickupAddress: currentDropoff,
+      dropoffAddress: currentPickup,
+    ));
+  }
+
+  Future<void> searchRides() async {
+    if (state.pickupAddress == null || state.dropoffAddress == null) {
+      emit(state.copyWith(
+        status: HomePassengerStatus.error,
+        error: 'Vui lòng chọn điểm đi và điểm đến',
+      ));
+      return;
+    }
+
+    emit(state.copyWith(status: HomePassengerStatus.loading));
+
+    try {
+      if (_rideRepository != null) {
+        final response = await _rideRepository.searchRides(
+          departure: state.pickupAddress!,
+          destination: state.dropoffAddress!,
+          startTime: state.selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
+          seats: state.selectedPassengerCount ?? 1,
+        );
+
+        if (response.success && response.data != null) {
+          final trips = response.data!.map((ride) => {
+            'id': ride.id,
+            'departure': ride.departure,
+            'destination': ride.destination,
+            'startTime': ride.startTime.toIso8601String(),
+            'pricePerSeat': ride.pricePerSeat,
+            'availableSeats': ride.availableSeats,
+            'driverName': ride.driverName,
+          }).toList();
+
+          emit(state.copyWith(
+            status: HomePassengerStatus.ready,
+            nearbyTrips: trips,
+            searchResults: trips.map((trip) => '${trip['departure']} → ${trip['destination']}').toList(),
+          ));
+        } else {
+          emit(state.copyWith(
+            status: HomePassengerStatus.error,
+            error: response.message ?? 'Không tìm thấy chuyến đi',
+          ));
+        }
+      } else {
+        emit(state.copyWith(
+          status: HomePassengerStatus.error,
+          error: 'Ride service không khả dụng',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: HomePassengerStatus.error,
+        error: 'Lỗi tìm kiếm: $e',
+      ));
+    }
   }
 
   // New methods for enhanced UI

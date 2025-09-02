@@ -15,6 +15,32 @@ class ApiResponse<T> {
     required this.success,
   });
 
+  /// Factory constructor for success response
+  factory ApiResponse.success({
+    required T data,
+    String? message,
+  }) {
+    return ApiResponse<T>(
+      message: message ?? 'Success',
+      statusCode: 200,
+      data: data,
+      success: true,
+    );
+  }
+
+  /// Factory constructor for error response
+  factory ApiResponse.error({
+    required String message,
+    int? statusCode,
+  }) {
+    return ApiResponse<T>(
+      message: message,
+      statusCode: statusCode ?? 400,
+      data: null,
+      success: false,
+    );
+  }
+
   /// 🏗️ Parse JSON → ApiResponse<T>
   ///
   /// Dùng khi API trả về **1 object** trong `data`

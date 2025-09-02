@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/config/theme.dart';
 import 'package:sharexev2/core/di/service_locator.dart';
-import 'package:sharexev2/logic/home/home_passenger_cubit.dart';
-import 'package:sharexev2/presentation/views/passenger/home/passenger_home_view.dart';
-import 'package:sharexev2/presentation/views/passenger/history/passenger_history_view.dart';
-import 'package:sharexev2/presentation/views/passenger/favorites/passenger_favorites_view.dart';
-import 'package:sharexev2/presentation/views/passenger/settings/passenger_settings_view.dart';
+import 'package:sharexev2/logic/home/home_driver_cubit.dart';
+import 'package:sharexev2/presentation/views/driver/home/driver_home_view.dart';
+import 'package:sharexev2/presentation/views/driver/trips/driver_trips_view.dart';
+import 'package:sharexev2/presentation/views/driver/earnings/driver_earnings_view.dart';
+import 'package:sharexev2/presentation/views/driver/settings/driver_settings_view.dart';
 import 'package:sharexev2/presentation/widgets/common/custom_bottom_nav.dart';
 
-/// Passenger Home Page - Controls navigation and provides cubit
-class PassengerHomePage extends StatefulWidget {
-  const PassengerHomePage({super.key});
+/// Driver Home Page - Controls navigation and provides cubit
+class DriverHomePage extends StatefulWidget {
+  const DriverHomePage({super.key});
 
   @override
-  State<PassengerHomePage> createState() => _PassengerHomePageState();
+  State<DriverHomePage> createState() => _DriverHomePageState();
 }
 
-class _PassengerHomePageState extends State<PassengerHomePage> {
+class _DriverHomePageState extends State<DriverHomePage> {
   int _currentIndex = 0;
   late PageController _pageController;
 
@@ -36,11 +36,10 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => HomePassengerCubit(
+      create: (_) => HomeDriverCubit(
         rideRepository: ServiceLocator.get(),
         bookingRepository: ServiceLocator.get(),
         userRepository: ServiceLocator.get(),
-        locationRepository: ServiceLocator.get(),
       )..init(),
       child: Scaffold(
         backgroundColor: AppColors.background,
@@ -53,14 +52,14 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
             });
           },
           children: const [
-            PassengerHomeView(),
-            PassengerHistoryView(),
-            PassengerFavoritesView(),
-            PassengerSettingsView(),
+            DriverHomeView(),
+            DriverTripsView(),
+            DriverEarningsView(),
+            DriverSettingsView(),
           ],
         ),
         bottomNavigationBar: CustomBottomNavBar(
-          role: 'PASSENGER',
+          role: 'DRIVER',
           currentIndex: _currentIndex,
           onTap: _onTabTapped,
         ),
@@ -69,11 +68,11 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    final titles = ['Trang chủ', 'Lịch sử', 'Yêu thích', 'Cài đặt'];
+    final titles = ['Trang chủ', 'Chuyến đi', 'Thu nhập', 'Cài đặt'];
     
     return AppBar(
       title: Text(titles[_currentIndex]),
-      backgroundColor: AppColors.passengerPrimary,
+      backgroundColor: AppColors.driverPrimary,
       foregroundColor: Colors.white,
       elevation: 0,
       actions: [
@@ -139,29 +138,29 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   }
 
   void _navigateToProfile(BuildContext context) {
-    Navigator.pushNamed(context, '/passenger/profile');
+    Navigator.pushNamed(context, '/driver/profile');
   }
 }
 
 class _NotificationBottomSheet extends StatelessWidget {
   final List<Map<String, dynamic>> _notifications = [
     {
-      'title': 'Chuyến đi được xác nhận',
-      'message': 'Tài xế đã xác nhận chuyến đi của bạn',
+      'title': 'Có chuyến đi mới',
+      'message': 'Hành khách đã đặt chuyến đi của bạn',
       'time': '5 phút trước',
-      'type': 'success',
+      'type': 'booking',
     },
     {
-      'title': 'Khuyến mãi mới',
-      'message': 'Giảm 20% cho chuyến đi tiếp theo',
+      'title': 'Thanh toán thành công',
+      'message': 'Bạn đã nhận được 150k VNĐ',
       'time': '1 giờ trước',
-      'type': 'promotion',
+      'type': 'payment',
     },
     {
-      'title': 'Nhắc nhở đánh giá',
-      'message': 'Hãy đánh giá chuyến đi vừa hoàn thành',
+      'title': 'Đánh giá mới',
+      'message': 'Hành khách đã đánh giá chuyến đi',
       'time': '2 giờ trước',
-      'type': 'reminder',
+      'type': 'review',
     },
   ];
 
@@ -232,16 +231,16 @@ class _NotificationBottomSheet extends StatelessWidget {
     Color iconColor;
     
     switch (notification['type']) {
-      case 'success':
-        icon = Icons.check_circle;
+      case 'booking':
+        icon = Icons.directions_car;
+        iconColor = AppColors.driverPrimary;
+        break;
+      case 'payment':
+        icon = Icons.account_balance_wallet;
         iconColor = AppColors.success;
         break;
-      case 'promotion':
-        icon = Icons.local_offer;
-        iconColor = AppColors.grabOrange;
-        break;
-      case 'reminder':
-        icon = Icons.schedule;
+      case 'review':
+        icon = Icons.star;
         iconColor = AppColors.warning;
         break;
       default:

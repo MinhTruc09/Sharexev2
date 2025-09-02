@@ -1,131 +1,188 @@
-import 'package:sharexev2/core/auth/auth_manager.dart';
 import 'package:sharexev2/core/network/api_response.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_room.dart';
 import 'package:sharexev2/data/models/chat/mappers/chat_message_mapper.dart';
-import 'package:sharexev2/data/services/chat/chat_service_interface.dart';
-import 'chat_repository.dart';
+import 'package:sharexev2/data/models/chat/dtos/chat_message_dto.dart';
+import 'package:sharexev2/data/services/chat/chat_api_service.dart';
+import 'chat_repository_interface.dart';
 
 /// Chat Repository Implementation
 class ChatRepositoryImpl implements ChatRepositoryInterface {
-  final ChatServiceInterface _chatService;
-  final AuthManager _authManager;
+  final ChatApiService _chatApiService;
 
   ChatRepositoryImpl({
-    required ChatServiceInterface chatService,
-    required AuthManager authManager,
-  })  : _chatService = chatService,
-        _authManager = authManager;
+    required ChatApiService chatApiService,
+  }) : _chatApiService = chatApiService;
 
   @override
-  Future<ApiResponse<List<ChatMessageEntity>>> getChatMessages(String roomId) async {
+  Future<ApiResponse<List<ChatRoom>>> getChatRooms(String token) async {
     try {
-      final token = _authManager.getToken();
-      if (token == null || token.isEmpty) {
-        return ApiResponse<List<ChatMessageEntity>>(
-          message: 'Token không hợp lệ',
-          statusCode: 401,
-          data: null,
-          success: false,
+      final response = await _chatApiService.getChatRooms(token);
+      
+      if (response.success && response.data != null) {
+        // TODO: Map response to ChatRoom entities
+        return ApiResponse.success(
+          data: <ChatRoom>[], // Placeholder until mapping is implemented
+          message: response.message,
         );
       }
 
-      final response = await _chatService.getChatMessages(token, roomId);
+      return ApiResponse.error(
+        message: response.message ?? 'Failed to get chat rooms',
+      );
+    } catch (e) {
+      return ApiResponse.error(
+        message: 'Error getting chat rooms: $e',
+      );
+    }
+  }
+
+  @override
+  Future<ApiResponse<List<ChatMessageEntity>>> fetchMessages(
+    String roomId,
+    String token,
+  ) async {
+    try {
+      final response = await _chatApiService.getMessages(roomId, token);
       
       if (response.success && response.data != null) {
         final messages = ChatMessageMapper.fromDtoList(response.data!);
-        return ApiResponse<List<ChatMessageEntity>>(
-          message: response.message,
-          statusCode: response.statusCode,
+        return ApiResponse.success(
           data: messages,
-          success: true,
+          message: response.message,
         );
       }
 
-      return ApiResponse<List<ChatMessageEntity>>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: null,
-        success: false,
+      return ApiResponse.error(
+        message: response.message ?? 'Failed to fetch messages',
       );
     } catch (e) {
-      return ApiResponse<List<ChatMessageEntity>>(
-        message: 'Lỗi: $e',
-        statusCode: 500,
-        data: null,
-        success: false,
+      return ApiResponse.error(
+        message: 'Error fetching messages: $e',
       );
     }
   }
 
   @override
-  Future<ApiResponse<ChatMessageEntity>> sendTestMessage(String roomId, ChatMessageEntity message) async {
+  Future<ApiResponse<String>> createChatRoom(
+    String participantEmail,
+    String token,
+  ) async {
     try {
-      final token = _authManager.getToken();
-      if (token == null || token.isEmpty) {
-        return ApiResponse<ChatMessageEntity>(
-          message: 'Token không hợp lệ',
-          statusCode: 401,
-          data: null,
-          success: false,
+      final response = await _chatApiService.getChatRoomId(participantEmail, token);
+      
+      if (response.success && response.data != null) {
+        return ApiResponse.success(
+          data: response.data!,
+          message: response.message,
         );
       }
 
+      return ApiResponse.error(
+        message: response.message ?? 'Failed to create chat room',
+      );
+    } catch (e) {
+      return ApiResponse.error(
+        message: 'Error creating chat room: $e',
+      );
+    }
+  }
+
+  @override
+  Future<ApiResponse<String>> getChatRoomId(
+    String otherUserEmail,
+    String token,
+  ) async {
+    try {
+      final response = await _chatApiService.getChatRoomId(otherUserEmail, token);
+      
+      if (response.success && response.data != null) {
+        return ApiResponse.success(
+          data: response.data!,
+          message: response.message,
+        );
+      }
+
+      return ApiResponse.error(
+        message: response.message ?? 'Failed to get chat room ID',
+      );
+    } catch (e) {
+      return ApiResponse.error(
+        message: 'Error getting chat room ID: $e',
+      );
+    }
+  }
+
+  @override
+  Future<ApiResponse<ChatMessageEntity>> sendMessage(
+    String roomId,
+    ChatMessageEntity message,
+    String token,
+  ) async {
+    try {
       final messageDto = ChatMessageMapper.toDto(message);
-      final response = await _chatService.sendTestMessage(roomId, messageDto, token);
+      final response = await _chatApiService.sendMessage(roomId, messageDto, token);
       
       if (response.success && response.data != null) {
         final sentMessage = ChatMessageMapper.fromDto(response.data!);
-        return ApiResponse<ChatMessageEntity>(
-          message: response.message,
-          statusCode: response.statusCode,
+        return ApiResponse.success(
           data: sentMessage,
-          success: true,
+          message: response.message,
         );
       }
 
-      return ApiResponse<ChatMessageEntity>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: null,
-        success: false,
+      return ApiResponse.error(
+        message: response.message ?? 'Failed to send message',
       );
     } catch (e) {
-      return ApiResponse<ChatMessageEntity>(
-        message: 'Lỗi: $e',
-        statusCode: 500,
-        data: null,
-        success: false,
+      return ApiResponse.error(
+        message: 'Error sending message: $e',
       );
     }
   }
 
   @override
-  Future<ApiResponse<void>> markMessagesAsRead(String roomId) async {
+  Future<ApiResponse<ChatMessageEntity>> sendTestMessage(
+    String roomId,
+    ChatMessageDto messageData,
+    String token,
+  ) async {
     try {
-      final token = _authManager.getToken();
-      if (token == null || token.isEmpty) {
-        return ApiResponse<void>(
-          message: 'Token không hợp lệ',
-          statusCode: 401,
-          data: null,
-          success: false,
+      final response = await _chatApiService.sendTestMessage(roomId, messageData, token);
+      
+      if (response.success && response.data != null) {
+        final sentMessage = ChatMessageMapper.fromDto(response.data!);
+        return ApiResponse.success(
+          data: sentMessage,
+          message: response.message,
         );
       }
 
-      final response = await _chatService.markMessagesAsRead(roomId, token);
-      
-      return ApiResponse<void>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: null,
-        success: response.success,
+      return ApiResponse.error(
+        message: response.message ?? 'Failed to send test message',
       );
     } catch (e) {
-      return ApiResponse<void>(
-        message: 'Lỗi: $e',
-        statusCode: 500,
+      return ApiResponse.error(
+        message: 'Error sending test message: $e',
+      );
+    }
+  }
+
+  @override
+  Future<ApiResponse<void>> markMessagesAsRead(
+    String roomId,
+    String token,
+  ) async {
+    try {
+      final response = await _chatApiService.markMessagesAsRead(roomId, token);
+      
+      return ApiResponse.success(
         data: null,
-        success: false,
+        message: response.message ?? 'Messages marked as read',
+      );
+    } catch (e) {
+      return ApiResponse.error(
+        message: 'Error marking messages as read: $e',
       );
     }
   }

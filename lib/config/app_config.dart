@@ -1,4 +1,5 @@
 import 'package:sharexev2/config/env.dart';
+import 'package:sharexev2/config/environment.dart';
 
 ///  AppConfig
 ///
@@ -10,8 +11,8 @@ class AppConfig {
 
   static AppConfig get I => _instance;
 
-  /// Base API
-  String get baseUrl => Env().fullApiUrl;
+  /// Base API - Using Environment config
+  String get baseUrl => Environment.apiBaseUrl;
   String get apiVersion => Env.apiVersion;
 
   /// Helper build endpoint (API doc không dùng version prefix)
@@ -44,8 +45,8 @@ class AppConfig {
   /// ========== ADMIN ==========
   final admin = _AdminEndpoints();
 
-  /// WebSocket URL
-  String get webSocketUrl => Env().webSocketUrl;
+  /// WebSocket URL - Using Environment config
+  String get webSocketUrl => Environment.websocketUrl;
 
   /// Cloudinary
   String get cloudinaryCloudName => Env.cloudinaryCloudName;
@@ -73,6 +74,7 @@ class _AuthEndpoints {
 }
 
 class _UserEndpoints {
+  String get profile => AppConfig.I._ep("/user/profile");
   String get updateProfile => AppConfig.I._ep("/user/update-profile");
   String get changePassword => AppConfig.I._ep("/user/change-pass");
 }

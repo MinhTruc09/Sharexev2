@@ -1,16 +1,26 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sharexev2/data/repositories/auth/auth_repository_interface.dart';
 import 'package:sharexev2/logic/roleselection/role_selection_state.dart';
 
 class RoleSelectionCubit extends Cubit<RoleSelectionState> {
-  final dynamic _authService; // TODO: Type as AuthRepositoryInterface when DI is ready
+  final AuthRepositoryInterface? _authRepository;
 
-  RoleSelectionCubit(this._authService) : super(const RoleSelectionState());
+  RoleSelectionCubit(this._authRepository) : super(const RoleSelectionState());
 
-  Future<void> selectRole(String role) async {
-    emit(state.copyWith(status: RoleStatus.saving, pendingRole: role));
+  void selectRole(String role) {
+    emit(state.copyWith(
+      selectedRole: role,
+      error: null,
+    ));
+  }
+
+  Future<void> saveRoleAndContinue() async {
+    if (state.selectedRole == null) return;
+    
+    emit(state.copyWith(status: RoleStatus.saving, pendingRole: state.selectedRole));
     try {
       // TODO: Implement role selection through repository
-      // await _authService.setRole(role);
+      // await _authService.setRole(state.selectedRole!);
 
       // Mock successful role selection
       await Future.delayed(const Duration(seconds: 1));
@@ -24,5 +34,9 @@ class RoleSelectionCubit extends Cubit<RoleSelectionState> {
         ),
       );
     }
+  }
+
+  void clearError() {
+    emit(state.copyWith(error: null));
   }
 }

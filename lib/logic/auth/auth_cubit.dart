@@ -7,7 +7,7 @@ import 'package:sharexev2/data/models/auth/app_user.dart';
 import 'package:sharexev2/logic/auth/auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final dynamic _authRepository; // TODO: Type as AuthRepositoryInterface when DI is ready
+  final AuthRepositoryInterface? _authRepository;
   final NavigationService _navigationService = NavigationService();
 
   AuthCubit(this._authRepository) : super(const AuthState());
@@ -17,10 +17,10 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(status: AuthStatus.loading, isLoading: true));
 
     try {
-      final isLoggedIn = await _authRepository.isLoggedIn();
+      final isLoggedIn = await _authRepository?.isLoggedIn() ?? false;
 
       if (isLoggedIn) {
-        final currentUser = await _authRepository.getCurrentUser();
+        final currentUser = await _authRepository?.getCurrentUser();
         emit(
           state.copyWith(
             status: AuthStatus.authenticated,
@@ -65,13 +65,13 @@ class AuthCubit extends Cubit<AuthState> {
         email: email,
         password: password,
       );
-      final authResult = await _authRepository.loginWithCredentials(credentials);
+      final authResult = await _authRepository?.loginWithCredentials(credentials);
 
-      if (authResult.isSuccess && authResult.user != null) {
+      if (authResult?.isSuccess == true && authResult?.user != null) {
         emit(
           state.copyWith(
             status: AuthStatus.authenticated,
-            user: authResult.user,
+            user: authResult!.user,
             isLoading: false,
           ),
         );
@@ -79,7 +79,7 @@ class AuthCubit extends Cubit<AuthState> {
         // Navigate to home screen based on user role
         _navigateToHomeAndClear(authResult.user!.role.name);
       } else {
-        throw Exception(authResult.failure?.message ?? 'Login failed');
+        throw Exception(authResult?.failure?.message ?? 'Login failed');
       }
     } catch (e) {
       emit(
@@ -104,13 +104,13 @@ class AuthCubit extends Cubit<AuthState> {
         orElse: () => UserRole.passenger,
       );
 
-      final authResult = await _authRepository.loginWithGoogle(idToken, userRole);
+      final authResult = await _authRepository?.loginWithGoogle(idToken, userRole);
 
-      if (authResult.isSuccess && authResult.user != null) {
+      if (authResult?.isSuccess == true && authResult?.user != null) {
         emit(
           state.copyWith(
             status: AuthStatus.authenticated,
-            user: authResult.user,
+            user: authResult!.user,
             isGoogleSigningIn: false,
           ),
         );
@@ -118,7 +118,7 @@ class AuthCubit extends Cubit<AuthState> {
         // Navigate to home screen based on user role
         _navigateToHomeAndClear(authResult.user!.role.name);
       } else {
-        throw Exception(authResult.failure?.message ?? 'Google login failed');
+        throw Exception(authResult?.failure?.message ?? 'Google login failed');
       }
     } catch (e) {
       emit(
@@ -156,14 +156,14 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       final authResult = userRole == UserRole.driver
-          ? await _authRepository.registerDriver(registerCredentials)
-          : await _authRepository.registerPassenger(registerCredentials);
+          ? await _authRepository?.registerDriver(registerCredentials)
+          : await _authRepository?.registerPassenger(registerCredentials);
 
-      if (authResult.isSuccess && authResult.user != null) {
+      if (authResult?.isSuccess == true && authResult?.user != null) {
         emit(
           state.copyWith(
             status: AuthStatus.authenticated,
-            user: authResult.user,
+            user: authResult!.user,
             isRegistering: false,
           ),
         );
@@ -171,7 +171,7 @@ class AuthCubit extends Cubit<AuthState> {
         // Navigate to home screen after successful registration
         _navigateToHomeAndClear(authResult.user!.role.name);
       } else {
-        throw Exception(authResult.failure?.message ?? 'Registration failed');
+        throw Exception(authResult?.failure?.message ?? 'Registration failed');
       }
     } catch (e) {
       emit(
@@ -189,7 +189,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isLoading: true));
 
     try {
-      await _authRepository.clearSession();
+      await _authRepository?.clearSession();
 
       emit(
         state.copyWith(
@@ -215,10 +215,10 @@ class AuthCubit extends Cubit<AuthState> {
   // Refresh token
   Future<void> refreshToken() async {
     try {
-      final authResult = await _authRepository.refreshToken();
+      final authResult = await _authRepository?.refreshToken();
 
-      if (authResult.isSuccess && authResult.user != null) {
-        emit(state.copyWith(user: authResult.user));
+      if (authResult?.isSuccess == true && authResult?.user != null) {
+        emit(state.copyWith(user: authResult!.user));
       } else {
         // Nếu refresh thất bại, đăng xuất
         await logout();

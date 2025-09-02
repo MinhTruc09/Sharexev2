@@ -8,12 +8,12 @@ import 'package:sharexev2/core/network/api_response.dart';
 part 'ride_state.dart';
 
 class RideCubit extends Cubit<RideState> {
-  final dynamic _rideRepository; // TODO: Type as RideRepositoryInterface when DI is ready
-  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
+  final RideRepositoryInterface? _rideRepository;
+  final BookingRepositoryInterface? _bookingRepository;
 
   RideCubit({
-    required dynamic rideRepository,
-    required dynamic bookingRepository,
+    required RideRepositoryInterface? rideRepository,
+    required BookingRepositoryInterface? bookingRepository,
   }) : _rideRepository = rideRepository,
        _bookingRepository = bookingRepository,
        super(const RideState());

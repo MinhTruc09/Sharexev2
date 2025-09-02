@@ -1,46 +1,75 @@
-// onboarding_content.dart
 import 'package:flutter/material.dart';
+import 'package:sharexev2/config/theme.dart';
 
+/// Onboarding content widget for each step
 class OnboardingContent extends StatelessWidget {
+  final String imagePath;
   final String title;
   final String description;
-  final String imagePath;
 
   const OnboardingContent({
     super.key,
+    required this.imagePath,
     required this.title,
     required this.description,
-    required this.imagePath,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(10.0),
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Ảnh ở trên
-          Image.asset(imagePath, height: 200, width: 300, fit: BoxFit.contain),
-          const SizedBox(height: 10),
+          // Image
+          Container(
+            width: 250,
+            height: 250,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.image_not_supported,
+                    size: 100,
+                    color: AppColors.primary.withOpacity(0.5),
+                  );
+                },
+              ),
+            ),
+          ),
 
-          // Tiêu đề
+          const SizedBox(height: AppSpacing.xl),
+
+          // Title
           Text(
             title,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.primaryColor,
+            style: AppTheme.headingLarge.copyWith(
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 15),
 
-          // Mô tả
+          const SizedBox(height: AppSpacing.lg),
+
+          // Description
           Text(
             description,
-            style: theme.textTheme.bodyMedium,
+            style: AppTheme.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

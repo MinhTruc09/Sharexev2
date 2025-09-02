@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sharexev2/data/repositories/chat/chat_repository_interface.dart';
 import 'package:sharexev2/logic/chat/chat_state.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
 
 class ChatCubit extends Cubit<ChatState> {
-  final dynamic _chatRepository; // TODO: Type as ChatRepositoryInterface when DI is ready
+  final ChatRepositoryInterface? _chatRepository;
   Timer? _typingTimer;
   String? _currentToken;
 
   ChatCubit({
-    required dynamic chatRepository,
+    required ChatRepositoryInterface? chatRepository,
   }) : _chatRepository = chatRepository,
        super(const ChatState()) {
     // _setupWebSocketCallbacks(); // TODO: Implement WebSocket
@@ -36,8 +37,8 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       emit(state.copyWith(status: ChatStatus.loading));
 
-      final roomsResp = await _chatRepository.getChatRooms(_currentToken!);
-      final rooms = roomsResp.data ?? [];
+      final roomsResp = await _chatRepository?.getChatRooms(_currentToken!);
+      final rooms = roomsResp?.data ?? [];
 
       // Convert ChatRoom to ChatRoomEntity
       final roomEntities = rooms.map((room) => ChatRoomEntity(
@@ -81,14 +82,14 @@ class ChatCubit extends Cubit<ChatState> {
       emit(state.copyWith(status: ChatStatus.loading));
 
       // Load message history
-      final resp = await _chatRepository.fetchMessages(roomId, _currentToken!);
-      final messages = resp.data ?? [];
+      final resp = await _chatRepository?.fetchMessages(roomId, _currentToken!);
+      final messages = resp?.data ?? [];
 
       // Connect to WebSocket
       // await _webSocketService.connect(_currentToken!, roomId); // TODO: Implement WebSocket
 
       // Mark messages as read
-      await _chatRepository.markMessagesAsRead(roomId, _currentToken!);
+      await _chatRepository?.markMessagesAsRead(roomId, _currentToken!);
 
       emit(
         state.copyWith(
@@ -223,12 +224,12 @@ class ChatCubit extends Cubit<ChatState> {
     if (_currentToken == null) throw Exception('No authentication token');
 
     try {
-      final response = await _chatRepository.createChatRoom(
+      final response = await _chatRepository?.createChatRoom(
         participantEmail,
         _currentToken!,
       );
       await loadChatRooms(); // Refresh chat rooms list
-      return response.data ?? '';
+      return response?.data ?? '';
     } catch (e) {
       emit(
         state.copyWith(

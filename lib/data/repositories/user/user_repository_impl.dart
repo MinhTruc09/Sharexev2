@@ -1,6 +1,7 @@
 import 'user_repository_interface.dart';
 import '../../models/auth/entities/user_entity.dart';
 import '../../models/auth/entities/driver_entity.dart';
+import '../../models/auth/entities/user_role.dart';
 import '../../models/auth/mappers/entity_mapper.dart';
 import '../../models/auth/dtos/user_update_request_dto.dart';
 import '../../models/auth/dtos/change_pass_dto.dart';
@@ -15,6 +16,39 @@ class UserRepositoryImpl implements UserRepositoryInterface {
   final UserService _userService;
 
   UserRepositoryImpl(this._userService);
+
+  @override
+  Future<ApiResponse<UserEntity>> getProfile() async {
+    try {
+      final response = await _userService.getProfile();
+      
+      if (response.success && response.data != null) {
+        final userEntity = UserEntity(
+          id: response.data!['id'],
+          fullName: response.data!['fullName'] ?? response.data!['name'] ?? '',
+          email: response.data!['email'] ?? '',
+          phoneNumber: response.data!['phoneNumber'] ?? response.data!['phone'] ?? '',
+          avatarUrl: response.data!['avatarUrl'],
+          role: UserRole.values.firstWhere(
+            (r) => r.name.toLowerCase() == (response.data!['role'] ?? 'passenger').toString().toLowerCase(),
+            orElse: () => UserRole.passenger,
+          ),
+        );
+        return ApiResponse.success(
+          data: userEntity,
+          message: response.message,
+        );
+      } else {
+        return ApiResponse.error(
+          message: response.message ?? 'Failed to get profile',
+        );
+      }
+    } catch (e) {
+      return ApiResponse.error(
+        message: 'Error getting profile: $e',
+      );
+    }
+  }
 
   @override
   Future<ApiResponse<void>> updateProfile({

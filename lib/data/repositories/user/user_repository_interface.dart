@@ -4,6 +4,9 @@ import '../../../core/network/api_response.dart';
 
 /// Interface cho User Repository
 abstract class UserRepositoryInterface {
+  /// Lấy thông tin cá nhân
+  Future<ApiResponse<UserEntity>> getProfile();
+
   /// Cập nhật thông tin cá nhân
   Future<ApiResponse<void>> updateProfile({
     required String phone,

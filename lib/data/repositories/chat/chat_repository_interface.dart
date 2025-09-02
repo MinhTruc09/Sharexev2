@@ -1,6 +1,7 @@
 import 'package:sharexev2/core/network/api_response.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_room.dart';
+import 'package:sharexev2/data/models/chat/dtos/chat_message_dto.dart';
 
 /// Interface cho ChatRepository
 /// Định nghĩa tất cả operations liên quan đến chat data layer
@@ -42,7 +43,7 @@ abstract class ChatRepositoryInterface {
   /// Gửi tin nhắn test (cho development/testing)
   Future<ApiResponse<ChatMessageEntity>> sendTestMessage(
     String roomId,
-    Map<String, dynamic> messageData,
+    ChatMessageDto messageData,
     String token,
   );
 }

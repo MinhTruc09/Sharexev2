@@ -5,11 +5,11 @@ import 'package:sharexev2/data/repositories/location/location_repository_interfa
 part 'location_state.dart';
 
 class LocationCubit extends Cubit<LocationState> {
-  final dynamic _locationRepository; // TODO: Type as LocationRepositoryInterface when DI is ready
+  final LocationRepositoryInterface? _locationRepository;
   StreamSubscription<LocationData>? _locationSubscription;
 
   LocationCubit({
-    required dynamic locationRepository,
+    required LocationRepositoryInterface? locationRepository,
   }) : _locationRepository = locationRepository,
        super(const LocationState());
 

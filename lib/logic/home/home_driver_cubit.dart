@@ -11,14 +11,14 @@ part 'home_driver_state.dart';
 
 class HomeDriverCubit extends Cubit<HomeDriverState> {
   // Repository Pattern - Clean Architecture
-  final dynamic _rideRepository; // TODO: Type as RideRepositoryInterface when DI is ready
-  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
-  final dynamic _userRepository; // TODO: Type as UserRepositoryInterface when DI is ready
+  final RideRepositoryInterface? _rideRepository;
+  final BookingRepositoryInterface? _bookingRepository;
+  final UserRepositoryInterface? _userRepository;
 
   HomeDriverCubit({
-    required dynamic rideRepository,
-    required dynamic bookingRepository,
-    required dynamic userRepository,
+    required RideRepositoryInterface? rideRepository,
+    required BookingRepositoryInterface? bookingRepository,
+    required UserRepositoryInterface? userRepository,
   }) : _rideRepository = rideRepository,
        _bookingRepository = bookingRepository,
        _userRepository = userRepository,
@@ -94,7 +94,7 @@ class HomeDriverCubit extends Cubit<HomeDriverState> {
   }
 
   // Accept booking
-  Future<void> acceptBooking(String bookingId) async {
+  Future<void> acceptBooking(int bookingId) async {
     try {
       if (_bookingRepository != null) {
         final response = await _bookingRepository.acceptBooking(bookingId);
@@ -113,7 +113,7 @@ class HomeDriverCubit extends Cubit<HomeDriverState> {
   }
 
   // Reject booking
-  Future<void> rejectBooking(String bookingId) async {
+  Future<void> rejectBooking(int bookingId) async {
     try {
       if (_bookingRepository != null) {
         final response = await _bookingRepository.rejectBooking(bookingId);

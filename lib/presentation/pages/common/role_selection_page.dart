@@ -100,7 +100,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
 
           if (state.status == RoleStatus.success) {
             final cubit = context.read<RoleSelectionCubit>();
-            final role = await cubit.repository.getRole();
+            final role = await cubit.getRole();
             if (!context.mounted || role == null) return;
 
             Navigator.pushReplacementNamed(

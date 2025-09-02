@@ -1,18 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/repositories/user/user_repository_interface.dart';
 import 'package:sharexev2/data/repositories/auth/auth_repository_interface.dart';
-import 'package:sharexev2/data/models/auth/entities/user_entity.dart';
-import 'package:sharexev2/core/network/api_response.dart';
+
 
 part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  final dynamic _userRepository; // TODO: Type as UserRepositoryInterface when DI is ready
-  final dynamic _authRepository; // TODO: Type as AuthRepositoryInterface when DI is ready
+  final UserRepositoryInterface? _userRepository;
+  final AuthRepositoryInterface? _authRepository;
 
   ProfileCubit({
-    required dynamic userRepository,
-    required dynamic authRepository,
+    required UserRepositoryInterface? userRepository,
+    required AuthRepositoryInterface? authRepository,
   }) : _userRepository = userRepository,
        _authRepository = authRepository,
        super(const ProfileState());
@@ -35,7 +34,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         final response = await _userRepository.getProfile();
 
         if (response.success && response.data != null) {
-          final user = response.data;
+          final user = response.data!;
           emit(state.copyWith(
             status: ProfileStatus.loaded,
             userData: {
@@ -45,8 +44,9 @@ class ProfileCubit extends Cubit<ProfileState> {
               'phone': user.phoneNumber,
               'avatar': user.avatarUrl,
               'role': user.role.name,
-              'isActive': user.isActive,
-              'createdAt': user.createdAt.toIso8601String(),
+              'isDriver': user.isDriver,
+              'isPassenger': user.isPassenger,
+              'isAdmin': user.isAdmin,
             },
           ));
         } else {

@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/core/di/service_locator.dart';
 import 'package:sharexev2/logic/registration/registration_cubit.dart';
 import 'package:sharexev2/data/models/registration_models.dart';
-import 'package:sharexev2/presentation/widgets/common/auth_container.dart';
-import 'package:sharexev2/presentation/widgets/registration/registration_step_one.dart';
-import 'package:sharexev2/presentation/widgets/registration/registration_step_two.dart';
+import 'package:sharexev2/presentation/widgets/shared/role_based_container.dart';
+import 'package:sharexev2/presentation/views/auth/passenger_register_view.dart';
+import 'package:sharexev2/presentation/views/auth/driver_register_view.dart';
 import 'package:sharexev2/routes/app_routes.dart';
 
 class RegisterPage extends StatelessWidget {
@@ -49,7 +49,7 @@ class RegisterPage extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          return AuthContainer(
+          return RoleBasedContainer(
             role: role,
             title: _getTitle(state.currentStep),
             subtitle: _getSubtitle(state.currentStep, role),
@@ -57,28 +57,9 @@ class RegisterPage extends StatelessWidget {
                 state.currentStep == RegistrationStep.stepTwo
                     ? () => context.read<RegistrationCubit>().goBackToStepOne()
                     : () => Navigator.pop(context),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(1.0, 0.0),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                );
-              },
-              child:
-                  state.currentStep == RegistrationStep.stepOne
-                      ? RegistrationStepOne(
-                        key: const ValueKey('step_one'),
-                        role: role,
-                      )
-                      : RegistrationStepTwo(
-                        key: const ValueKey('step_two'),
-                        role: role,
-                      ),
-            ),
+            type: ContainerType.auth,
+            useBackground: false, // Use gradient instead of background
+            child: _buildRoleSpecificView(context, state),
           );
         },
       ),
@@ -108,6 +89,57 @@ class RegisterPage extends StatelessWidget {
         }
       default:
         return 'Hoàn tất đăng ký';
+    }
+  }
+
+  Widget _buildRoleSpecificView(BuildContext context, RegistrationState state) {
+    if (role.toUpperCase() == 'PASSENGER') {
+      return PassengerRegisterView(
+        isLoading: state.isLoading || state.isGoogleSigningIn,
+        error: state.error,
+        onRegister: (credentials) {
+          context.read<RegistrationCubit>().registerWithEmail(
+            credentials,
+            role,
+          );
+        },
+        onGoogleRegister: () {
+          context.read<RegistrationCubit>().registerWithGoogle(role);
+        },
+        onLogin: () {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoute.login,
+            arguments: {'role': role, 'flow': 'passenger'},
+          );
+        },
+      );
+    } else if (role.toUpperCase() == 'DRIVER') {
+      return DriverRegisterView(
+        isLoading: state.isLoading || state.isGoogleSigningIn,
+        error: state.error,
+        onRegister: (credentials) {
+          context.read<RegistrationCubit>().registerWithEmail(
+            credentials,
+            role,
+          );
+        },
+        onGoogleRegister: () {
+          context.read<RegistrationCubit>().registerWithGoogle(role);
+        },
+        onLogin: () {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoute.login,
+            arguments: {'role': role, 'flow': 'driver'},
+          );
+        },
+      );
+    } else {
+      // Fallback to generic register view
+      return const Center(
+        child: Text('Role không được hỗ trợ'),
+      );
     }
   }
 

@@ -1,11 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
-import 'package:sharexev2/data/models/booking/entities/booking_entity.dart' as booking_entity;
-import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
+
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
-  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
+  final BookingRepositoryInterface? _bookingRepository;
 
   BookingCubit(this._bookingRepository) : super(const BookingState());
 
@@ -77,20 +76,20 @@ class BookingCubit extends Cubit<BookingState> {
     emit(state.copyWith(status: BookingStatus.selecting, error: null));
 
     try {
-      final response = await _bookingRepository.getPassengerBookings();
+      final response = await _bookingRepository?.getPassengerBookings();
 
-      if (response.success && response.data != null) {
+      if (response?.success == true && response?.data != null) {
         emit(state.copyWith(
           status: BookingStatus.initial,
           bookingData: {
-            'bookings': response.data!.length,
+            'bookings': response!.data!.length,
             'bookingsList': response.data,
           },
         ));
       } else {
         emit(state.copyWith(
           status: BookingStatus.error,
-          error: response.message,
+          error: response?.message ?? 'Failed to load bookings',
         ));
       }
     } catch (e) {
@@ -111,12 +110,12 @@ class BookingCubit extends Cubit<BookingState> {
     emit(state.copyWith(status: BookingStatus.selecting, error: null));
 
     try {
-      final response = await _bookingRepository.createBooking(
+      final response = await _bookingRepository?.createBooking(
         rideId,
         state.selectedSeats.length,
       );
 
-      if (response.success && response.data != null) {
+      if (response?.success == true && response?.data != null) {
         emit(state.copyWith(
           status: BookingStatus.confirmed,
           bookingData: {
@@ -125,13 +124,13 @@ class BookingCubit extends Cubit<BookingState> {
             'totalPrice': state.totalPrice,
             'pricePerSeat': state.pricePerSeat,
             'bookingTime': DateTime.now().toIso8601String(),
-            'bookingEntity': response.data!.id,
+            'bookingEntity': response!.data!.id,
           },
         ));
       } else {
         emit(state.copyWith(
           status: BookingStatus.error,
-          error: response.message,
+          error: response?.message ?? 'Failed to create booking',
         ));
       }
     } catch (e) {
@@ -147,9 +146,9 @@ class BookingCubit extends Cubit<BookingState> {
     emit(state.copyWith(status: BookingStatus.selecting, error: null));
 
     try {
-      final response = await _bookingRepository.cancelBooking(rideId);
+      final response = await _bookingRepository?.cancelBooking(rideId);
 
-      if (response.success) {
+      if (response?.success == true) {
         emit(state.copyWith(
           status: BookingStatus.initial,
           bookingData: null,
@@ -157,7 +156,7 @@ class BookingCubit extends Cubit<BookingState> {
       } else {
         emit(state.copyWith(
           status: BookingStatus.error,
-          error: response.message,
+          error: response?.message ?? 'Failed to cancel booking',
         ));
       }
     } catch (e) {

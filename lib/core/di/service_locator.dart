@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 
 // Core services
 import '../../core/network/api_client.dart';
@@ -8,6 +9,8 @@ import '../../data/services/booking_service.dart';
 import '../../data/services/ride_service.dart';
 import '../../data/services/user_service.dart';
 import '../../data/services/firebase_auth_service.dart' as firebase;
+import '../../data/services/tracking_service.dart';
+import '../../data/services/chat/chat_api_service.dart';
 
 // Repository interfaces
 import '../../data/repositories/auth/auth_repository_interface.dart';
@@ -16,12 +19,16 @@ import '../../data/repositories/ride/ride_repository_interface.dart';
 import '../../data/repositories/user/user_repository_interface.dart';
 import '../../data/repositories/chat/chat_repository_interface.dart';
 import '../../data/repositories/location/location_repository_interface.dart';
+import '../../data/repositories/tracking/tracking_repository_interface.dart';
 
 // Real implementations
 import '../../data/repositories/auth/auth_repository_impl.dart';
 import '../../data/repositories/booking/booking_repository_impl.dart';
 import '../../data/repositories/ride/ride_repository_impl.dart';
 import '../../data/repositories/user/user_repository_impl.dart';
+import '../../data/repositories/chat/chat_repository_impl.dart';
+import '../../data/repositories/location/location_repository_impl.dart';
+import '../../data/repositories/tracking/tracking_repository_impl.dart';
 
 // Auth manager
 import '../auth/auth_manager.dart';
@@ -47,6 +54,7 @@ class ServiceLocator {
     // Register repositories
     _registerRepositories();
     
+    // ignore: avoid_print
     print('✅ Service Locator setup completed');
   }
   
@@ -56,11 +64,15 @@ class ServiceLocator {
     final sharedPreferences = await SharedPreferences.getInstance();
     _getIt.registerSingleton<SharedPreferences>(sharedPreferences);
     
+    // ignore: avoid_print
     print('✅ External dependencies registered');
   }
   
   /// Register core services
   static void _registerCoreServices() {
+    // Dio instance
+    _getIt.registerLazySingleton<Dio>(() => Dio());
+    
     // API Client
     _getIt.registerLazySingleton<ApiClient>(() => ApiClient());
 
@@ -89,6 +101,17 @@ class ServiceLocator {
       () => firebase.FirebaseAuthService(),
     );
 
+    // Tracking Service
+    _getIt.registerLazySingleton<TrackingService>(
+      () => TrackingService(get<ApiClient>()),
+    );
+
+    // Chat API Service
+    _getIt.registerLazySingleton<ChatApiService>(
+      () => ChatApiService(get<Dio>()),
+    );
+
+    // ignore: avoid_print
     print('✅ Core services registered');
   }
   
@@ -105,9 +128,11 @@ class ServiceLocator {
       ),
     );
 
-    // Booking Repository - TODO: Implement BookingRepositoryInterface
+    // Booking Repository - Real implementation
     _getIt.registerLazySingleton<BookingRepositoryInterface>(
-      () => throw UnimplementedError('BookingRepositoryInterface not yet implemented'),
+      () => BookingRepositoryImpl(
+        bookingService: get<BookingService>(),
+      ),
     );
 
     // Ride Repository - Real implementation
@@ -120,22 +145,33 @@ class ServiceLocator {
       () => UserRepositoryImpl(get<UserService>()),
     );
 
-    // Chat Repository - TODO: Implement real chat repository
+    // Chat Repository - Real implementation
     _getIt.registerLazySingleton<ChatRepositoryInterface>(
-      () => throw UnimplementedError('Chat repository not yet implemented'),
+      () => ChatRepositoryImpl(
+        chatApiService: get<ChatApiService>(),
+      ),
     );
 
-    // Location Repository - TODO: Implement real location repository
+    // Location Repository - Real implementation
     _getIt.registerLazySingleton<LocationRepositoryInterface>(
-      () => throw UnimplementedError('Location repository not yet implemented'),
+      () => LocationRepositoryImpl(
+        trackingService: get<TrackingService>(),
+      ),
     );
 
+    // Tracking Repository - Real implementation
+    _getIt.registerLazySingleton<TrackingRepositoryInterface>(
+      () => TrackingRepositoryImpl(get<TrackingService>()),
+    );
+
+    // ignore: avoid_print
     print('✅ Real repositories registered');
   }
   
   /// Reset all dependencies (useful for testing)
   static Future<void> reset() async {
     await _getIt.reset();
+    // ignore: avoid_print
     print('🔄 Service Locator reset');
   }
 }

@@ -1,16 +1,17 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/models/registration_models.dart';
+import 'package:sharexev2/data/models/auth/entities/auth_credentials.dart';
 import 'package:sharexev2/data/repositories/auth/auth_repository_interface.dart';
 
 part 'registration_state.dart';
 
 class RegistrationCubit extends Cubit<RegistrationState> {
-  final dynamic _authRepository; // TODO: Type as AuthRepositoryInterface when DI is ready
+  final AuthRepositoryInterface? _authRepository;
   final String role;
 
   RegistrationCubit({
-    required dynamic authRepository,
+    required AuthRepositoryInterface? authRepository,
     required this.role,
   }) : _authRepository = authRepository,
        super(RegistrationState(role: role));
@@ -111,6 +112,88 @@ class RegistrationCubit extends Cubit<RegistrationState> {
 
   void goBackToStepOne() {
     emit(state.copyWith(currentStep: RegistrationStep.stepOne, error: null));
+  }
+
+  /// Register with RegisterCredentials (new unified method)
+  Future<void> registerWithEmail(RegisterCredentials credentials, String role) async {
+    emit(state.copyWith(status: RegistrationStatus.loading));
+
+    try {
+      if (_authRepository != null) {
+        // Use real registration through repository
+        if (role.toUpperCase() == 'DRIVER') {
+          final result = await _authRepository!.registerDriver(credentials);
+          if (result.isSuccess) {
+            emit(state.copyWith(
+              status: RegistrationStatus.success,
+              error: null,
+            ));
+          } else {
+            emit(state.copyWith(
+              status: RegistrationStatus.error,
+              error: result.failure?.message ?? 'Đăng ký thất bại',
+            ));
+          }
+        } else {
+          final result = await _authRepository!.registerPassenger(credentials);
+          if (result.isSuccess) {
+            emit(state.copyWith(
+              status: RegistrationStatus.success,
+              error: null,
+            ));
+          } else {
+            emit(state.copyWith(
+              status: RegistrationStatus.error,
+              error: result.failure?.message ?? 'Đăng ký thất bại',
+            ));
+          }
+        }
+      } else {
+        // Mock registration for testing
+        await Future.delayed(const Duration(seconds: 2));
+        emit(state.copyWith(
+          status: RegistrationStatus.success,
+          error: null,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: RegistrationStatus.error,
+        error: 'Đăng ký thất bại: $e',
+      ));
+    }
+  }
+
+  /// Register with Google (new unified method)
+  Future<void> registerWithGoogle(String role) async {
+    emit(state.copyWith(isGoogleSigningIn: true));
+
+    try {
+      if (_authRepository != null) {
+        // Use real Google registration through repository
+        // TODO: Implement Google registration with proper role handling
+        await Future.delayed(const Duration(seconds: 2));
+        emit(state.copyWith(
+          status: RegistrationStatus.success,
+          isGoogleSigningIn: false,
+          error: null,
+        ));
+      } else {
+        // Mock Google registration for testing
+        await Future.delayed(const Duration(seconds: 2));
+        emit(state.copyWith(
+          status: RegistrationStatus.success,
+          isGoogleSigningIn: false,
+          error: null,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: RegistrationStatus.error,
+        isGoogleSigningIn: false,
+        error: 'Đăng ký Google thất bại: $e',
+      ));
+    }
   }
 
   Future<void> submitRegistration() async {

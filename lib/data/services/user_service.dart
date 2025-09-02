@@ -9,6 +9,18 @@ class UserService {
 
   UserService(this._api);
 
+  /// Lấy thông tin cá nhân
+  /// GET /api/user/profile
+  Future<ApiResponse<dynamic>> getProfile() async {
+    final res = await _api.client.get(
+      AppConfig.I.user.profile,
+    );
+    return ApiResponse.fromJson(
+      res.data as Map<String, dynamic>,
+      (json) => json,
+    );
+  }
+
   /// Cập nhật thông tin cá nhân
   /// PUT /api/user/update-profile
   Future<ApiResponse<dynamic>> updateProfile(

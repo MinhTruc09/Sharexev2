@@ -17,25 +17,20 @@ enum TripPhase {
   cancelled,        // Trip cancelled
 }
 
-class LocationData {
-  final double lat;
-  final double lng;
-
-  const LocationData({required this.lat, required this.lng});
-}
+// Using LocationData from location repository interface
 
 class TrackingCubit extends Cubit<TrackingState> {
   final TrackingRepositoryInterface _trackingRepository;
-  final dynamic _bookingRepository; // TODO: Type as BookingRepositoryInterface when DI is ready
-  final dynamic _locationRepository; // TODO: Type as LocationRepositoryInterface when DI is ready
+  final BookingRepositoryInterface? _bookingRepository;
+  final LocationRepositoryInterface? _locationRepository;
   
   StreamSubscription<LocationData>? _driverLocationSubscription;
   Timer? _etaUpdateTimer;
 
   TrackingCubit({
     required TrackingRepositoryInterface trackingRepository,
-    required dynamic bookingRepository,
-    required dynamic locationRepository,
+    required BookingRepositoryInterface? bookingRepository,
+    required LocationRepositoryInterface? locationRepository,
   })  : _trackingRepository = trackingRepository,
         _bookingRepository = bookingRepository,
         _locationRepository = locationRepository,
@@ -85,7 +80,7 @@ class TrackingCubit extends Cubit<TrackingState> {
       try {
         final response = await _locationRepository.getCurrentLocation();
         if (response.success && response.data != null) {
-          emit(state.copyWith(currentLocation: response.data!));
+          emit(state.copyWith(currentLocation: response.data));
         }
       } catch (e) {
         // Handle error silently for refresh
@@ -270,7 +265,7 @@ class TrackingCubit extends Cubit<TrackingState> {
           .listen(
         (location) {
           emit(state.copyWith(
-            currentLocation: location,
+            currentLocation: location as LocationData?,
           ));
           
           _updateETA();
@@ -280,7 +275,7 @@ class TrackingCubit extends Cubit<TrackingState> {
             error: 'Driver tracking error: $error',
           ));
         },
-      );
+      ) as StreamSubscription<LocationData>?;
     }
   }
 
@@ -304,8 +299,8 @@ class TrackingCubit extends Cubit<TrackingState> {
     // Use real ETA calculation with fallback coordinates
     // TODO: Get destination coordinates from ride data
     final distance = _calculateDistance(
-      driverLocation.lat,
-      driverLocation.lng,
+      driverLocation.latitude,
+      driverLocation.longitude,
       21.0285, // TODO: Get from ride destination coordinates
       105.8542, // TODO: Get from ride destination coordinates
     );

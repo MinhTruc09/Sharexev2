@@ -89,9 +89,8 @@ class ServiceRegistry {
       
       // Initialize chat repository
       _chatRepository = ChatRepositoryImpl(
-        chatService: _chatService,
-        authManager: AuthManager(),
-      ) as ChatRepositoryInterface;
+        chatApiService: _chatService as ChatApiService,
+      );
 
       if (kDebugMode) {
         debugPrint('✅ ServiceRegistry initialized successfully');
