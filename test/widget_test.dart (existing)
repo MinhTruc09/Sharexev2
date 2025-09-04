@@ -1,0 +1,14 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:your_app/widgets/your_widget.dart';
+
+void main() {
+  testWidgets('YourWidget has a title and message', (WidgetTester tester) async {
+    await tester.pumpWidget(YourWidget());
+
+    final titleFinder = find.text('Expected Title');
+    final messageFinder = find.text('Expected Message');
+
+    expect(titleFinder, findsOneWidget);
+    expect(messageFinder, findsOneWidget);
+  });
+}

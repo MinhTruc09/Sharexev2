@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:sharexev2/core/network/api_response.dart';
+import 'package:sharexev2/config/app_config.dart';
 import 'package:sharexev2/data/models/chat/dtos/chat_message_dto.dart';
 import 'package:sharexev2/data/models/chat/dtos/chat_room_dto.dart';
 import 'chat_service_interface.dart';
@@ -11,18 +12,20 @@ class ChatApiService implements ChatServiceInterface {
   ChatApiService(this._dio);
 
   @override
-  Future<ApiResponse<List<ChatMessageDto>>> getChatMessages(String token, String roomId) async {
+  Future<ApiResponse<List<ChatMessageDto>>> getChatMessages(
+    String token,
+    String roomId,
+  ) async {
     try {
       final response = await _dio.get(
-        '/api/chat/$roomId',
+        '${AppConfig.I.chat.messages}$roomId',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.data != null && response.data['data'] is List) {
         final List<dynamic> messagesJson = response.data['data'];
-        final messages = messagesJson
-            .map((json) => ChatMessageDto.fromJson(json))
-            .toList();
+        final messages =
+            messagesJson.map((json) => ChatMessageDto.fromJson(json)).toList();
 
         return ApiResponse<List<ChatMessageDto>>(
           message: response.data['message'] ?? 'Lấy tin nhắn thành công',
@@ -49,10 +52,14 @@ class ChatApiService implements ChatServiceInterface {
   }
 
   @override
-  Future<ApiResponse<ChatMessageDto>> sendTestMessage(String roomId, ChatMessageDto message, String token) async {
+  Future<ApiResponse<ChatMessageDto>> sendTestMessage(
+    String roomId,
+    ChatMessageDto message,
+    String token,
+  ) async {
     try {
       final response = await _dio.post(
-        '/api/chat/test/$roomId',
+        '${AppConfig.I.chat.sendTest}$roomId',
         data: message.toJson(),
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
@@ -85,10 +92,13 @@ class ChatApiService implements ChatServiceInterface {
   }
 
   @override
-  Future<ApiResponse<void>> markMessagesAsRead(String roomId, String token) async {
+  Future<ApiResponse<void>> markMessagesAsRead(
+    String roomId,
+    String token,
+  ) async {
     try {
       final response = await _dio.put(
-        '/api/chat/$roomId/mark-read',
+        '${AppConfig.I.chat.markRead}$roomId/mark-read',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -121,18 +131,18 @@ class ChatApiService implements ChatServiceInterface {
   Future<ApiResponse<List<ChatRoomDTO>>> getChatRooms(String token) async {
     try {
       final response = await _dio.get(
-        '/api/chat/rooms',
+        AppConfig.I.chat.rooms,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.data != null && response.data['data'] is List) {
         final List<dynamic> roomsJson = response.data['data'];
-        final rooms = roomsJson
-            .map((json) => ChatRoomDTO.fromJson(json))
-            .toList();
+        final rooms =
+            roomsJson.map((json) => ChatRoomDTO.fromJson(json)).toList();
 
         return ApiResponse<List<ChatRoomDTO>>(
-          message: response.data['message'] ?? 'Lấy danh sách phòng chat thành công',
+          message:
+              response.data['message'] ?? 'Lấy danh sách phòng chat thành công',
           statusCode: response.statusCode ?? 200,
           data: rooms,
           success: true,
@@ -140,7 +150,8 @@ class ChatApiService implements ChatServiceInterface {
       }
 
       return ApiResponse<List<ChatRoomDTO>>(
-        message: response.data['message'] ?? 'Không thể lấy danh sách phòng chat',
+        message:
+            response.data['message'] ?? 'Không thể lấy danh sách phòng chat',
         statusCode: response.statusCode ?? 400,
         data: null,
         success: false,
@@ -156,15 +167,21 @@ class ChatApiService implements ChatServiceInterface {
   }
 
   /// Get messages for a chat room
-  Future<ApiResponse<List<ChatMessageDto>>> getMessages(String roomId, String token) async {
+  Future<ApiResponse<List<ChatMessageDto>>> getMessages(
+    String roomId,
+    String token,
+  ) async {
     return getChatMessages(token, roomId);
   }
 
   /// Get chat room ID by user email
-  Future<ApiResponse<String>> getChatRoomId(String otherUserEmail, String token) async {
+  Future<ApiResponse<String>> getChatRoomId(
+    String otherUserEmail,
+    String token,
+  ) async {
     try {
       final response = await _dio.get(
-        '/api/chat/room/$otherUserEmail',
+        '${AppConfig.I.chat.roomByUser}$otherUserEmail',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -194,10 +211,14 @@ class ChatApiService implements ChatServiceInterface {
   }
 
   /// Send message to chat room
-  Future<ApiResponse<ChatMessageDto>> sendMessage(String roomId, ChatMessageDto messageDto, String token) async {
+  Future<ApiResponse<ChatMessageDto>> sendMessage(
+    String roomId,
+    ChatMessageDto messageDto,
+    String token,
+  ) async {
     try {
       final response = await _dio.post(
-        '/api/chat/$roomId',
+        '${AppConfig.I.chat.messages}$roomId',
         data: messageDto.toJson(),
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );

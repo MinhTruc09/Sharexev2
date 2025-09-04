@@ -115,84 +115,116 @@ class RegistrationCubit extends Cubit<RegistrationState> {
   }
 
   /// Register with RegisterCredentials (new unified method)
-  Future<void> registerWithEmail(RegisterCredentials credentials, String role) async {
+  Future<void> registerWithEmail(
+    RegisterCredentials credentials,
+    String role,
+  ) async {
     emit(state.copyWith(status: RegistrationStatus.loading));
 
     try {
       if (_authRepository != null) {
         // Use real registration through repository
         if (role.toUpperCase() == 'DRIVER') {
+          // Prefer multipart when images/vehicle info present
+          final hasImages =
+              credentials.avatarImage != null ||
+              credentials.licenseImage != null ||
+              credentials.vehicleImage != null;
+          if (hasImages) {
+            // Call through service via repository mapping (temporary direct call since repo API is DTO-based)
+            // Fallback to existing repo method if needed
+            final result = await _authRepository!.registerDriver(credentials);
+            if (result.isSuccess) {
+              emit(
+                state.copyWith(status: RegistrationStatus.success, error: null),
+              );
+            } else {
+              emit(
+                state.copyWith(
+                  status: RegistrationStatus.error,
+                  error: result.failure?.message ?? 'Đăng ký thất bại',
+                ),
+              );
+            }
+            return;
+          }
           final result = await _authRepository!.registerDriver(credentials);
           if (result.isSuccess) {
-            emit(state.copyWith(
-              status: RegistrationStatus.success,
-              error: null,
-            ));
+            emit(
+              state.copyWith(status: RegistrationStatus.success, error: null),
+            );
           } else {
-            emit(state.copyWith(
-              status: RegistrationStatus.error,
-              error: result.failure?.message ?? 'Đăng ký thất bại',
-            ));
+            emit(
+              state.copyWith(
+                status: RegistrationStatus.error,
+                error: result.failure?.message ?? 'Đăng ký thất bại',
+              ),
+            );
           }
         } else {
           final result = await _authRepository!.registerPassenger(credentials);
           if (result.isSuccess) {
-            emit(state.copyWith(
-              status: RegistrationStatus.success,
-              error: null,
-            ));
+            emit(
+              state.copyWith(status: RegistrationStatus.success, error: null),
+            );
           } else {
-            emit(state.copyWith(
-              status: RegistrationStatus.error,
-              error: result.failure?.message ?? 'Đăng ký thất bại',
-            ));
+            emit(
+              state.copyWith(
+                status: RegistrationStatus.error,
+                error: result.failure?.message ?? 'Đăng ký thất bại',
+              ),
+            );
           }
         }
       } else {
-        // Mock registration for testing
-        await Future.delayed(const Duration(seconds: 2));
-        emit(state.copyWith(
-          status: RegistrationStatus.success,
-          error: null,
-        ));
+        // No repository available - show error
+        emit(
+          state.copyWith(
+            status: RegistrationStatus.error,
+            error: 'Service không khả dụng, vui lòng thử lại sau',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: RegistrationStatus.error,
-        error: 'Đăng ký thất bại: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: RegistrationStatus.error,
+          error: 'Đăng ký thất bại: $e',
+        ),
+      );
     }
   }
 
   /// Register with Google (new unified method)
   Future<void> registerWithGoogle(String role) async {
-    emit(state.copyWith(isGoogleSigningIn: true));
+    emit(state.copyWith(status: RegistrationStatus.loading));
 
     try {
       if (_authRepository != null) {
-        // Use real Google registration through repository
-        // TODO: Implement Google registration with proper role handling
-        await Future.delayed(const Duration(seconds: 2));
-        emit(state.copyWith(
-          status: RegistrationStatus.success,
-          isGoogleSigningIn: false,
-          error: null,
-        ));
+        // Google registration not yet implemented in backend
+        emit(
+          state.copyWith(
+            status: RegistrationStatus.error,
+            error:
+                'Đăng ký Google đang được phát triển, vui lòng sử dụng email/password',
+          ),
+        );
       } else {
-        // Mock Google registration for testing
-        await Future.delayed(const Duration(seconds: 2));
-        emit(state.copyWith(
-          status: RegistrationStatus.success,
-          isGoogleSigningIn: false,
-          error: null,
-        ));
+        // No repository available - show error
+        emit(
+          state.copyWith(
+            status: RegistrationStatus.error,
+            error: 'Service không khả dụng, vui lòng thử lại sau',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: RegistrationStatus.error,
-        isGoogleSigningIn: false,
-        error: 'Đăng ký Google thất bại: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: RegistrationStatus.error,
+          error: 'Đăng ký Google thất bại: $e',
+        ),
+      );
     }
   }
 
@@ -228,29 +260,65 @@ class RegistrationCubit extends Cubit<RegistrationState> {
       if (_authRepository != null) {
         // Use real registration through repository
         if (role == 'DRIVER') {
-          // TODO: Implement driver registration with proper DTO mapping
-          // final driverRequest = RegisterDriverRequestDto(...);
-          // final authResponse = await _authRepository.registerDriver(driverRequest);
-          emit(state.copyWith(
-            status: RegistrationStatus.error,
-            error: 'Driver registration API chưa được triển khai',
-          ));
-          return;
+          // Create RegisterCredentials object for driver
+          final credentials = RegisterCredentials(
+            email: state.data.email ?? '',
+            password: state.data.password ?? '',
+            fullName: state.data.fullName ?? '',
+            phoneNumber: state.data.phoneNumber,
+            licenseNumber: state.data.licensePlate,
+            brand: state.data.vehicleBrand,
+            model: state.data.vehicleModel,
+            color: state.data.vehicleColor,
+            numberOfSeats: state.data.numberOfSeats,
+            avatarImage: state.data.profileImage,
+            licenseImage: state.data.licenseImage,
+            vehicleImage: state.data.vehicleImage,
+          );
+
+          final response = await _authRepository.registerDriver(credentials);
+
+          if (response.isSuccess) {
+            emit(state.copyWith(status: RegistrationStatus.success));
+          } else {
+            emit(
+              state.copyWith(
+                status: RegistrationStatus.error,
+                error: response.failure?.message ?? 'Đăng ký tài xế thất bại',
+              ),
+            );
+          }
         } else {
-          // TODO: Implement passenger registration with proper DTO mapping
-          // final passengerRequest = RegisterPassengerRequestDto(...);
-          // final authResponse = await _authRepository.registerPassenger(passengerRequest);
-          emit(state.copyWith(
-            status: RegistrationStatus.error,
-            error: 'Passenger registration API chưa được triển khai',
-          ));
-          return;
+          // Create RegisterCredentials object for passenger
+          final credentials = RegisterCredentials(
+            email: state.data.email ?? '',
+            password: state.data.password ?? '',
+            fullName: state.data.fullName ?? '',
+            phoneNumber: state.data.phoneNumber,
+            avatarImage: state.data.profileImage,
+          );
+
+          final response = await _authRepository.registerPassenger(credentials);
+
+          if (response.isSuccess) {
+            emit(state.copyWith(status: RegistrationStatus.success));
+          } else {
+            emit(
+              state.copyWith(
+                status: RegistrationStatus.error,
+                error:
+                    response.failure?.message ?? 'Đăng ký hành khách thất bại',
+              ),
+            );
+          }
         }
       } else {
-        emit(state.copyWith(
-          status: RegistrationStatus.error,
-          error: 'Auth repository không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            status: RegistrationStatus.error,
+            error: 'Auth repository không khả dụng',
+          ),
+        );
         return;
       }
 

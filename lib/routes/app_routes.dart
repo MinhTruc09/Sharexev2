@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sharexev2/core/auth/auth_manager.dart';
 
 // Common pages
 import 'package:sharexev2/presentation/pages/common/splash_page.dart';
@@ -6,32 +7,35 @@ import 'package:sharexev2/presentation/pages/common/onboarding_page.dart';
 import 'package:sharexev2/presentation/pages/common/role_selection_page.dart';
 
 // Auth pages
-import 'package:sharexev2/presentation/pages/authflow/login_page.dart';
+import 'package:sharexev2/presentation/pages/auth/login_page.dart';
 import 'package:sharexev2/presentation/pages/authflow/register_page.dart';
 
 // Home pages
-import 'package:sharexev2/presentation/pages/home/new_home_passenger_page.dart';
-import 'package:sharexev2/presentation/pages/home_driver_page.dart';
-// Grab-like home pages
-import 'package:sharexev2/presentation/pages/home/grab_passenger_home.dart';
-import 'package:sharexev2/presentation/pages/home/grab_driver_home.dart';
+import 'package:sharexev2/presentation/pages/passenger/passenger_ride_page.dart';
+import 'package:sharexev2/presentation/pages/driver/driver_home_page.dart';
 
 // Profile pages
 import 'package:sharexev2/presentation/pages/profile/profile_page.dart';
+
+// Passenger pages
+import 'package:sharexev2/presentation/pages/passenger/profile/edit_profile_page.dart';
+import 'package:sharexev2/presentation/pages/passenger/profile/change_password_page.dart';
+import 'package:sharexev2/presentation/pages/passenger/support/support_page.dart';
+import 'package:sharexev2/presentation/pages/passenger/about/about_page.dart';
+import 'package:sharexev2/presentation/pages/passenger/search_rides_page.dart';
 
 // Chat pages
 import 'package:sharexev2/presentation/pages/chat/chat_rooms_page.dart';
 import 'package:sharexev2/presentation/pages/chat/chat_page.dart';
 
 // Trip pages
-import 'package:sharexev2/presentation/pages/trip/trip_detail_page.dart';
-import 'package:sharexev2/presentation/pages/trip/trip_review_page.dart';
+import 'package:sharexev2/presentation/pages/ride/ride_detail_page.dart';
+import 'package:sharexev2/presentation/pages/ride/ride_review_page.dart';
 
 // Notification pages
 import 'package:sharexev2/presentation/pages/notification/notification_details_page.dart';
 
-// Demo pages
-import 'package:sharexev2/presentation/pages/demo/booking_widgets_demo.dart';
+// Demo pages (disabled)
 
 // Background widgets
 import 'package:sharexev2/presentation/widgets/backgrounds/sharexe_background.dart';
@@ -56,6 +60,12 @@ class PassengerRoutes {
   static const String profile = '/passenger/profile';
   static const String bookings = '/passenger/bookings';
   static const String tripHistory = '/passenger/trip-history';
+  static const String editProfile = '/passenger/edit-profile';
+  static const String changePassword = '/passenger/change-password';
+  static const String support = '/passenger/support';
+  static const String about = '/passenger/about';
+  static const String searchRides = '/passenger/search-rides';
+  static const String rideBooking = '/passenger/ride-booking';
 }
 
 class DriverRoutes {
@@ -100,6 +110,12 @@ class AppRoute {
   static const String passengerProfile = PassengerRoutes.profile;
   static const String passengerBookings = PassengerRoutes.bookings;
   static const String passengerTripHistory = PassengerRoutes.tripHistory;
+  static const String passengerEditProfile = PassengerRoutes.editProfile;
+  static const String passengerChangePassword = PassengerRoutes.changePassword;
+  static const String passengerSupport = PassengerRoutes.support;
+  static const String passengerAbout = PassengerRoutes.about;
+  static const String searchRides = PassengerRoutes.searchRides;
+  static const String rideBooking = PassengerRoutes.rideBooking;
 
   // Driver routes
   static const String homeDriver = DriverRoutes.home;
@@ -120,13 +136,47 @@ class AppRoute {
   // Notification routes
   static const String notificationDetails = NotificationRoutes.details;
 
-  // Demo routes
-  static const String bookingDemo = DemoRoutes.bookingWidgets;
+  // Demo routes (disabled)
+  static const String bookingDemo = '/__disabled__';
 
   // Route generation with proper argument handling, background integration, and dynamic themes
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final String? routeName = settings.name;
     final dynamic arguments = settings.arguments;
+
+    // Simple auth guard: redirect protected routes to login when not authenticated
+    final Set<String> protectedRoutes = {
+      PassengerRoutes.home,
+      PassengerRoutes.profile,
+      PassengerRoutes.bookings,
+      PassengerRoutes.tripHistory,
+      DriverRoutes.home,
+      DriverRoutes.profile,
+      DriverRoutes.createRide,
+      DriverRoutes.myRides,
+      DriverRoutes.bookings,
+      DriverRoutes.rideDetails,
+      ChatRoutes.rooms,
+      ChatRoutes.chat,
+      TripRoutes.detail,
+      TripRoutes.review,
+      NotificationRoutes.details,
+    };
+
+    final bool requiresAuth =
+        routeName != null && protectedRoutes.contains(routeName);
+    if (requiresAuth) {
+      final token = AuthManager().getToken();
+      if (token == null || token.isEmpty) {
+        return MaterialPageRoute(
+          builder:
+              (_) => SharexeBackgroundFactory(
+                type: SharexeBackgroundType.blueWithClouds,
+                child: const LoginPage(role: 'PASSENGER'),
+              ),
+        );
+      }
+    }
 
     // Common routes
     if (routeName == splash) {
@@ -178,10 +228,8 @@ class AppRoute {
     else if (routeName == homePassenger) {
       return MaterialPageRoute(
         builder:
-            (_) => Theme(
-              data: passengerTheme,
-              child: const GrabPassengerHome(),
-            ),
+            (_) =>
+                Theme(data: passengerTheme, child: const PassengerRidePage()),
       );
     } else if (routeName == passengerProfile) {
       return MaterialPageRoute(
@@ -207,11 +255,26 @@ class AppRoute {
               child: const ProfilePage(role: 'PASSENGER'),
             ),
       );
+    } else if (routeName == searchRides) {
+      return MaterialPageRoute(
+        builder:
+            (_) => Theme(data: passengerTheme, child: const SearchRidesPage()),
+      );
+    } else if (routeName == rideBooking) {
+      return MaterialPageRoute(
+        builder:
+            (_) => Theme(
+              data: passengerTheme,
+              child: const ProfilePage(
+                role: 'PASSENGER',
+              ), // TODO: Create RideBookingPage
+            ),
+      );
     }
     // Driver routes - Use driver theme
     else if (routeName == homeDriver) {
       return MaterialPageRoute(
-        builder: (_) => Theme(data: driverTheme, child: const GrabDriverHome()),
+        builder: (_) => Theme(data: driverTheme, child: const DriverHomePage()),
       );
     } else if (routeName == driverProfile) {
       return MaterialPageRoute(
@@ -247,12 +310,11 @@ class AppRoute {
       );
     } else if (routeName == driverRideDetails) {
       final rideData = arguments as Map<String, dynamic>? ?? {};
+      final String rideId = (rideData['rideId'] ?? '').toString();
       return MaterialPageRoute(
         builder:
-            (_) => Theme(
-              data: driverTheme,
-              child: TripDetailPage(tripData: rideData),
-            ),
+            (_) =>
+                Theme(data: driverTheme, child: RideDetailPage(rideId: rideId)),
       );
     }
     // Chat routes - Use theme based on current user role
@@ -272,33 +334,23 @@ class AppRoute {
     // Trip routes - Use theme based on current user role
     else if (routeName == tripDetail) {
       final tripData = arguments as Map<String, dynamic>? ?? {};
-      return MaterialPageRoute(
-        builder: (_) => TripDetailPage(tripData: tripData),
-      );
+      final String rideId = (tripData["rideId"] ?? '').toString();
+      return MaterialPageRoute(builder: (_) => RideDetailPage(rideId: rideId));
     } else if (routeName == tripReview) {
       final args = arguments as Map<String, dynamic>? ?? {};
+      final String rideId = (args["rideId"] ?? '').toString();
+      final String role = args["role"] ?? 'PASSENGER';
       return MaterialPageRoute(
-        builder:
-            (_) => TripReviewPage(
-              tripData: args['tripData'] ?? {},
-              role: args['role'] ?? 'PASSENGER',
-            ),
+        builder: (_) => RideReviewPage(rideId: rideId, role: role),
       );
     }
     // Notification routes
     else if (routeName == notificationDetails) {
       return MaterialPageRoute(builder: (_) => const NotificationDetailsPage());
     }
-    // Demo routes
+    // Demo routes (disabled)
     else if (routeName == bookingDemo) {
-      final role = arguments as String? ?? 'PASSENGER';
-      return MaterialPageRoute(
-        builder:
-            (_) => SharexeBackgroundFactory(
-              type: SharexeBackgroundType.darkBlueWithClouds,
-              child: BookingWidgetsDemoPage(role: role),
-            ),
-      );
+      return _errorRoute(routeName);
     }
     // Default error route
     else {
@@ -406,9 +458,9 @@ final Map<String, WidgetBuilder> appRoutes = {
       ),
   AppRoute.homePassenger:
       (context) =>
-          Theme(data: passengerTheme, child: const NewHomePassengerPage()),
+          Theme(data: passengerTheme, child: const PassengerRidePage()),
   AppRoute.homeDriver:
-      (context) => Theme(data: driverTheme, child: const HomeDriverPage()),
+      (context) => Theme(data: driverTheme, child: const DriverHomePage()),
   AppRoute.roleSelection:
       (context) => SharexeBackgroundFactory(
         type: SharexeBackgroundType.blueWithSun,
@@ -428,13 +480,7 @@ final Map<String, WidgetBuilder> appRoutes = {
       child: RegisterPage(role: args ?? 'PASSENGER'),
     );
   },
-  AppRoute.bookingDemo: (context) {
-    final args = ModalRoute.of(context)!.settings.arguments as String?;
-    return SharexeBackgroundFactory(
-      type: SharexeBackgroundType.darkBlueWithClouds,
-      child: BookingWidgetsDemoPage(role: args ?? 'PASSENGER'),
-    );
-  },
+  // Demo disabled
   AppRoute.chatRooms: (context) => const ChatRoomsPage(),
   AppRoute.chat: (context) {
     final args =
@@ -449,15 +495,15 @@ final Map<String, WidgetBuilder> appRoutes = {
   AppRoute.tripDetail: (context) {
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    return TripDetailPage(tripData: args ?? {});
+    final String rideId = (args?["rideId"] ?? '').toString();
+    return RideDetailPage(rideId: rideId);
   },
   AppRoute.tripReview: (context) {
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    return TripReviewPage(
-      tripData: args?['tripData'] ?? {},
-      role: args?['role'] ?? 'PASSENGER',
-    );
+    final String rideId = (args?["rideId"] ?? '').toString();
+    final String role = args?["role"] ?? 'PASSENGER';
+    return RideReviewPage(rideId: rideId, role: role);
   },
   AppRoute.passengerProfile:
       (context) => Theme(

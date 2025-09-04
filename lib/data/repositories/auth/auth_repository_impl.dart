@@ -16,6 +16,7 @@ import '../../models/auth/dtos/user_dto.dart';
 import '../../services/auth_service.dart' as auth_service;
 import '../../services/firebase_auth_service.dart';
 import 'auth_repository_interface.dart';
+import '../../../core/auth/auth_manager.dart';
 
 /// Implementation của AuthRepositoryInterface
 /// Combines API service, Firebase service, và local storage
@@ -237,7 +238,33 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
         );
       }
 
-      // Call API service
+      // If images provided, use multipart endpoint
+      if (credentials.avatarImage != null ||
+          credentials.licenseImage != null ||
+          credentials.vehicleImage != null) {
+        final authResponse = await (_authApiService as auth_service.AuthService)
+            .registerDriverMultipart(
+              email: credentials.email,
+              password: credentials.password,
+              fullName: credentials.fullName,
+              phoneNumber: credentials.phoneNumber ?? '',
+              licensePlate: credentials.licenseNumber ?? '',
+              brand: credentials.brand ?? 'Unknown',
+              model: credentials.model ?? 'Unknown',
+              color: credentials.color ?? 'Unknown',
+              numberOfSeats: credentials.numberOfSeats ?? 4,
+              avatarImage: credentials.avatarImage,
+              licenseImage: credentials.licenseImage,
+              vehicleImage: credentials.vehicleImage,
+            );
+
+        final session = AuthMapper.sessionFromAuthResponse(authResponse);
+        final user = UserMapper.fromUserDto(authResponse.user);
+        await saveSession(session, user);
+        return AuthResult.success(user, session);
+      }
+
+      // Default JSON path
       final registerRequest = AuthMapper.registerRequestFromCredentials(
         credentials,
         UserRole.driver,
@@ -397,7 +424,14 @@ class AuthRepositoryImpl implements AuthRepositoryInterface {
       final session = await getCurrentSession();
       if (session == null) return; // Silently fail if no session
 
-      await _authApiService.registerDevice(deviceToken, 'current_user'); // TODO: Get actual user ID
+      // Get actual user ID from AuthManager
+      final currentUser = AuthManager.instance.currentUser;
+      final userId =
+          currentUser?.id?.toString() ??
+          currentUser?.email.value ??
+          'unknown_user';
+
+      await _authApiService.registerDevice(deviceToken, userId);
       // Save device token locally for later unregistration
       await _prefs.setString(_keyDeviceToken, deviceToken);
     } catch (e) {

@@ -3,6 +3,7 @@ import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_room.dart';
 import 'package:sharexev2/data/models/chat/mappers/chat_message_mapper.dart';
 import 'package:sharexev2/data/models/chat/dtos/chat_message_dto.dart';
+import 'package:sharexev2/data/models/chat/dtos/chat_room_dto.dart';
 import 'package:sharexev2/data/services/chat/chat_api_service.dart';
 import 'chat_repository_interface.dart';
 
@@ -10,30 +11,46 @@ import 'chat_repository_interface.dart';
 class ChatRepositoryImpl implements ChatRepositoryInterface {
   final ChatApiService _chatApiService;
 
-  ChatRepositoryImpl({
-    required ChatApiService chatApiService,
-  }) : _chatApiService = chatApiService;
+  ChatRepositoryImpl({required ChatApiService chatApiService})
+    : _chatApiService = chatApiService;
 
   @override
   Future<ApiResponse<List<ChatRoom>>> getChatRooms(String token) async {
     try {
       final response = await _chatApiService.getChatRooms(token);
-      
+
       if (response.success && response.data != null) {
-        // TODO: Map response to ChatRoom entities
-        return ApiResponse.success(
-          data: <ChatRoom>[], // Placeholder until mapping is implemented
-          message: response.message,
-        );
+        // Map response to ChatRoom entities
+        final chatRooms =
+            response.data!.map((roomData) {
+              // Convert Map<String, Object> to ChatRoomDTO first
+              final dto = ChatRoomDTO.fromJson(
+                roomData as Map<String, dynamic>,
+              );
+
+              // Then convert DTO to Entity
+              return ChatRoom(
+                roomId: dto.id,
+                lastMessage: dto.lastMessage,
+                lastMessageTime:
+                    dto.lastMessageTime != null
+                        ? DateTime.tryParse(dto.lastMessageTime!) ??
+                            DateTime.now()
+                        : DateTime.now(),
+                unreadCount: dto.unreadCount,
+                participantEmail: dto.participantEmail,
+                participantName: dto.participantName,
+              );
+            }).toList();
+
+        return ApiResponse.success(data: chatRooms, message: response.message);
       }
 
       return ApiResponse.error(
         message: response.message ?? 'Failed to get chat rooms',
       );
     } catch (e) {
-      return ApiResponse.error(
-        message: 'Error getting chat rooms: $e',
-      );
+      return ApiResponse.error(message: 'Error getting chat rooms: $e');
     }
   }
 
@@ -44,22 +61,17 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
   ) async {
     try {
       final response = await _chatApiService.getMessages(roomId, token);
-      
+
       if (response.success && response.data != null) {
         final messages = ChatMessageMapper.fromDtoList(response.data!);
-        return ApiResponse.success(
-          data: messages,
-          message: response.message,
-        );
+        return ApiResponse.success(data: messages, message: response.message);
       }
 
       return ApiResponse.error(
         message: response.message ?? 'Failed to fetch messages',
       );
     } catch (e) {
-      return ApiResponse.error(
-        message: 'Error fetching messages: $e',
-      );
+      return ApiResponse.error(message: 'Error fetching messages: $e');
     }
   }
 
@@ -69,8 +81,11 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
     String token,
   ) async {
     try {
-      final response = await _chatApiService.getChatRoomId(participantEmail, token);
-      
+      final response = await _chatApiService.getChatRoomId(
+        participantEmail,
+        token,
+      );
+
       if (response.success && response.data != null) {
         return ApiResponse.success(
           data: response.data!,
@@ -82,9 +97,7 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
         message: response.message ?? 'Failed to create chat room',
       );
     } catch (e) {
-      return ApiResponse.error(
-        message: 'Error creating chat room: $e',
-      );
+      return ApiResponse.error(message: 'Error creating chat room: $e');
     }
   }
 
@@ -94,8 +107,11 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
     String token,
   ) async {
     try {
-      final response = await _chatApiService.getChatRoomId(otherUserEmail, token);
-      
+      final response = await _chatApiService.getChatRoomId(
+        otherUserEmail,
+        token,
+      );
+
       if (response.success && response.data != null) {
         return ApiResponse.success(
           data: response.data!,
@@ -107,9 +123,7 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
         message: response.message ?? 'Failed to get chat room ID',
       );
     } catch (e) {
-      return ApiResponse.error(
-        message: 'Error getting chat room ID: $e',
-      );
+      return ApiResponse.error(message: 'Error getting chat room ID: $e');
     }
   }
 
@@ -121,8 +135,12 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
   ) async {
     try {
       final messageDto = ChatMessageMapper.toDto(message);
-      final response = await _chatApiService.sendMessage(roomId, messageDto, token);
-      
+      final response = await _chatApiService.sendMessage(
+        roomId,
+        messageDto,
+        token,
+      );
+
       if (response.success && response.data != null) {
         final sentMessage = ChatMessageMapper.fromDto(response.data!);
         return ApiResponse.success(
@@ -135,9 +153,7 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
         message: response.message ?? 'Failed to send message',
       );
     } catch (e) {
-      return ApiResponse.error(
-        message: 'Error sending message: $e',
-      );
+      return ApiResponse.error(message: 'Error sending message: $e');
     }
   }
 
@@ -148,8 +164,12 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
     String token,
   ) async {
     try {
-      final response = await _chatApiService.sendTestMessage(roomId, messageData, token);
-      
+      final response = await _chatApiService.sendTestMessage(
+        roomId,
+        messageData,
+        token,
+      );
+
       if (response.success && response.data != null) {
         final sentMessage = ChatMessageMapper.fromDto(response.data!);
         return ApiResponse.success(
@@ -162,9 +182,7 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
         message: response.message ?? 'Failed to send test message',
       );
     } catch (e) {
-      return ApiResponse.error(
-        message: 'Error sending test message: $e',
-      );
+      return ApiResponse.error(message: 'Error sending test message: $e');
     }
   }
 
@@ -175,15 +193,13 @@ class ChatRepositoryImpl implements ChatRepositoryInterface {
   ) async {
     try {
       final response = await _chatApiService.markMessagesAsRead(roomId, token);
-      
+
       return ApiResponse.success(
         data: null,
         message: response.message ?? 'Messages marked as read',
       );
     } catch (e) {
-      return ApiResponse.error(
-        message: 'Error marking messages as read: $e',
-      );
+      return ApiResponse.error(message: 'Error marking messages as read: $e');
     }
   }
 }

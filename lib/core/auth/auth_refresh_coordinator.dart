@@ -2,7 +2,8 @@
 // and fallback to exchanging Firebase ID token when available.
 
 import 'package:sharexev2/data/services/auth_service.dart';
-import 'package:sharexev2/data/services/service_registry.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
+import 'package:sharexev2/core/network/api_client.dart';
 import 'package:sharexev2/core/auth/auth_manager.dart';
 import 'package:sharexev2/config/app_config.dart';
 import 'package:sharexev2/core/network/api_response.dart';
@@ -16,16 +17,17 @@ import 'package:sharexev2/data/models/auth/mappers/user_mapper.dart';
 ///    and POST it to the backend exchange endpoint (AppConfig.I.auth.googleSignIn)
 ///    to obtain new app tokens.
 class AuthRefreshCoordinator {
-  static final _registry = ServiceRegistry.I;
-
   /// Try refresh and return true when new tokens are stored, false otherwise.
   static Future<bool> tryRefresh() async {
     final authManager = AuthManager();
 
     // 1) Try backend refresh via repository
     try {
-      final authService = AuthService(ServiceRegistry.I.apiClient);
-      await authService.refreshToken(RefreshTokenRequestDto(refreshToken: authManager.refreshToken ?? ''));
+      final apiClient = ServiceLocator.get<ApiClient>();
+      final authService = AuthService(apiClient);
+      await authService.refreshToken(
+        RefreshTokenRequestDto(refreshToken: authManager.refreshToken ?? ''),
+      );
       return true;
     } catch (_) {
       // ignore and fall back to Firebase exchange
@@ -40,7 +42,7 @@ class AuthRefreshCoordinator {
       if (idToken == null || idToken.isEmpty) return false;
 
       // Exchange ID token with backend via API client
-      final client = _registry.apiClient.client;
+      final client = ServiceLocator.get<ApiClient>().client;
       final response = await client.post(
         AppConfig.I.auth.googleSignIn,
         data: {'idToken': idToken},

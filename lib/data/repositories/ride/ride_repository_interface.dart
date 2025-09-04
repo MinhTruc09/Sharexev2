@@ -16,15 +16,15 @@ abstract class RideRepositoryInterface {
   Future<ApiResponse<RideEntity>> getRideById(int rideId);
 
   /// Tìm kiếm chuyến đi
-  Future<ApiResponse<List<RideEntity>>> searchRides({
+  Future<List<RideEntity>> searchRides({
     String? departure,
     String? destination,
-    String? startTime,
+    DateTime? startTime,
     int? seats,
   });
 
   /// Lấy danh sách chuyến đi đang hoạt động
-  Future<ApiResponse<List<RideEntity>>> getAvailableRides();
+  Future<List<RideEntity>> getAvailableRides();
 
   /// Lấy tất cả chuyến đi
   Future<ApiResponse<List<RideEntity>>> getAllRides();

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'splash_state.dart';
 import '../../data/services/auth_service.dart';
 import '../../routes/app_routes.dart';
+import 'package:sharexev2/core/auth/auth_manager.dart';
 
 class SplashCubit extends Cubit<SplashState> {
   final AuthService authService;
@@ -17,9 +18,19 @@ class SplashCubit extends Cubit<SplashState> {
       // Nếu đã biết role từ luồng role selection thì bỏ qua kiểm tra đăng nhập
       if (overrideRole != null) {
         if (overrideRole == 'PASSENGER') {
-          emit(state.copyWith(status: SplashStatus.success, route: AppRoute.homePassenger));
+          emit(
+            state.copyWith(
+              status: SplashStatus.success,
+              route: AppRoute.homePassenger,
+            ),
+          );
         } else {
-          emit(state.copyWith(status: SplashStatus.success, route: AppRoute.homeDriver));
+          emit(
+            state.copyWith(
+              status: SplashStatus.success,
+              route: AppRoute.homeDriver,
+            ),
+          );
         }
         return;
       }
@@ -27,11 +38,14 @@ class SplashCubit extends Cubit<SplashState> {
       bool isLoggedIn = await authService.isLoggedIn();
 
       if (isLoggedIn) {
-        // TODO: Implement getCurrentUserRole in AuthService
-        // String? role = await authService.getCurrentUserRole();
-
-        // Mock user role for now
-        String? role = 'PASSENGER';
+        // Determine role based on stored user/session
+        String? role;
+        try {
+          final authManager = AuthManager();
+          role = authManager.currentUser?.role.name.toUpperCase();
+        } catch (_) {
+          role = null;
+        }
 
         if (role == 'PASSENGER') {
           emit(
@@ -50,13 +64,19 @@ class SplashCubit extends Cubit<SplashState> {
         } else {
           // Nếu không xác định role
           emit(
-            state.copyWith(status: SplashStatus.success, route: AppRoute.roleSelection),
+            state.copyWith(
+              status: SplashStatus.success,
+              route: AppRoute.roleSelection,
+            ),
           );
         }
       } else {
         // Nếu chưa đăng nhập
         emit(
-          state.copyWith(status: SplashStatus.success, route: AppRoute.roleSelection),
+          state.copyWith(
+            status: SplashStatus.success,
+            route: AppRoute.roleSelection,
+          ),
         );
       }
     } catch (e) {

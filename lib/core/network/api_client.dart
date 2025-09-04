@@ -22,9 +22,17 @@ class ApiClient {
     final dio = Dio(
       BaseOptions(
         baseUrl: Env().fullApiUrl,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-        headers: {"Content-Type": "application/json"},
+        connectTimeout: const Duration(seconds: 30), // Increased timeout
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        validateStatus: (status) {
+          return status != null &&
+              status < 500; // Accept all responses below 500
+        },
       ),
     );
 
@@ -88,6 +96,45 @@ class ApiClient {
               } catch (_) {
                 // refresh failed; continue to error handler below
               }
+            }
+          }
+
+          // Enhanced retry logic for network errors with exponential backoff
+          final isNetworkError =
+              response == null &&
+              (err.type == DioExceptionType.connectionTimeout ||
+                  err.type == DioExceptionType.receiveTimeout ||
+                  err.type == DioExceptionType.sendTimeout ||
+                  err.type == DioExceptionType.connectionError);
+          if (isNetworkError) {
+            final int retryCount =
+                (requestOptions.extra['__retry_count'] as int?) ?? 0;
+            if (retryCount < 3) {
+              // Increased max retries
+              final backoffMs =
+                  1000 * (1 << retryCount); // Exponential backoff: 1s, 2s, 4s
+              if (kDebugMode) {
+                print(
+                  'Retrying request (${retryCount + 1}/3) after ${backoffMs}ms',
+                );
+              }
+              await Future<void>.delayed(Duration(milliseconds: backoffMs));
+              requestOptions.extra['__retry_count'] = retryCount + 1;
+              try {
+                final retryResp = await dio.request<dynamic>(
+                  requestOptions.path,
+                  data: requestOptions.data,
+                  queryParameters: requestOptions.queryParameters,
+                  options: Options(
+                    method: requestOptions.method,
+                    headers: requestOptions.headers,
+                    responseType: requestOptions.responseType,
+                    contentType: requestOptions.contentType,
+                    extra: requestOptions.extra,
+                  ),
+                );
+                return handler.resolve(retryResp);
+              } catch (_) {}
             }
           }
 

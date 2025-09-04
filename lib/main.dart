@@ -9,8 +9,8 @@ import 'package:sharexev2/core/services/navigation_service.dart';
 // import 'package:sharexev2/data/services/firebase_api.dart';
 // import 'package:sharexev2/data/services/firebase_service.dart';
 // import 'package:sharexev2/data/repositories/auth/auth_api_repository.dart';
-import 'package:sharexev2/data/services/service_registry.dart';
 import 'package:sharexev2/core/network/api_client.dart';
+import 'package:sharexev2/core/auth/auth_refresh_coordinator.dart';
 // auth repository interfaces are used by specific modules when needed
 import 'package:sharexev2/core/auth/auth_manager.dart';
 import 'package:sharexev2/core/di/service_locator.dart';
@@ -48,8 +48,7 @@ Future<void> main() async {
   // Initialize Dependency Injection
   await ServiceLocator.setup();
 
-  // Initialize Service Registry (DI)
-  await ServiceRegistry.I.initialize();
+  // ServiceRegistry removed; using GetIt ServiceLocator only
 
   // Get shared preferences for first open check
   final prefs = await SharedPreferences.getInstance();
@@ -95,21 +94,9 @@ Future<void> _initializeFirebase() async {
     };
 
     ApiClient.refreshTokenProvider = () async {
+      // Delegate to centralized coordinator which uses ServiceLocator
       try {
-        final refresh = authManager.getRefreshToken();
-        if (refresh == null) return false;
-
-        // TODO: Implement token refresh when AuthRepository is ready
-        // final svc = ServiceRegistry.I.apiClient;
-        // final repo = AuthApiRepository(AuthService(svc), AuthManager());
-        try {
-          // Mock token refresh for now
-          await Future.delayed(const Duration(milliseconds: 500));
-          return true;
-        } catch (e) {
-          await authManager.clearSession();
-          return false;
-        }
+        return await AuthRefreshCoordinator.tryRefresh();
       } catch (_) {
         return false;
       }

@@ -1,5 +1,5 @@
 import 'package:sharexev2/config/env.dart';
-import 'package:sharexev2/config/environment.dart';
+// environment.dart is deprecated in favor of Env
 
 ///  AppConfig
 ///
@@ -11,8 +11,9 @@ class AppConfig {
 
   static AppConfig get I => _instance;
 
-  /// Base API - Using Environment config
-  String get baseUrl => Environment.apiBaseUrl;
+  /// Base API
+  /// Use Env.fullApiUrl to ensure '/api' prefix matches backend docs
+  String get baseUrl => Env().fullApiUrl;
   String get apiVersion => Env.apiVersion;
 
   /// Helper build endpoint (API doc không dùng version prefix)
@@ -45,8 +46,8 @@ class AppConfig {
   /// ========== ADMIN ==========
   final admin = _AdminEndpoints();
 
-  /// WebSocket URL - Using Environment config
-  String get webSocketUrl => Environment.websocketUrl;
+  /// WebSocket URL
+  String get webSocketUrl => Env().webSocketUrl;
 
   /// Cloudinary
   String get cloudinaryCloudName => Env.cloudinaryCloudName;

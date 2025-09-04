@@ -3,14 +3,14 @@ import 'package:sharexev2/data/models/notification/dtos/notification_dto.dart';
 import 'notification_repository_interface.dart';
 import 'notification_repository_impl.dart';
 import 'package:sharexev2/data/services/notification_service.dart';
-import 'package:sharexev2/data/services/service_registry.dart';
+import 'package:sharexev2/core/di/service_locator.dart';
 
 class NotificationRepository implements NotificationRepositoryInterface {
   final NotificationRepositoryImpl _impl;
 
   NotificationRepository({NotificationService? service})
       : _impl = NotificationRepositoryImpl(
-          service ?? NotificationService(ServiceRegistry.I.apiClient),
+          service ?? ServiceLocator.get<NotificationService>(),
         );
 
   @override

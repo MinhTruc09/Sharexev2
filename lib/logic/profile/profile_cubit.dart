@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/repositories/user/user_repository_interface.dart';
 import 'package:sharexev2/data/repositories/auth/auth_repository_interface.dart';
 
-
 part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
@@ -20,10 +19,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   /// Initialize profile and load user data from repository
   Future<void> initializeProfile(String role) async {
-    emit(state.copyWith(
-      role: role,
-      status: ProfileStatus.loading,
-    ));
+    emit(state.copyWith(role: role, status: ProfileStatus.loading));
     await _loadUserData();
   }
 
@@ -35,37 +31,40 @@ class ProfileCubit extends Cubit<ProfileState> {
 
         if (response.success && response.data != null) {
           final user = response.data!;
-          emit(state.copyWith(
-            status: ProfileStatus.loaded,
-            userData: {
-              'id': user.id,
-              'name': user.fullName,
-              'email': user.email,
-              'phone': user.phoneNumber,
-              'avatar': user.avatarUrl,
-              'role': user.role.name,
-              'isDriver': user.isDriver,
-              'isPassenger': user.isPassenger,
-              'isAdmin': user.isAdmin,
-            },
-          ));
+          emit(
+            state.copyWith(
+              status: ProfileStatus.loaded,
+              userData: {
+                'id': user.id,
+                'name': user.fullName,
+                'email': user.email,
+                'phone': user.phoneNumber,
+                'avatar': user.avatarUrl,
+                'role': user.role.name,
+                'isDriver': user.isDriver,
+                'isPassenger': user.isPassenger,
+                'isAdmin': user.isAdmin,
+              },
+            ),
+          );
         } else {
-          emit(state.copyWith(
-            status: ProfileStatus.error,
-            error: response.message ?? 'Failed to load profile',
-          ));
+          emit(
+            state.copyWith(
+              status: ProfileStatus.error,
+              error: response.message ?? 'Failed to load profile',
+            ),
+          );
         }
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          error: 'User repository không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            error: 'User repository không khả dụng',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        error: e.toString(),
-      ));
+      emit(state.copyWith(status: ProfileStatus.error, error: e.toString()));
     }
   }
 
@@ -75,38 +74,26 @@ class ProfileCubit extends Cubit<ProfileState> {
     final updatedData = Map<String, dynamic>.from(state.userData);
     updatedData['name'] = name;
 
-    emit(state.copyWith(
-      userData: updatedData,
-      error: null,
-    ));
+    emit(state.copyWith(userData: updatedData, error: null));
   }
 
   void updatePhone(String phone) {
     final updatedData = Map<String, dynamic>.from(state.userData);
     updatedData['phone'] = phone;
 
-    emit(state.copyWith(
-      userData: updatedData,
-      error: null,
-    ));
+    emit(state.copyWith(userData: updatedData, error: null));
   }
 
   void updateAvatar(List<int>? imageBytes) {
     final updatedData = Map<String, dynamic>.from(state.userData);
     updatedData['avatar'] = imageBytes;
 
-    emit(state.copyWith(
-      userData: updatedData,
-      error: null,
-    ));
+    emit(state.copyWith(userData: updatedData, error: null));
   }
 
   void toggleEditMode() {
-    emit(state.copyWith(
-      isEditing: !state.isEditing,
-      error: null,
-    ));
-    
+    emit(state.copyWith(isEditing: !state.isEditing, error: null));
+
     if (!state.isEditing) {
       // Reset to original values if canceling
       _loadUserData();
@@ -116,17 +103,16 @@ class ProfileCubit extends Cubit<ProfileState> {
   /// Save profile changes to repository
   Future<void> saveProfile() async {
     if (!_validateProfile()) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        error: 'Vui lòng điền đầy đủ thông tin',
-      ));
+      emit(
+        state.copyWith(
+          status: ProfileStatus.error,
+          error: 'Vui lòng điền đầy đủ thông tin',
+        ),
+      );
       return;
     }
 
-    emit(state.copyWith(
-      status: ProfileStatus.saving,
-      error: null,
-    ));
+    emit(state.copyWith(status: ProfileStatus.saving, error: null));
 
     try {
       if (_userRepository != null) {
@@ -145,30 +131,38 @@ class ProfileCubit extends Cubit<ProfileState> {
         );
 
         if (response.success) {
-          emit(state.copyWith(
-            status: ProfileStatus.saved,
-            isEditing: false,
-            error: null,
-          ));
+          emit(
+            state.copyWith(
+              status: ProfileStatus.saved,
+              isEditing: false,
+              error: null,
+            ),
+          );
           // Reload fresh data from server
           await _loadUserData();
         } else {
-          emit(state.copyWith(
-            status: ProfileStatus.error,
-            error: response.message ?? 'Failed to save profile',
-          ));
+          emit(
+            state.copyWith(
+              status: ProfileStatus.error,
+              error: response.message ?? 'Failed to save profile',
+            ),
+          );
         }
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          error: 'User repository không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            error: 'User repository không khả dụng',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        error: 'Lỗi lưu thông tin: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: ProfileStatus.error,
+          error: 'Lỗi lưu thông tin: $e',
+        ),
+      );
     }
   }
 
@@ -177,33 +171,46 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(state.copyWith(status: ProfileStatus.saving, error: null));
 
     try {
-      if (_authRepository != null) {
-        // TODO: Implement changePassword in AuthRepository
-        // final response = await _authRepository.changePassword(oldPassword, newPassword);
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          error: 'Change password API chưa được triển khai',
-        ));
+      if (_userRepository != null) {
+        // Implement changePassword through UserRepository (PUT /api/user/change-pass)
+        final response = await _userRepository.changePassword(
+          oldPassword: oldPassword,
+          newPassword: newPassword,
+        );
+
+        if (response.success) {
+          emit(state.copyWith(status: ProfileStatus.saved, error: null));
+        } else {
+          emit(
+            state.copyWith(
+              status: ProfileStatus.error,
+              error: response.message ?? 'Lỗi đổi mật khẩu',
+            ),
+          );
+        }
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          error: 'Auth repository không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            error: 'User repository không khả dụng',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        error: 'Lỗi đổi mật khẩu: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: ProfileStatus.error,
+          error: 'Lỗi đổi mật khẩu: $e',
+        ),
+      );
     }
   }
 
   bool _validateProfile() {
     final name = state.userData['name'] as String?;
     final phone = state.userData['phone'] as String?;
-    
-    return name != null && name.isNotEmpty && 
-           phone != null && phone.isNotEmpty;
+
+    return name != null && name.isNotEmpty && phone != null && phone.isNotEmpty;
   }
 
   void clearError() {

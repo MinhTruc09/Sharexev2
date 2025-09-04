@@ -2,7 +2,7 @@ import 'ride_repository_interface.dart';
 import '../../models/ride/entities/ride_entity.dart';
 import '../../models/ride/mappers/ride_mapper.dart';
 import '../../services/ride_service.dart';
-import '../../services/service_registry.dart';
+import '../../../core/di/service_locator.dart';
 import '../../../core/network/api_response.dart';
 
 /// Implementation của Ride Repository
@@ -13,7 +13,7 @@ class RideRepositoryImpl implements RideRepositoryInterface {
 
   /// Factory constructor sử dụng ServiceRegistry
   factory RideRepositoryImpl.fromRegistry() {
-    return RideRepositoryImpl(ServiceRegistry.I.rideService);
+    return RideRepositoryImpl(ServiceLocator.get<RideService>());
   }
 
   @override
@@ -21,15 +21,14 @@ class RideRepositoryImpl implements RideRepositoryInterface {
     try {
       // Convert entity to DTO
       final rideDto = RideMapper.toDto(ride);
-      
+
       // Call service
       final response = await _rideService.createRide(rideDto);
-      
+
       // Convert DTO back to entity
-      final entity = response.data != null 
-          ? RideMapper.fromDto(response.data!)
-          : null;
-      
+      final entity =
+          response.data != null ? RideMapper.fromDto(response.data!) : null;
+
       return ApiResponse<RideEntity>(
         message: response.message,
         statusCode: response.statusCode,
@@ -47,15 +46,17 @@ class RideRepositoryImpl implements RideRepositoryInterface {
   }
 
   @override
-  Future<ApiResponse<RideEntity>> updateRide(int rideId, RideEntity ride) async {
+  Future<ApiResponse<RideEntity>> updateRide(
+    int rideId,
+    RideEntity ride,
+  ) async {
     try {
       final rideDto = RideMapper.toDto(ride);
       final response = await _rideService.updateRide(rideId, rideDto);
-      
-      final entity = response.data != null 
-          ? RideMapper.fromDto(response.data!)
-          : null;
-      
+
+      final entity =
+          response.data != null ? RideMapper.fromDto(response.data!) : null;
+
       return ApiResponse<RideEntity>(
         message: response.message,
         statusCode: response.statusCode,
@@ -76,7 +77,7 @@ class RideRepositoryImpl implements RideRepositoryInterface {
   Future<ApiResponse<void>> cancelRide(int rideId) async {
     try {
       final response = await _rideService.cancelRide(rideId);
-      
+
       return ApiResponse<void>(
         message: response.message,
         statusCode: response.statusCode,
@@ -97,11 +98,10 @@ class RideRepositoryImpl implements RideRepositoryInterface {
   Future<ApiResponse<RideEntity>> getRideById(int rideId) async {
     try {
       final response = await _rideService.getRideById(rideId);
-      
-      final entity = response.data != null 
-          ? RideMapper.fromDto(response.data!)
-          : null;
-      
+
+      final entity =
+          response.data != null ? RideMapper.fromDto(response.data!) : null;
+
       return ApiResponse<RideEntity>(
         message: response.message,
         statusCode: response.statusCode,
@@ -119,62 +119,45 @@ class RideRepositoryImpl implements RideRepositoryInterface {
   }
 
   @override
-  Future<ApiResponse<List<RideEntity>>> searchRides({
+  Future<List<RideEntity>> searchRides({
     String? departure,
     String? destination,
-    String? startTime,
+    DateTime? startTime,
     int? seats,
   }) async {
     try {
       final response = await _rideService.searchRides(
         departure: departure,
         destination: destination,
-        startTime: startTime,
+        startTime:
+            startTime?.toIso8601String().split(
+              'T',
+            )[0], // Convert to date string
         seats: seats,
       );
-      
-      final entities = response.data != null 
-          ? RideMapper.fromDtoList(response.data!)
-          : <RideEntity>[];
-      
-      return ApiResponse<List<RideEntity>>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: entities,
-        success: response.success,
-      );
+
+      if (response.success && response.data != null) {
+        return RideMapper.fromDtoList(response.data!);
+      } else {
+        throw Exception(response.message ?? 'Unknown error');
+      }
     } catch (e) {
-      return ApiResponse<List<RideEntity>>(
-        message: 'Lỗi tìm kiếm chuyến đi: $e',
-        statusCode: 500,
-        data: <RideEntity>[],
-        success: false,
-      );
+      throw Exception('Lỗi tìm kiếm chuyến đi: $e');
     }
   }
 
   @override
-  Future<ApiResponse<List<RideEntity>>> getAvailableRides() async {
+  Future<List<RideEntity>> getAvailableRides() async {
     try {
       final response = await _rideService.getAvailableRides();
-      
-      final entities = response.data != null 
-          ? RideMapper.fromDtoList(response.data!)
-          : <RideEntity>[];
-      
-      return ApiResponse<List<RideEntity>>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: entities,
-        success: response.success,
-      );
+
+      if (response.success && response.data != null) {
+        return RideMapper.fromDtoList(response.data!);
+      } else {
+        throw Exception(response.message ?? 'Unknown error');
+      }
     } catch (e) {
-      return ApiResponse<List<RideEntity>>(
-        message: 'Lỗi lấy danh sách chuyến đi: $e',
-        statusCode: 500,
-        data: <RideEntity>[],
-        success: false,
-      );
+      throw Exception('Lỗi lấy danh sách chuyến đi: $e');
     }
   }
 
@@ -182,11 +165,12 @@ class RideRepositoryImpl implements RideRepositoryInterface {
   Future<ApiResponse<List<RideEntity>>> getAllRides() async {
     try {
       final response = await _rideService.getAllRides();
-      
-      final entities = response.data != null 
-          ? RideMapper.fromDtoList(response.data!)
-          : <RideEntity>[];
-      
+
+      final entities =
+          response.data != null
+              ? RideMapper.fromDtoList(response.data!)
+              : <RideEntity>[];
+
       return ApiResponse<List<RideEntity>>(
         message: response.message,
         statusCode: response.statusCode,

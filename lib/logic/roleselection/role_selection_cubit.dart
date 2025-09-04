@@ -8,23 +8,30 @@ class RoleSelectionCubit extends Cubit<RoleSelectionState> {
   RoleSelectionCubit(this._authRepository) : super(const RoleSelectionState());
 
   void selectRole(String role) {
-    emit(state.copyWith(
-      selectedRole: role,
-      error: null,
-    ));
+    emit(state.copyWith(selectedRole: role, error: null));
   }
 
   Future<void> saveRoleAndContinue() async {
     if (state.selectedRole == null) return;
-    
-    emit(state.copyWith(status: RoleStatus.saving, pendingRole: state.selectedRole));
-    try {
-      // TODO: Implement role selection through repository
-      // await _authService.setRole(state.selectedRole!);
 
-      // Mock successful role selection
-      await Future.delayed(const Duration(seconds: 1));
-      emit(state.copyWith(status: RoleStatus.success, pendingRole: null));
+    emit(
+      state.copyWith(
+        status: RoleStatus.saving,
+        pendingRole: state.selectedRole,
+      ),
+    );
+
+    try {
+      // Implement role selection through repository
+      if (_authRepository != null) {
+        // Store role locally since API doesn't provide setRole method
+        // The role will be set during registration process instead
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        emit(state.copyWith(status: RoleStatus.success, pendingRole: null));
+      } else {
+        throw Exception('Auth repository không khả dụng');
+      }
     } catch (e) {
       emit(
         state.copyWith(

@@ -36,43 +36,43 @@ import '../auth/auth_manager.dart';
 /// Service Locator using GetIt for Dependency Injection
 class ServiceLocator {
   static final GetIt _getIt = GetIt.instance;
-  
+
   /// Get instance of any registered service
   static T get<T extends Object>() => _getIt.get<T>();
-  
+
   /// Check if a service is registered
   static bool isRegistered<T extends Object>() => _getIt.isRegistered<T>();
-  
+
   /// Setup all dependencies
   static Future<void> setup() async {
     // Register external dependencies first
     await _registerExternalDependencies();
-    
+
     // Register core services
     _registerCoreServices();
-    
+
     // Register repositories
     _registerRepositories();
-    
+
     // ignore: avoid_print
     print('✅ Service Locator setup completed');
   }
-  
+
   /// Register external dependencies (SharedPreferences, etc.)
   static Future<void> _registerExternalDependencies() async {
     // SharedPreferences
     final sharedPreferences = await SharedPreferences.getInstance();
     _getIt.registerSingleton<SharedPreferences>(sharedPreferences);
-    
+
     // ignore: avoid_print
     print('✅ External dependencies registered');
   }
-  
+
   /// Register core services
   static void _registerCoreServices() {
     // Dio instance
     _getIt.registerLazySingleton<Dio>(() => Dio());
-    
+
     // API Client
     _getIt.registerLazySingleton<ApiClient>(() => ApiClient());
 
@@ -106,15 +106,17 @@ class ServiceLocator {
       () => TrackingService(get<ApiClient>()),
     );
 
-    // Chat API Service
-    _getIt.registerLazySingleton<ChatApiService>(
-      () => ChatApiService(get<Dio>()),
-    );
+    // Chat API Service uses same Dio instance configured via ApiClient (baseUrl from Env)
+    _getIt.registerLazySingleton<ChatApiService>(() {
+      final apiClient = get<ApiClient>();
+      // Reuse ApiClient's Dio to leverage interceptors and baseUrl
+      return ChatApiService(apiClient.client);
+    });
 
     // ignore: avoid_print
     print('✅ Core services registered');
   }
-  
+
   /// Register repositories
   static void _registerRepositories() {
     // ✅ Using REAL implementations based on API documentation
@@ -130,9 +132,7 @@ class ServiceLocator {
 
     // Booking Repository - Real implementation
     _getIt.registerLazySingleton<BookingRepositoryInterface>(
-      () => BookingRepositoryImpl(
-        bookingService: get<BookingService>(),
-      ),
+      () => BookingRepositoryImpl(bookingService: get<BookingService>()),
     );
 
     // Ride Repository - Real implementation
@@ -147,16 +147,12 @@ class ServiceLocator {
 
     // Chat Repository - Real implementation
     _getIt.registerLazySingleton<ChatRepositoryInterface>(
-      () => ChatRepositoryImpl(
-        chatApiService: get<ChatApiService>(),
-      ),
+      () => ChatRepositoryImpl(chatApiService: get<ChatApiService>()),
     );
 
     // Location Repository - Real implementation
     _getIt.registerLazySingleton<LocationRepositoryInterface>(
-      () => LocationRepositoryImpl(
-        trackingService: get<TrackingService>(),
-      ),
+      () => LocationRepositoryImpl(trackingService: get<TrackingService>()),
     );
 
     // Tracking Repository - Real implementation
@@ -167,7 +163,7 @@ class ServiceLocator {
     // ignore: avoid_print
     print('✅ Real repositories registered');
   }
-  
+
   /// Reset all dependencies (useful for testing)
   static Future<void> reset() async {
     await _getIt.reset();

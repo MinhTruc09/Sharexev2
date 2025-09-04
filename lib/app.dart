@@ -35,7 +35,6 @@ import 'package:sharexev2/logic/tracking/tracking_cubit.dart';
 // Dependency Injection
 import 'package:sharexev2/core/di/service_locator.dart';
 
-
 class App extends StatelessWidget {
   final bool isFirstOpen;
 
@@ -46,56 +45,105 @@ class App extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         // Core BLoCs
-        BlocProvider(create: (_) => SplashCubit(ServiceLocator.get<AuthService>())),
+        BlocProvider(
+          create: (_) => SplashCubit(ServiceLocator.get<AuthService>()),
+        ),
         BlocProvider(create: (_) => OnboardingCubit()),
-        BlocProvider(create: (_) => RoleSelectionCubit(ServiceLocator.get<AuthRepositoryInterface>())),
+        BlocProvider(
+          create:
+              (_) => RoleSelectionCubit(
+                ServiceLocator.get<AuthRepositoryInterface>(),
+              ),
+        ),
 
         // Auth BLoCs
-        BlocProvider(create: (_) => AuthCubit(ServiceLocator.get<AuthRepositoryInterface>())),
         BlocProvider(
-          create: (_) => RegistrationCubit(
-            authRepository: ServiceLocator.get<AuthRepositoryInterface>(),
-            role: 'PASSENGER',
-          ),
+          create:
+              (_) => AuthCubit(ServiceLocator.get<AuthRepositoryInterface>()),
+        ),
+        BlocProvider(
+          create:
+              (_) => RegistrationCubit(
+                authRepository: ServiceLocator.get<AuthRepositoryInterface>(),
+                role: 'PASSENGER',
+              ),
         ),
 
         // Home BLoCs
-        BlocProvider(create: (_) => HomePassengerCubit(
-          rideRepository: ServiceLocator.get<RideRepositoryInterface>(),
-          bookingRepository: ServiceLocator.get<BookingRepositoryInterface>(),
-          userRepository: ServiceLocator.get<UserRepositoryInterface>(),
-          locationRepository: ServiceLocator.get<LocationRepositoryInterface>(),
-        )),
-        BlocProvider(create: (_) => HomeDriverCubit(
-          rideRepository: ServiceLocator.get<RideRepositoryInterface>(),
-          bookingRepository: ServiceLocator.get<BookingRepositoryInterface>(),
-          userRepository: ServiceLocator.get<UserRepositoryInterface>(),
-        )),
+        BlocProvider(
+          create:
+              (_) => HomePassengerCubit(
+                rideRepository: ServiceLocator.get<RideRepositoryInterface>(),
+                bookingRepository:
+                    ServiceLocator.get<BookingRepositoryInterface>(),
+                locationRepository:
+                    ServiceLocator.get<LocationRepositoryInterface>(),
+              ),
+        ),
+        BlocProvider(
+          create:
+              (_) => HomeDriverCubit(
+                rideRepository: ServiceLocator.get<RideRepositoryInterface>(),
+                bookingRepository:
+                    ServiceLocator.get<BookingRepositoryInterface>(),
+                userRepository: ServiceLocator.get<UserRepositoryInterface>(),
+              ),
+        ),
 
         // Feature BLoCs
-        BlocProvider(create: (_) => BookingCubit(ServiceLocator.get<BookingRepositoryInterface>())),
-        BlocProvider(create: (_) => ChatCubit(
-          chatRepository: ServiceLocator.get<ChatRepositoryInterface>(),
-        )),
-        BlocProvider(create: (_) => MapBloc(locationRepository: ServiceLocator.get<LocationRepositoryInterface>())),
-        BlocProvider(create: (_) => ProfileCubit(
-          userRepository: ServiceLocator.get<UserRepositoryInterface>(),
-          authRepository: ServiceLocator.get<AuthRepositoryInterface>(),
-        )),
-        BlocProvider(create: (_) => RideCubit(
-          rideRepository: ServiceLocator.get<RideRepositoryInterface>(),
-          bookingRepository: ServiceLocator.get<BookingRepositoryInterface>(),
-        )),
+        BlocProvider(
+          create:
+              (_) => BookingCubit(
+                ServiceLocator.get<BookingRepositoryInterface>(),
+              ),
+        ),
+        BlocProvider(
+          create:
+              (_) => ChatCubit(
+                chatRepository: ServiceLocator.get<ChatRepositoryInterface>(),
+              ),
+        ),
+        BlocProvider(
+          create:
+              (_) => MapBloc(
+                locationRepository:
+                    ServiceLocator.get<LocationRepositoryInterface>(),
+              ),
+        ),
+        BlocProvider(
+          create:
+              (_) => ProfileCubit(
+                userRepository: ServiceLocator.get<UserRepositoryInterface>(),
+                authRepository: ServiceLocator.get<AuthRepositoryInterface>(),
+              ),
+        ),
+        BlocProvider(
+          create:
+              (_) => RideCubit(
+                rideRepository: ServiceLocator.get<RideRepositoryInterface>(),
+                bookingRepository:
+                    ServiceLocator.get<BookingRepositoryInterface>(),
+              ),
+        ),
         // New Grab-like features
-        BlocProvider(create: (_) => LocationCubit(
-          locationRepository: ServiceLocator.get<LocationRepositoryInterface>(),
-        )),
-        BlocProvider(create: (_) => TrackingCubit(
-          trackingRepository: ServiceLocator.get<TrackingRepositoryInterface>(),
-          bookingRepository: ServiceLocator.get<BookingRepositoryInterface>(),
-          locationRepository: ServiceLocator.get<LocationRepositoryInterface>(),
-        )),
-
+        BlocProvider(
+          create:
+              (_) => LocationCubit(
+                locationRepository:
+                    ServiceLocator.get<LocationRepositoryInterface>(),
+              ),
+        ),
+        BlocProvider(
+          create:
+              (_) => TrackingCubit(
+                trackingRepository:
+                    ServiceLocator.get<TrackingRepositoryInterface>(),
+                bookingRepository:
+                    ServiceLocator.get<BookingRepositoryInterface>(),
+                locationRepository:
+                    ServiceLocator.get<LocationRepositoryInterface>(),
+              ),
+        ),
       ],
       child: ThemeProvider(
         child: MaterialApp(
@@ -173,7 +221,8 @@ extension ThemeExtension on BuildContext {
   ButtonStyle get textButtonStyle => theme.textButtonTheme.style!;
 
   // Input styles
-  InputDecorationTheme get inputDecorationTheme => theme.inputDecorationTheme as InputDecorationTheme;
+  InputDecorationTheme get inputDecorationTheme =>
+      theme.inputDecorationTheme as InputDecorationTheme;
 
   // Card styles
   CardThemeData get cardTheme => theme.cardTheme;

@@ -25,7 +25,7 @@ class HomePassengerState {
   final List<RideEntity> rideHistory;
 
   // New features for enhanced UI
-  final List<Map<String, dynamic>> nearbyTrips;
+  final List<Map<String, dynamic>> nearbyRides;
   final bool hasActiveTrip;
   final Map<String, dynamic>? activeTripData;
   final int selectedPassengerCount;
@@ -50,7 +50,7 @@ class HomePassengerState {
     this.recentSearches = const [],
     this.currentRide,
     this.rideHistory = const [],
-    this.nearbyTrips = const [],
+    this.nearbyRides = const [],
     this.hasActiveTrip = false,
     this.activeTripData,
     this.selectedPassengerCount = 1,
@@ -76,7 +76,7 @@ class HomePassengerState {
     List<String>? recentSearches,
     RideEntity? currentRide,
     List<RideEntity>? rideHistory,
-    List<Map<String, dynamic>>? nearbyTrips,
+    List<Map<String, dynamic>>? nearbyRides,
     bool? hasActiveTrip,
     Map<String, dynamic>? activeTripData,
     int? selectedPassengerCount,
@@ -101,7 +101,7 @@ class HomePassengerState {
       recentSearches: recentSearches ?? this.recentSearches,
       currentRide: currentRide ?? this.currentRide,
       rideHistory: rideHistory ?? this.rideHistory,
-      nearbyTrips: nearbyTrips ?? this.nearbyTrips,
+      nearbyRides: nearbyRides ?? this.nearbyRides,
       hasActiveTrip: hasActiveTrip ?? this.hasActiveTrip,
       activeTripData: activeTripData ?? this.activeTripData,
       selectedPassengerCount:

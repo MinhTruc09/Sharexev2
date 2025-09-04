@@ -16,7 +16,6 @@ export 'booking/dtos/passenger_info_dto.dart';
 export 'chat/dtos/chat_message_dto.dart';
 export 'chat/dtos/chat_room_dto.dart';
 export 'notification/dtos/notification_dto.dart';
-export 'ride/dtos/ride_request_dto.dart';
 export 'tracking/dtos/location_dto.dart';
 export 'tracking/dtos/tracking_payload_dto.dart';
 

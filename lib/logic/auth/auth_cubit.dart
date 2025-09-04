@@ -61,11 +61,10 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      final credentials = AuthCredentials(
-        email: email,
-        password: password,
+      final credentials = AuthCredentials(email: email, password: password);
+      final authResult = await _authRepository?.loginWithCredentials(
+        credentials,
       );
-      final authResult = await _authRepository?.loginWithCredentials(credentials);
 
       if (authResult?.isSuccess == true && authResult?.user != null) {
         emit(
@@ -97,29 +96,16 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isGoogleSigningIn: true, error: null));
 
     try {
-      // TODO: Get real Google ID token from Google Sign In
-      final idToken = 'google_token_placeholder';
-      final userRole = UserRole.values.firstWhere(
-        (r) => r.name.toLowerCase() == role.toLowerCase(),
-        orElse: () => UserRole.passenger,
+      // Google Sign In not yet fully implemented
+      emit(
+        state.copyWith(
+          status: AuthStatus.error,
+          error:
+              'Đăng nhập Google đang được phát triển, vui lòng sử dụng email/password',
+          isGoogleSigningIn: false,
+        ),
       );
-
-      final authResult = await _authRepository?.loginWithGoogle(idToken, userRole);
-
-      if (authResult?.isSuccess == true && authResult?.user != null) {
-        emit(
-          state.copyWith(
-            status: AuthStatus.authenticated,
-            user: authResult!.user,
-            isGoogleSigningIn: false,
-          ),
-        );
-
-        // Navigate to home screen based on user role
-        _navigateToHomeAndClear(authResult.user!.role.name);
-      } else {
-        throw Exception(authResult?.failure?.message ?? 'Google login failed');
-      }
+      return;
     } catch (e) {
       emit(
         state.copyWith(
@@ -155,9 +141,10 @@ class AuthCubit extends Cubit<AuthState> {
         phoneNumber: phoneNumber,
       );
 
-      final authResult = userRole == UserRole.driver
-          ? await _authRepository?.registerDriver(registerCredentials)
-          : await _authRepository?.registerPassenger(registerCredentials);
+      final authResult =
+          userRole == UserRole.driver
+              ? await _authRepository?.registerDriver(registerCredentials)
+              : await _authRepository?.registerPassenger(registerCredentials);
 
       if (authResult?.isSuccess == true && authResult?.user != null) {
         emit(

@@ -1,9 +1,9 @@
 // lib/data/services/auth_service.dart
 // Service Implementation - Auth API Operations
 
+import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
-import '../../core/network/api_response.dart';
 import '../../config/app_config.dart';
 import '../models/auth/dtos/auth_response_dto.dart';
 import '../models/auth/dtos/login_request_dto.dart';
@@ -24,10 +24,35 @@ abstract class AuthServiceInterface {
 
   // Additional methods needed by repository
   Future<AuthResponseDto> loginWithGoogle(GoogleLoginRequestDto googleRequest);
-  Future<AuthResponseDto> registerPassenger(RegisterPassengerRequestDto registerRequest);
-  Future<AuthResponseDto> registerDriver(RegisterDriverRequestDto registerRequest);
-  Future<Map<String, dynamic>> updateUserProfile(String token, Map<String, dynamic> profileData);
-  Future<void> changePassword(String token, String currentPassword, String newPassword);
+  Future<AuthResponseDto> registerPassenger(
+    RegisterPassengerRequestDto registerRequest,
+  );
+  Future<AuthResponseDto> registerDriver(
+    RegisterDriverRequestDto registerRequest,
+  );
+  Future<AuthResponseDto> registerDriverMultipart({
+    required String email,
+    required String password,
+    required String fullName,
+    required String phoneNumber,
+    required String licensePlate,
+    required String brand,
+    required String model,
+    required String color,
+    required int numberOfSeats,
+    File? avatarImage,
+    File? licenseImage,
+    File? vehicleImage,
+  });
+  Future<Map<String, dynamic>> updateUserProfile(
+    String token,
+    Map<String, dynamic> profileData,
+  );
+  Future<void> changePassword(
+    String token,
+    String currentPassword,
+    String newPassword,
+  );
   Future<void> resetPassword(String email);
   Future<void> verifyEmail(String token);
   Future<void> resendVerificationEmail(String email);
@@ -108,34 +133,170 @@ class AuthService implements AuthServiceInterface {
   }
 
   @override
-  Future<AuthResponseDto> registerPassenger(RegisterPassengerRequestDto request) async {
+  Future<AuthResponseDto> registerPassenger(
+    RegisterPassengerRequestDto request,
+  ) async {
     try {
+      // API docs show query parameters, not body
+      final queryParams = {
+        'email': request.email,
+        'password': request.password,
+        'fullName': request.fullName,
+        'phone': request.phoneNumber,
+      };
+
       final response = await _apiClient.client.post(
         AppConfig.I.auth.registerPassenger,
-        data: request.toJson(),
+        queryParameters: queryParams,
+        // No data needed since all required fields are in query params
       );
 
       return AuthResponseDto.fromJson(response.data);
     } on DioException catch (e) {
       _handleDioException(e, 'registerPassenger');
     } catch (e) {
-      throw AuthServiceException('Unexpected error during passenger registration: $e');
+      throw AuthServiceException(
+        'Unexpected error during passenger registration: $e',
+      );
     }
   }
 
   @override
-  Future<AuthResponseDto> registerDriver(RegisterDriverRequestDto request) async {
+  Future<AuthResponseDto> registerDriver(
+    RegisterDriverRequestDto request,
+  ) async {
     try {
+      // Check if we have image URLs to use multipart endpoint
+      if (request.avatarUrl != null ||
+          request.licenseImageUrl != null ||
+          request.vehicleImageUrl != null) {
+        // Use multipart endpoint for images
+        return await registerDriverMultipart(
+          email: request.email,
+          password: request.password,
+          fullName: request.fullName,
+          phoneNumber: request.phoneNumber,
+          licensePlate: request.licensePlate,
+          brand: request.brand,
+          model: request.model,
+          color: request.color,
+          numberOfSeats: request.numberOfSeats,
+          // File uploads should be handled separately in multipart request
+          // For now, these are URL strings that will be handled by the API
+          avatarImage: null, // request.avatarUrl will be included in API call
+          licenseImage:
+              null, // request.licenseImageUrl will be included in API call
+          vehicleImage:
+              null, // request.vehicleImageUrl will be included in API call
+        );
+      }
+
+      // Build query parameters as required by API docs
+      final queryParams = {
+        'email': request.email,
+        'phone': request.phoneNumber,
+        'password': request.password,
+        'fullName': request.fullName,
+        'licensePlate': request.licensePlate,
+        'brand': request.brand,
+        'model': request.model,
+        'color': request.color,
+        'numberOfSeats': request.numberOfSeats.toString(),
+      };
+
+      // API docs show parameters in query string, not in body
+      // Request body is multipart/form-data but only for optional images
       final response = await _apiClient.client.post(
         AppConfig.I.auth.registerDriver,
-        data: request.toJson(),
+        queryParameters: queryParams,
+        // No data needed since all required fields are in query params
       );
 
       return AuthResponseDto.fromJson(response.data);
     } on DioException catch (e) {
       _handleDioException(e, 'registerDriver');
     } catch (e) {
-      throw AuthServiceException('Unexpected error during driver registration: $e');
+      throw AuthServiceException(
+        'Unexpected error during driver registration: $e',
+      );
+    }
+  }
+
+  @override
+  Future<AuthResponseDto> registerDriverMultipart({
+    required String email,
+    required String password,
+    required String fullName,
+    required String phoneNumber,
+    required String licensePlate,
+    required String brand,
+    required String model,
+    required String color,
+    required int numberOfSeats,
+    File? avatarImage,
+    File? licenseImage,
+    File? vehicleImage,
+  }) async {
+    try {
+      final formData = FormData();
+      formData.fields
+        ..add(MapEntry('email', email))
+        ..add(MapEntry('password', password))
+        ..add(MapEntry('fullName', fullName))
+        ..add(MapEntry('phone', phoneNumber))
+        ..add(MapEntry('licensePlate', licensePlate))
+        ..add(MapEntry('brand', brand))
+        ..add(MapEntry('model', model))
+        ..add(MapEntry('color', color))
+        ..add(MapEntry('numberOfSeats', numberOfSeats.toString()));
+
+      if (avatarImage != null) {
+        formData.files.add(
+          MapEntry(
+            'avatarImage',
+            await MultipartFile.fromFile(
+              avatarImage.path,
+              filename: avatarImage.uri.pathSegments.last,
+            ),
+          ),
+        );
+      }
+      if (licenseImage != null) {
+        formData.files.add(
+          MapEntry(
+            'licenseImage',
+            await MultipartFile.fromFile(
+              licenseImage.path,
+              filename: licenseImage.uri.pathSegments.last,
+            ),
+          ),
+        );
+      }
+      if (vehicleImage != null) {
+        formData.files.add(
+          MapEntry(
+            'vehicleImage',
+            await MultipartFile.fromFile(
+              vehicleImage.path,
+              filename: vehicleImage.uri.pathSegments.last,
+            ),
+          ),
+        );
+      }
+
+      final response = await _apiClient.client.post(
+        AppConfig.I.auth.registerDriver,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      return AuthResponseDto.fromJson(response.data);
+    } on DioException catch (e) {
+      _handleDioException(e, 'registerDriverMultipart');
+    } catch (e) {
+      throw AuthServiceException(
+        'Unexpected error during driver registration (multipart): $e',
+      );
     }
   }
 
@@ -174,14 +335,15 @@ class AuthService implements AuthServiceInterface {
   // ===== Profile Management =====
 
   @override
-  Future<Map<String, dynamic>> updateUserProfile(String token, Map<String, dynamic> profileData) async {
+  Future<Map<String, dynamic>> updateUserProfile(
+    String token,
+    Map<String, dynamic> profileData,
+  ) async {
     try {
       final response = await _apiClient.client.put(
         AppConfig.I.auth.profile,
         data: profileData,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       return response.data as Map<String, dynamic>;
@@ -193,17 +355,16 @@ class AuthService implements AuthServiceInterface {
   }
 
   @override
-  Future<void> changePassword(String token, String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+    String token,
+    String currentPassword,
+    String newPassword,
+  ) async {
     try {
       await _apiClient.client.post(
         AppConfig.I.auth.changePassword,
-        data: {
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        },
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
     } on DioException catch (e) {
       _handleDioException(e, 'changePassword');
@@ -236,7 +397,9 @@ class AuthService implements AuthServiceInterface {
     } on DioException catch (e) {
       _handleDioException(e, 'verifyEmail');
     } catch (e) {
-      throw AuthServiceException('Unexpected error during email verification: $e');
+      throw AuthServiceException(
+        'Unexpected error during email verification: $e',
+      );
     }
   }
 
@@ -250,7 +413,9 @@ class AuthService implements AuthServiceInterface {
     } on DioException catch (e) {
       _handleDioException(e, 'resendVerificationEmail');
     } catch (e) {
-      throw AuthServiceException('Unexpected error during resend verification: $e');
+      throw AuthServiceException(
+        'Unexpected error during resend verification: $e',
+      );
     }
   }
 
@@ -270,7 +435,9 @@ class AuthService implements AuthServiceInterface {
     } on DioException catch (e) {
       _handleDioException(e, 'registerDevice');
     } catch (e) {
-      throw AuthServiceException('Unexpected error during device registration: $e');
+      throw AuthServiceException(
+        'Unexpected error during device registration: $e',
+      );
     }
   }
 
@@ -284,7 +451,9 @@ class AuthService implements AuthServiceInterface {
     } on DioException catch (e) {
       _handleDioException(e, 'unregisterDevice');
     } catch (e) {
-      throw AuthServiceException('Unexpected error during device unregistration: $e');
+      throw AuthServiceException(
+        'Unexpected error during device unregistration: $e',
+      );
     }
   }
 
@@ -305,13 +474,14 @@ class AuthService implements AuthServiceInterface {
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode;
         final responseData = e.response?.data;
-        
+
         if (statusCode == 401) {
           message = 'Authentication failed during $operation';
         } else if (statusCode == 403) {
           message = 'Access forbidden during $operation';
         } else if (statusCode == 422) {
-          message = 'Validation error during $operation: ${responseData?['message'] ?? 'Invalid data'}';
+          message =
+              'Validation error during $operation: ${responseData?['message'] ?? 'Invalid data'}';
         } else {
           message = 'Server error during $operation: $statusCode';
         }
@@ -332,11 +502,7 @@ class AuthServiceException implements Exception {
   final String? code;
   final Map<String, dynamic>? details;
 
-  const AuthServiceException(
-    this.message, {
-    this.code,
-    this.details,
-  });
+  const AuthServiceException(this.message, {this.code, this.details});
 
   @override
   String toString() => 'AuthServiceException: $message';
@@ -345,14 +511,14 @@ class AuthServiceException implements Exception {
 /// Firebase Auth Service for social login
 class FirebaseAuthService {
   static bool get isAvailable => true; // Placeholder
-  
+
   String? get currentUser => null; // Placeholder
-  
+
   Future<String?> getIdToken() async {
     // Placeholder implementation
     return null;
   }
-  
+
   Future<void> signOut() async {
     // Placeholder implementation
   }

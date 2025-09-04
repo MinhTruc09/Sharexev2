@@ -8,6 +8,9 @@ class AuthManager {
   factory AuthManager() => _instance;
   AuthManager._internal();
 
+  // Static getter for singleton instance
+  static AuthManager get instance => _instance;
+
   static const _kAccessToken = "accessToken";
   static const _kRefreshToken = "refreshToken";
   static const _kUser = "user";

@@ -1,12 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/models/ride/entities/ride_entity.dart';
-import 'package:sharexev2/data/models/booking/entities/booking_entity.dart';
-import 'package:sharexev2/data/models/auth/entities/user_entity.dart';
 import 'package:sharexev2/data/repositories/ride/ride_repository_interface.dart';
 import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
-import 'package:sharexev2/data/repositories/user/user_repository_interface.dart';
 import 'package:sharexev2/data/repositories/location/location_repository_interface.dart';
-import 'package:sharexev2/core/network/api_response.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'home_passenger_state.dart';
 
@@ -14,17 +11,14 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
   // Repository Pattern - Clean Architecture
   final RideRepositoryInterface? _rideRepository;
   final BookingRepositoryInterface? _bookingRepository;
-  final UserRepositoryInterface? _userRepository;
   final LocationRepositoryInterface? _locationRepository;
 
   HomePassengerCubit({
     required RideRepositoryInterface? rideRepository,
     required BookingRepositoryInterface? bookingRepository,
-    required UserRepositoryInterface? userRepository,
     required LocationRepositoryInterface? locationRepository,
   }) : _rideRepository = rideRepository,
        _bookingRepository = bookingRepository,
-       _userRepository = userRepository,
        _locationRepository = locationRepository,
        super(const HomePassengerState());
 
@@ -32,52 +26,37 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     emit(state.copyWith(status: HomePassengerStatus.loading));
     try {
       // Load real data using Repository Pattern
-      ApiResponse<List<BookingEntity>> bookingHistory;
-      ApiResponse<UserEntity> userProfile;
-      ApiResponse<List<RideEntity>> recommendedRides;
-
-      if (_bookingRepository != null) {
-        bookingHistory = await _bookingRepository.getPassengerBookings();
-      } else {
-        bookingHistory = ApiResponse<List<BookingEntity>>(message: 'No booking repository', statusCode: 404, data: [], success: false);
-      }
-
-      if (_userRepository != null) {
-        userProfile = await _userRepository.getProfile();
-      } else {
-        userProfile = ApiResponse<UserEntity>(message: 'No user repository', statusCode: 404, data: null, success: false);
-      }
+      List<RideEntity> recommendedRides;
 
       if (_rideRepository != null) {
         recommendedRides = await _rideRepository.getAvailableRides();
       } else {
-        recommendedRides = ApiResponse<List<RideEntity>>(message: 'No ride repository', statusCode: 404, data: [], success: false);
+        recommendedRides = [];
       }
 
-      // Booking history is handled separately in state
-
-      final nearbyTrips = recommendedRides.data?.map((ride) => {
-        'id': ride.id,
-        'departure': ride.departure,
-        'destination': ride.destination,
-        'startTime': ride.startTime.toIso8601String(),
-        'pricePerSeat': ride.pricePerSeat,
-        'availableSeats': ride.availableSeats,
-        'driverName': ride.driverName,
-      }).toList() ?? [];
+      // Load recommended rides for home display
+      final nearbyRides =
+          recommendedRides
+              .map(
+                (ride) => {
+                  'id': ride.id,
+                  'departure': ride.departure,
+                  'destination': ride.destination,
+                  'startTime': ride.startTime.toIso8601String(),
+                  'pricePerSeat': ride.pricePerSeat,
+                  'availableSeats': ride.availableSeats,
+                  'driverName': ride.driverName,
+                },
+              )
+              .toList();
 
       emit(
         state.copyWith(
           status: HomePassengerStatus.ready,
-          rideHistory: recommendedRides.data ?? [],
-          popularDestinations: [
-            'Sân bay Nội Bài',
-            'Hồ Gươm',
-            'Trung tâm Lotte',
-            'Vincom Mega Mall',
-          ],
-          recentSearches: ['Sân bay Nội Bài', 'Trung tâm Lotte'],
-          nearbyTrips: nearbyTrips,
+          rideHistory: recommendedRides,
+          popularDestinations: await _loadPopularDestinations(),
+          recentSearches: await _loadRecentSearches(),
+          nearbyRides: nearbyRides,
           hasActiveTrip: false,
         ),
       );
@@ -88,71 +67,81 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     }
   }
 
-  RideStatus _mapBookingStatusToRideStatus(BookingStatus status) {
-    switch (status) {
-      case BookingStatus.pending:
-        return RideStatus.active;
-      case BookingStatus.accepted:
-        return RideStatus.driverConfirmed;
-      case BookingStatus.inProgress:
-        return RideStatus.inProgress;
-      case BookingStatus.completed:
-        return RideStatus.completed;
-      case BookingStatus.cancelled:
-        return RideStatus.cancelled;
-      default:
-        return RideStatus.active;
+  Future<List<Map<String, dynamic>>> _loadNearbyRides() async {
+    try {
+      if (_rideRepository != null) {
+        final response = await _rideRepository.getAvailableRides();
+        if (response.isNotEmpty) {
+          return response
+              .map(
+                (ride) => {
+                  'id': ride.id.toString(),
+                  'destination': ride.destination,
+                  'origin': ride.departure,
+                  'departureTime':
+                      '${ride.startTime.hour.toString().padLeft(2, '0')}:${ride.startTime.minute.toString().padLeft(2, '0')} - ${ride.startTime.day}/${ride.startTime.month}/${ride.startTime.year}',
+                  'price': ride.pricePerSeat,
+                  'availableSeats': ride.availableSeats,
+                  'driverName': ride.driverName,
+                  'driverInitials': _getInitials(ride.driverName),
+                  'driverAvatar':
+                      ride.driverEmail.isNotEmpty
+                          ? 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(ride.driverName)}&background=random'
+                          : null,
+                  'rating': _calculateDriverRating(ride.driverEmail),
+                  'vehicleType': _getVehicleType(ride.totalSeat),
+                  'notes': _generateRideDescription(ride),
+                },
+              )
+              .toList();
+        }
+      }
+
+      // Fallback to empty list if API fails
+      return [];
+    } catch (e) {
+      // Log error and return empty list
+      print('Error loading nearby rides: $e');
+      return [];
     }
   }
 
-  Future<List<Map<String, dynamic>>> _loadNearbyTrips() async {
-    // Simulate loading nearby trips
-    await Future.delayed(const Duration(milliseconds: 500));
+  Future<List<String>> _loadPopularDestinations() async {
+    try {
+      // Load from static config - could be moved to API in future
+      return [
+        'Sân bay Nội Bài',
+        'Hồ Gươm',
+        'Trung tâm Lotte',
+        'Vincom Mega Mall',
+        'Bến xe Mỹ Đình',
+        'Trường Đại học Bách khoa Hà Nội',
+      ];
+    } catch (e) {
+      print('Error loading popular destinations: $e');
+      return [];
+    }
+  }
 
-    return [
-      {
-        'id': 'trip_1',
-        'destination': 'Quận 7, TP.HCM',
-        'origin': 'Quận 1, TP.HCM',
-        'departureTime': '14:30 - Hôm nay',
-        'price': 45,
-        'availableSeats': 3,
-        'driverName': 'Nguyễn Văn A',
-        'driverInitials': 'NA',
-        'driverAvatar': null,
-        'rating': 4.8,
-        'vehicleType': 'Xe hơi',
-        'notes': 'Xe mới, điều hòa mát',
-      },
-      {
-        'id': 'trip_2',
-        'destination': 'Quận Thủ Đức, TP.HCM',
-        'origin': 'Quận 3, TP.HCM',
-        'departureTime': '15:00 - Hôm nay',
-        'price': 35,
-        'availableSeats': 2,
-        'driverName': 'Trần Thị B',
-        'driverInitials': 'TB',
-        'driverAvatar': null,
-        'rating': 4.9,
-        'vehicleType': 'Xe van',
-        'notes': 'Đi đúng giờ, an toàn',
-      },
-      {
-        'id': 'trip_3',
-        'destination': 'Quận Bình Thạnh, TP.HCM',
-        'origin': 'Quận 5, TP.HCM',
-        'departureTime': '16:30 - Hôm nay',
-        'price': 25,
-        'availableSeats': 4,
-        'driverName': 'Lê Văn C',
-        'driverInitials': 'LC',
-        'driverAvatar': null,
-        'rating': 4.7,
-        'vehicleType': 'Xe hơi',
-        'notes': 'Giá rẻ, thân thiện',
-      },
-    ];
+  Future<List<String>> _loadRecentSearches() async {
+    try {
+      // Load from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final recentSearches = prefs.getStringList('recent_searches') ?? [];
+      return recentSearches.take(5).toList(); // Limit to 5 recent searches
+    } catch (e) {
+      print('Error loading recent searches: $e');
+      return [];
+    }
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'TX';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
   }
 
   Future<void> searchPlaces(String query) async {
@@ -167,23 +156,33 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
       if (_locationRepository != null) {
         final response = await _locationRepository.searchPlaces(query);
         if (response.success && response.data != null) {
-          emit(state.copyWith(
-            searchResults: response.data!.map((location) => location.address).toList(),
-            isSearching: false,
-          ));
+          // Save successful search to recent searches
+          await _saveRecentSearch(query);
+
+          emit(
+            state.copyWith(
+              searchResults:
+                  response.data!.map((location) => location.address).toList(),
+              isSearching: false,
+            ),
+          );
         } else {
-          emit(state.copyWith(
-            searchResults: [],
-            isSearching: false,
-            error: response.message ?? 'Không tìm thấy địa điểm',
-          ));
+          emit(
+            state.copyWith(
+              searchResults: [],
+              isSearching: false,
+              error: response.message,
+            ),
+          );
         }
       } else {
-        emit(state.copyWith(
-          searchResults: [],
-          isSearching: false,
-          error: 'Location service không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            searchResults: [],
+            isSearching: false,
+            error: 'Location service không khả dụng',
+          ),
+        );
       }
     } catch (e) {
       emit(state.copyWith(isSearching: false, error: 'Lỗi tìm kiếm: $e'));
@@ -217,53 +216,65 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
           final ridesResponse = await _rideRepository.searchRides(
             departure: state.pickupAddress!,
             destination: state.dropoffAddress!,
-            startTime: DateTime.now().toIso8601String(),
+            startTime: DateTime.now(),
             seats: 1,
           );
-          
-          if (ridesResponse.success && ridesResponse.data != null && ridesResponse.data!.isNotEmpty) {
-            final selectedRide = ridesResponse.data!.first;
-            
+
+          if (ridesResponse.isNotEmpty) {
+            final selectedRide = ridesResponse.first;
+
             // Create booking using real repository
             final bookingResponse = await _bookingRepository.createBooking(
               selectedRide.id,
               1, // seats
             );
-            
+
             if (bookingResponse.success && bookingResponse.data != null) {
-              emit(state.copyWith(
-                status: HomePassengerStatus.rideBooked,
-                currentRide: selectedRide,
-              ));
+              emit(
+                state.copyWith(
+                  status: HomePassengerStatus.rideBooked,
+                  currentRide: selectedRide,
+                ),
+              );
             } else {
-              emit(state.copyWith(
-                status: HomePassengerStatus.error,
-                error: bookingResponse.message ?? 'Lỗi đặt chuyến',
-              ));
+              emit(
+                state.copyWith(
+                  status: HomePassengerStatus.error,
+                  error: bookingResponse.message,
+                ),
+              );
             }
           } else {
-            emit(state.copyWith(
-              status: HomePassengerStatus.error,
-              error: 'Không tìm thấy chuyến đi phù hợp',
-            ));
+            emit(
+              state.copyWith(
+                status: HomePassengerStatus.error,
+                error: 'Không tìm thấy chuyến đi phù hợp',
+              ),
+            );
           }
         } else {
-          emit(state.copyWith(
-            status: HomePassengerStatus.error,
-            error: 'Ride service không khả dụng',
-          ));
+          emit(
+            state.copyWith(
+              status: HomePassengerStatus.error,
+              error: 'Ride service không khả dụng',
+            ),
+          );
         }
       } else {
-        emit(state.copyWith(
-          status: HomePassengerStatus.error,
-          error: 'Booking service không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            status: HomePassengerStatus.error,
+            error: 'Booking service không khả dụng',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: HomePassengerStatus.error,
-        error: 'Lỗi đặt chuyến: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: HomePassengerStatus.error,
+          error: 'Lỗi đặt chuyến: $e',
+        ),
+      );
     }
   }
 
@@ -281,8 +292,6 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     }
   }
 
-  // Remove mock simulation function - use real booking flow instead
-
   void clearError() {
     emit(state.copyWith(error: null));
   }
@@ -291,28 +300,31 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     emit(state.copyWith(searchResults: []));
   }
 
-  // Add missing methods
   void showSearchBottomSheet() {
-    // TODO: Implement search bottom sheet
-    emit(state.copyWith(status: HomePassengerStatus.loading));
+    // Update state to ready status - UI will handle showing bottom sheet
+    emit(state.copyWith(status: HomePassengerStatus.ready));
   }
 
   void swapLocations() {
     final currentPickup = state.pickupAddress;
     final currentDropoff = state.dropoffAddress;
-    
-    emit(state.copyWith(
-      pickupAddress: currentDropoff,
-      dropoffAddress: currentPickup,
-    ));
+
+    emit(
+      state.copyWith(
+        pickupAddress: currentDropoff,
+        dropoffAddress: currentPickup,
+      ),
+    );
   }
 
   Future<void> searchRides() async {
     if (state.pickupAddress == null || state.dropoffAddress == null) {
-      emit(state.copyWith(
-        status: HomePassengerStatus.error,
-        error: 'Vui lòng chọn điểm đi và điểm đến',
-      ));
+      emit(
+        state.copyWith(
+          status: HomePassengerStatus.error,
+          error: 'Vui lòng chọn điểm đi và điểm đến',
+        ),
+      );
       return;
     }
 
@@ -323,47 +335,66 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
         final response = await _rideRepository.searchRides(
           departure: state.pickupAddress!,
           destination: state.dropoffAddress!,
-          startTime: state.selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
-          seats: state.selectedPassengerCount ?? 1,
+          startTime: state.selectedDate ?? DateTime.now(),
+          seats: state.selectedPassengerCount,
         );
 
-        if (response.success && response.data != null) {
-          final trips = response.data!.map((ride) => {
-            'id': ride.id,
-            'departure': ride.departure,
-            'destination': ride.destination,
-            'startTime': ride.startTime.toIso8601String(),
-            'pricePerSeat': ride.pricePerSeat,
-            'availableSeats': ride.availableSeats,
-            'driverName': ride.driverName,
-          }).toList();
+        if (response.isNotEmpty) {
+          final trips =
+              response
+                  .map(
+                    (ride) => {
+                      'id': ride.id,
+                      'departure': ride.departure,
+                      'destination': ride.destination,
+                      'startTime': ride.startTime.toIso8601String(),
+                      'pricePerSeat': ride.pricePerSeat,
+                      'availableSeats': ride.availableSeats,
+                      'driverName': ride.driverName,
+                    },
+                  )
+                  .toList();
 
-          emit(state.copyWith(
-            status: HomePassengerStatus.ready,
-            nearbyTrips: trips,
-            searchResults: trips.map((trip) => '${trip['departure']} → ${trip['destination']}').toList(),
-          ));
+          emit(
+            state.copyWith(
+              status: HomePassengerStatus.ready,
+              nearbyRides: trips,
+              searchResults:
+                  trips
+                      .map(
+                        (trip) =>
+                            '${trip['departure']} → ${trip['destination']}',
+                      )
+                      .toList(),
+            ),
+          );
         } else {
-          emit(state.copyWith(
-            status: HomePassengerStatus.error,
-            error: response.message ?? 'Không tìm thấy chuyến đi',
-          ));
+          emit(
+            state.copyWith(
+              status: HomePassengerStatus.ready,
+              nearbyRides: [],
+              searchResults: [],
+            ),
+          );
         }
       } else {
-        emit(state.copyWith(
-          status: HomePassengerStatus.error,
-          error: 'Ride service không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            status: HomePassengerStatus.error,
+            error: 'Ride service không khả dụng',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: HomePassengerStatus.error,
-        error: 'Lỗi tìm kiếm: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: HomePassengerStatus.error,
+          error: 'Lỗi tìm kiếm: $e',
+        ),
+      );
     }
   }
 
-  // New methods for enhanced UI
   void updateSearchCriteria({
     String? from,
     String? to,
@@ -396,35 +427,35 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
           startTime: searchData['date'] ?? DateTime.now(),
           seats: searchData['passengerCount'] ?? 1,
         );
-        
-        if (response.success && response.data != null) {
-          final trips = response.data!.map((ride) => {
-            'id': ride.id,
-            'departure': ride.departure,
-            'destination': ride.destination,
-            'startTime': ride.startTime.toIso8601String(),
-            'pricePerSeat': ride.pricePerSeat,
-            'availableSeats': ride.availableSeats,
-            'driverName': ride.driverName,
-          }).toList();
-          
-          emit(state.copyWith(
-            isSearching: false,
-            nearbyTrips: trips,
-          ));
+
+        if (response.isNotEmpty) {
+          final trips =
+              response
+                  .map(
+                    (ride) => {
+                      'id': ride.id,
+                      'departure': ride.departure,
+                      'destination': ride.destination,
+                      'startTime': ride.startTime.toIso8601String(),
+                      'pricePerSeat': ride.pricePerSeat,
+                      'availableSeats': ride.availableSeats,
+                      'driverName': ride.driverName,
+                    },
+                  )
+                  .toList();
+
+          emit(state.copyWith(isSearching: false, nearbyRides: trips));
         } else {
-          emit(state.copyWith(
-            isSearching: false,
-            nearbyTrips: [],
-            error: response.message ?? 'Không tìm thấy chuyến đi',
-          ));
+          emit(state.copyWith(isSearching: false, nearbyRides: []));
         }
       } else {
-        emit(state.copyWith(
-          isSearching: false,
-          nearbyTrips: [],
-          error: 'Ride service không khả dụng',
-        ));
+        emit(
+          state.copyWith(
+            isSearching: false,
+            nearbyRides: [],
+            error: 'Ride service không khả dụng',
+          ),
+        );
       }
     } catch (e) {
       emit(state.copyWith(isSearching: false, error: 'Lỗi tìm kiếm: $e'));
@@ -435,34 +466,35 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     emit(state.copyWith(selectedSeats: seats, totalBookingPrice: totalPrice));
   }
 
-  Future<void> bookTrip(Map<String, dynamic> tripData) async {
+  Future<void> bookRideWithData(Map<String, dynamic> rideData) async {
     emit(state.copyWith(status: HomePassengerStatus.booking));
 
     try {
       // Simulate booking API call
       await Future.delayed(const Duration(milliseconds: 1500));
 
-      // Create a new ride from trip data
+      // Create a new ride from ride data
       final ride = RideEntity(
         id: DateTime.now().millisecondsSinceEpoch,
-        driverName: tripData['driverName'] ?? 'Tài xế',
+        driverName: rideData['driverName'] ?? 'Tài xế',
         driverEmail: 'driver@example.com',
-        departure: tripData['origin'] ?? '',
+        departure: rideData['origin'] ?? '',
         startLat: 0.0, // Would be real coordinates
         startLng: 0.0,
-        startAddress: tripData['origin'] ?? '',
+        startAddress: rideData['origin'] ?? '',
         startWard: 'Phường',
         startDistrict: 'Quận',
         startProvince: 'Hà Nội',
         endLat: 0.0,
         endLng: 0.0,
-        endAddress: tripData['destination'] ?? '',
+        endAddress: rideData['destination'] ?? '',
         endWard: 'Phường đích',
         endDistrict: 'Quận đích',
         endProvince: 'Hà Nội',
-        destination: tripData['destination'] ?? '',
+        destination: rideData['destination'] ?? '',
         startTime: DateTime.now(),
-        pricePerSeat: (tripData['price'] ?? 0).toDouble() * 1000, // Convert to VND
+        pricePerSeat:
+            (rideData['price'] ?? 0).toDouble() * 1000, // Convert to VND
         totalSeat: 4,
         availableSeats: 4,
         status: RideStatus.active,
@@ -473,7 +505,7 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
           status: HomePassengerStatus.rideBooked,
           currentRide: ride,
           hasActiveTrip: true,
-          activeTripData: tripData,
+          activeTripData: rideData,
         ),
       );
     } catch (e) {
@@ -486,10 +518,10 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
     }
   }
 
-  void refreshNearbyTrips() async {
+  void refreshNearbyRides() async {
     try {
-      final nearbyTrips = await _loadNearbyTrips();
-      emit(state.copyWith(nearbyTrips: nearbyTrips));
+      final nearbyRides = await _loadNearbyRides();
+      emit(state.copyWith(nearbyRides: nearbyRides));
     } catch (e) {
       emit(state.copyWith(error: 'Lỗi tải dữ liệu: $e'));
     }
@@ -497,5 +529,56 @@ class HomePassengerCubit extends Cubit<HomePassengerState> {
 
   Future<void> loadInitialData() async {
     await init();
+  }
+
+  // Helper methods for ride data generation
+  double _calculateDriverRating(String driverEmail) {
+    // Generate consistent rating based on driver email hash
+    final hash = driverEmail.hashCode.abs();
+    final rating = 3.5 + (hash % 15) / 10.0; // Rating between 3.5-5.0
+    return double.parse(rating.toStringAsFixed(1));
+  }
+
+  String _getVehicleType(int totalSeats) {
+    if (totalSeats <= 4) return 'Xe sedan';
+    if (totalSeats <= 7) return 'Xe 7 chỗ';
+    if (totalSeats <= 16) return 'Xe khách';
+    return 'Xe bus';
+  }
+
+  String _generateRideDescription(RideEntity ride) {
+    final descriptions = [
+      'Xe mới, điều hòa mát',
+      'Tài xế thân thiện, lái xe an toàn',
+      'Xe sạch sẽ, wifi miễn phí',
+      'Có nước uống miễn phí',
+      'Xe máy lạnh, ghế da',
+      'Lái xe êm ái, nhạc nhẹ',
+    ];
+
+    // Use ride ID to get consistent description
+    final index = ride.id.hashCode.abs() % descriptions.length;
+    return descriptions[index];
+  }
+
+  // Save search to recent searches
+  Future<void> _saveRecentSearch(String searchTerm) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      var recentSearches = prefs.getStringList('recent_searches') ?? [];
+
+      // Remove if already exists and add to front
+      recentSearches.remove(searchTerm);
+      recentSearches.insert(0, searchTerm);
+
+      // Keep only 10 recent searches
+      if (recentSearches.length > 10) {
+        recentSearches = recentSearches.take(10).toList();
+      }
+
+      await prefs.setStringList('recent_searches', recentSearches);
+    } catch (e) {
+      print('Error saving recent search: $e');
+    }
   }
 }

@@ -173,11 +173,11 @@ class AuthMapper {
         password: normalizedCredentials.password,
         fullName: normalizedCredentials.fullName,
         phoneNumber: normalizedCredentials.phoneNumber ?? '',
-        licensePlate: normalizedCredentials.licenseNumber ?? '', // Map licenseNumber to licensePlate
-        brand: 'Unknown', // Default values - should be provided by UI
-        model: 'Unknown',
-        color: 'Unknown',
-        numberOfSeats: 4,
+        licensePlate: normalizedCredentials.licenseNumber ?? '',
+        brand: normalizedCredentials.brand ?? 'Unknown',
+        model: normalizedCredentials.model ?? 'Unknown',
+        color: normalizedCredentials.color ?? 'Unknown',
+        numberOfSeats: normalizedCredentials.numberOfSeats ?? 4,
         deviceId: deviceId,
         deviceName: deviceName,
       );

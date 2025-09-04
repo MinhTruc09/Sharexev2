@@ -1,5 +1,6 @@
 // Domain Value Object: AuthCredentials
 // Chứa thông tin đăng nhập và validation
+import 'dart:io';
 
 /// Value Object: AuthCredentials
 /// Chứa thông tin đăng nhập với validation
@@ -7,10 +8,7 @@ class AuthCredentials {
   final String email;
   final String password;
 
-  const AuthCredentials({
-    required this.email,
-    required this.password,
-  });
+  const AuthCredentials({required this.email, required this.password});
 
   // ===== Validation =====
 
@@ -28,12 +26,12 @@ class AuthCredentials {
   /// Kiểm tra password có đủ mạnh không (strict)
   bool get hasStrongPassword {
     if (password.length < 8) return false;
-    
+
     // Phải có ít nhất 1 chữ hoa, 1 chữ thường, 1 số
     final hasUppercase = password.contains(RegExp(r'[A-Z]'));
     final hasLowercase = password.contains(RegExp(r'[a-z]'));
     final hasDigits = password.contains(RegExp(r'[0-9]'));
-    
+
     return hasUppercase && hasLowercase && hasDigits;
   }
 
@@ -50,7 +48,9 @@ class AuthCredentials {
     if (password.isEmpty) {
       errors.add('Mật khẩu không được để trống');
     } else if (requireStrongPassword && !hasStrongPassword) {
-      errors.add('Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số');
+      errors.add(
+        'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số',
+      );
     } else if (!hasValidPassword) {
       errors.add('Mật khẩu phải có ít nhất 6 ký tự');
     }
@@ -80,7 +80,7 @@ class AuthCredentials {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is AuthCredentials &&
-           other.email.toLowerCase() == email.toLowerCase();
+        other.email.toLowerCase() == email.toLowerCase();
   }
 
   @override
@@ -94,10 +94,20 @@ class AuthCredentials {
 
 /// Value Object: RegisterCredentials
 /// Chứa thông tin đăng ký với validation mở rộng
+
 class RegisterCredentials extends AuthCredentials {
   final String fullName;
   final String? phoneNumber;
   final String? licenseNumber; // For drivers
+  // Driver vehicle details (optional for passengers)
+  final String? brand;
+  final String? model;
+  final String? color;
+  final int? numberOfSeats;
+  // Optional images (for driver multipart)
+  final File? avatarImage;
+  final File? licenseImage;
+  final File? vehicleImage;
 
   const RegisterCredentials({
     required super.email,
@@ -105,6 +115,13 @@ class RegisterCredentials extends AuthCredentials {
     required this.fullName,
     this.phoneNumber,
     this.licenseNumber,
+    this.brand,
+    this.model,
+    this.color,
+    this.numberOfSeats,
+    this.avatarImage,
+    this.licenseImage,
+    this.vehicleImage,
   });
 
   // ===== Additional Validation =====
@@ -145,6 +162,11 @@ class RegisterCredentials extends AuthCredentials {
       errors.add('Số giấy phép lái xe phải có ít nhất 8 ký tự');
     }
 
+    // Driver-specific numeric validation
+    if (numberOfSeats != null && numberOfSeats! < 1) {
+      errors.add('Số ghế phải >= 1');
+    }
+
     return errors;
   }
 
@@ -157,6 +179,13 @@ class RegisterCredentials extends AuthCredentials {
       fullName: fullName.trim(),
       phoneNumber: phoneNumber?.trim(),
       licenseNumber: licenseNumber?.trim(),
+      brand: brand?.trim(),
+      model: model?.trim(),
+      color: color?.trim(),
+      numberOfSeats: numberOfSeats,
+      avatarImage: avatarImage,
+      licenseImage: licenseImage,
+      vehicleImage: vehicleImage,
     );
   }
 
