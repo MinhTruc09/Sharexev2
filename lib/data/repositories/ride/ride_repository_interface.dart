@@ -28,4 +28,7 @@ abstract class RideRepositoryInterface {
 
   /// Lấy tất cả chuyến đi
   Future<ApiResponse<List<RideEntity>>> getAllRides();
+
+  /// Lấy danh sách chuyến đi của tài xế
+  Future<ApiResponse<List<RideEntity>>> getDriverRides();
 }

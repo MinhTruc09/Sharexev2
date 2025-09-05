@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:sharexev2/data/repositories/ride/ride_repository_interface.dart';
 import 'package:sharexev2/data/repositories/booking/booking_repository_interface.dart';
 import 'package:sharexev2/data/models/ride/entities/ride_entity.dart'
@@ -18,6 +19,54 @@ class RideCubit extends Cubit<RideState> {
   }) : _rideRepository = rideRepository,
        _bookingRepository = bookingRepository,
        super(const RideState());
+
+  /// Load driver rides from repository
+  Future<void> loadDriverRides() async {
+    emit(state.copyWith(status: RideStatus.loading));
+
+    try {
+      if (_rideRepository != null) {
+        final response = await _rideRepository.getDriverRides();
+        
+        if (response.success && response.data != null) {
+          emit(state.copyWith(
+            status: RideStatus.loaded,
+            rides: response.data,
+          ));
+        } else {
+          emit(state.copyWith(
+            status: RideStatus.error,
+            error: response.message.isEmpty ? 'Failed to load driver rides' : response.message,
+          ));
+        }
+      } else {
+        // Repository not available - show error instead of mock data
+        emit(state.copyWith(
+          status: RideStatus.error,
+          error: 'Ride service is not available. Please check your connection.',
+        ));
+      }
+    } catch (e) {
+      String errorMessage = 'Không thể tải danh sách chuyến đi';
+      
+      if (e.toString().contains('SocketException') || e.toString().contains('NetworkException')) {
+        errorMessage = 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
+      } else if (e.toString().contains('TimeoutException')) {
+        errorMessage = 'Kết nối quá chậm. Vui lòng thử lại.';
+      } else if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+        errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      } else if (e.toString().contains('403') || e.toString().contains('Forbidden')) {
+        errorMessage = 'Bạn không có quyền truy cập tính năng này.';
+      } else if (e.toString().contains('500') || e.toString().contains('Internal Server Error')) {
+        errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau.';
+      }
+      
+      emit(state.copyWith(
+        status: RideStatus.error,
+        error: errorMessage,
+      ));
+    }
+  }
 
   /// Tạo chuyến đi mới
   Future<void> createRide({
@@ -59,7 +108,7 @@ class RideCubit extends Cubit<RideState> {
         final rideEntity = ride_entity.RideEntity(
           id: 0, // Will be assigned by backend
           availableSeats: totalSeats,
-          driverName: currentUser.fullName ?? 'Unknown Driver',
+          driverName: currentUser.fullName.isEmpty ? 'Unknown Driver' : currentUser.fullName,
           driverEmail: currentUser.email.value,
           departure: departure,
           startLat: startLat,
@@ -82,7 +131,7 @@ class RideCubit extends Cubit<RideState> {
         );
 
         // Use repository to create ride
-        final result = await _rideRepository!.createRide(rideEntity);
+        final result = await _rideRepository.createRide(rideEntity);
 
         if (result.success && result.data != null) {
           emit(
@@ -95,7 +144,7 @@ class RideCubit extends Cubit<RideState> {
           emit(
             state.copyWith(
               status: RideStatus.error,
-              error: result.message ?? 'Không thể tạo chuyến đi',
+              error: result.message.isEmpty ? 'Không thể tạo chuyến đi' : result.message,
             ),
           );
         }
@@ -150,6 +199,55 @@ class RideCubit extends Cubit<RideState> {
           error: 'Lỗi tìm kiếm chuyến đi: $e',
         ),
       );
+    }
+  }
+
+  /// Tìm kiếm chuyến đi trong khu vực
+  Future<void> searchRidesInArea({
+    required LatLng southwest,
+    required LatLng northeast,
+  }) async {
+    emit(state.copyWith(status: RideStatus.loading));
+
+    try {
+      if (_rideRepository != null) {
+        // Get all available rides and filter by area
+        final rides = await _rideRepository.getAvailableRides();
+        
+        if (rides.isNotEmpty) {
+          // Filter rides within the specified bounds
+          final filteredRides = rides.where((ride) {
+            final lat = ride.startLat;
+            final lng = ride.startLng;
+            
+            return lat >= southwest.latitude && 
+                   lat <= northeast.latitude &&
+                   lng >= southwest.longitude && 
+                   lng <= northeast.longitude;
+          }).toList();
+
+          emit(state.copyWith(
+            status: RideStatus.loaded,
+            rides: filteredRides,
+          ));
+        } else {
+          emit(state.copyWith(
+            status: RideStatus.loaded,
+            rides: [],
+            error: 'Không tìm thấy chuyến đi trong khu vực này',
+          ));
+        }
+      } else {
+        emit(state.copyWith(
+          status: RideStatus.error,
+          error: 'Ride service is not available. Please check your connection.',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: RideStatus.error,
+        error: 'Lỗi khi tìm kiếm chuyến đi trong khu vực: $e',
+      ));
     }
   }
 
@@ -229,7 +327,7 @@ class RideCubit extends Cubit<RideState> {
 
       if (result.success && result.data != null) {
         emit(
-          state.copyWith(status: RideStatus.loaded, currentRide: result.data!),
+          state.copyWith(status: RideStatus.loaded, currentRide: result.data),
         );
       } else {
         emit(state.copyWith(status: RideStatus.error, error: result.message));
@@ -253,4 +351,5 @@ class RideCubit extends Cubit<RideState> {
   void reset() {
     emit(const RideState());
   }
+
 }

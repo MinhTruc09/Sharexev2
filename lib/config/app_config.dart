@@ -119,7 +119,9 @@ class _ChatEndpoints {
   String get rooms => AppConfig.I._ep("/chat/rooms");
   String get roomByUser => AppConfig.I._ep("/chat/room/"); // + {otherUserEmail}
   String get sendTest => AppConfig.I._ep("/chat/test/"); // + {roomId}
-  String get markRead => AppConfig.I._ep("/chat/"); // + {roomId}/mark-read
+  
+  /// Build mark read URL for a specific room
+  String markReadUrl(String roomId) => AppConfig.I._ep("/chat/$roomId/mark-read");
 }
 
 class _NotificationEndpoints {

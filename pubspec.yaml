@@ -28,9 +28,13 @@ dependencies:
   easy_helpers: ^0.0.14
   dio: ^5.9.0
   geolocator: ^11.0.0
+  geocoding: ^3.0.0
   dartz: ^0.10.1
   get_it: ^7.6.4
   image_picker: ^1.0.7
+  flutter_local_notifications: ^19.4.1
+  package_info_plus: ^8.0.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

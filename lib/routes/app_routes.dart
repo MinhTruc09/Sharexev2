@@ -1,44 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:sharexev2/core/auth/auth_manager.dart';
+import 'package:sharexev2/core/services/navigation_service.dart';
 
 // Common pages
-import 'package:sharexev2/presentation/pages/common/splash_page.dart';
-import 'package:sharexev2/presentation/pages/common/onboarding_page.dart';
-import 'package:sharexev2/presentation/pages/common/role_selection_page.dart';
-
-// Auth pages
-import 'package:sharexev2/presentation/pages/auth/login_page.dart';
-import 'package:sharexev2/presentation/pages/authflow/register_page.dart';
-
-// Home pages
-import 'package:sharexev2/presentation/pages/passenger/passenger_ride_page.dart';
-import 'package:sharexev2/presentation/pages/driver/driver_home_page.dart';
-
-// Profile pages
-import 'package:sharexev2/presentation/pages/profile/profile_page.dart';
-
-// Passenger pages
-import 'package:sharexev2/presentation/pages/passenger/profile/edit_profile_page.dart';
-import 'package:sharexev2/presentation/pages/passenger/profile/change_password_page.dart';
-import 'package:sharexev2/presentation/pages/passenger/support/support_page.dart';
-import 'package:sharexev2/presentation/pages/passenger/about/about_page.dart';
-import 'package:sharexev2/presentation/pages/passenger/search_rides_page.dart';
-
-// Chat pages
-import 'package:sharexev2/presentation/pages/chat/chat_rooms_page.dart';
-import 'package:sharexev2/presentation/pages/chat/chat_page.dart';
-
-// Trip pages
-import 'package:sharexev2/presentation/pages/ride/ride_detail_page.dart';
-import 'package:sharexev2/presentation/pages/ride/ride_review_page.dart';
-
-// Notification pages
-import 'package:sharexev2/presentation/pages/notification/notification_details_page.dart';
-
-// Demo pages (disabled)
-
-// Background widgets
-import 'package:sharexev2/presentation/widgets/backgrounds/sharexe_background.dart';
+import 'package:sharexev2/views/screens/splash/main_splash_screen.dart';
+import 'package:sharexev2/views/screens/onboarding/onboarding_screen.dart';
+import 'package:sharexev2/views/screens/splash/role_splash_screen.dart';
+// Auth pages - New implementation
+import 'package:sharexev2/views/screens/auth/login_screen.dart';
+import 'package:sharexev2/views/screens/auth/register_screen.dart';
+import 'package:sharexev2/views/screens/auth/forgot_password_screen.dart';
+// Common pages
+import 'package:sharexev2/views/screens/common/role_selection_screen.dart';
+// Chat pages - New implementation
+import 'package:sharexev2/views/screens/chat/sharexe_chat_list_screen.dart';
+import 'package:sharexev2/views/screens/chat/sharexe_chat_room_screen.dart';
+// Passenger pages - New implementation
+import 'package:sharexev2/views/screens/passenger/history_screen.dart';
+import 'package:sharexev2/views/screens/passenger/favorites_screen.dart';
+// Driver pages - New implementation
+import 'package:sharexev2/views/screens/driver/driver_home_screen.dart';
+import 'package:sharexev2/views/screens/driver/driver_notifications_screen.dart';
+import 'package:sharexev2/views/screens/driver/driver_tracking_screen.dart';
+import 'package:sharexev2/views/screens/driver/driver_review_screen.dart';
+import 'package:sharexev2/views/screens/driver/driver_revenue_screen.dart';
+import 'package:sharexev2/views/screens/driver/driver_history_screen.dart';
+// Common pages - New implementation
+import 'package:sharexev2/views/screens/common/notifications_screen.dart';
+import 'package:sharexev2/views/screens/common/map_tracking_screen.dart';
+import 'package:sharexev2/views/screens/common/ride_details_screen.dart';
+// Driver pages - Additional
+import 'package:sharexev2/views/screens/driver/create_ride_screen.dart';
+// import 'package:sharexev2/presentation/pages/passenger/passenger_ride_page.dart';
+// import 'package:sharexev2/presentation/pages/driver/driver_home_page.dart';
+// import 'package:sharexev2/presentation/pages/profile/profile_page.dart';
+// import 'package:sharexev2/presentation/pages/passenger/search_rides_page.dart';
+// import 'package:sharexev2/presentation/pages/chat/chat_rooms_page.dart';
+// import 'package:sharexev2/presentation/pages/chat/chat_page.dart';
+// import 'package:sharexev2/presentation/pages/ride/ride_detail_page.dart';
+// import 'package:sharexev2/presentation/pages/ride/ride_review_page.dart';
+// import 'package:sharexev2/presentation/pages/notification/notification_details_page.dart';
+// import 'package:sharexev2/presentation/widgets/backgrounds/sharexe_background.dart';
 
 // Theme
 import 'package:sharexev2/config/theme.dart';
@@ -48,11 +50,14 @@ class CommonRoutes {
   static const String splash = '/splash';
   static const String onboarding = '/onboarding';
   static const String roleSelection = '/role-selection';
+  static const String passengerSplash = '/splash/passenger';
+  static const String driverSplash = '/splash/driver';
 }
 
 class AuthRoutes {
   static const String login = '/auth/login';
   static const String register = '/auth/register';
+  static const String forgotPassword = '/auth/forgot-password';
 }
 
 class PassengerRoutes {
@@ -75,6 +80,7 @@ class DriverRoutes {
   static const String myRides = '/driver/my-rides';
   static const String bookings = '/driver/bookings';
   static const String rideDetails = '/driver/ride-details';
+  static const String passengersList = '/driver/passengers-list';
 }
 
 class ChatRoutes {
@@ -89,10 +95,53 @@ class TripRoutes {
 
 class NotificationRoutes {
   static const String details = '/notification/details';
+  static const String promotions = '/notification/promotions';
+}
+
+class SettingsRoutes {
+  static const String main = '/settings';
+  static const String editProfile = '/profile/edit';
+  static const String changePassword = '/profile/change-password';
+  static const String notifications = '/settings/notifications';
+  static const String vehicle = '/settings/vehicle';
+  static const String payment = '/settings/payment';
+  static const String about = '/about';
+  static const String userGuide = '/help/guide';
+  static const String support = '/support';
+  static const String privacyPolicy = '/privacy-policy';
+  static const String termsOfService = '/terms-of-service';
 }
 
 class DemoRoutes {
   static const String bookingWidgets = '/demo/booking-widgets';
+}
+
+// Compatibility class for old imports
+class AppRoutes {
+  // Common routes
+  static const String splash = CommonRoutes.splash;
+  static const String onboarding = CommonRoutes.onboarding;
+  static const String roleSelection = CommonRoutes.roleSelection;
+  static const String passengerSplash = CommonRoutes.passengerSplash;
+  static const String driverSplash = CommonRoutes.driverSplash;
+
+  // Auth routes
+  static const String login = AuthRoutes.login;
+  static const String register = AuthRoutes.register;
+  static const String forgotPassword = AuthRoutes.forgotPassword;
+
+  // Passenger routes
+  static const String homePassenger = PassengerRoutes.home;
+  static const String passengerProfile = PassengerRoutes.profile;
+  static const String searchRides = PassengerRoutes.searchRides;
+
+  // Driver routes
+  static const String homeDriver = DriverRoutes.home;
+  static const String driverProfile = DriverRoutes.profile;
+
+  // Chat routes
+  static const String chatRooms = ChatRoutes.rooms;
+  static const String chat = ChatRoutes.chat;
 }
 
 class AppRoute {
@@ -100,10 +149,13 @@ class AppRoute {
   static const String splash = CommonRoutes.splash;
   static const String onboarding = CommonRoutes.onboarding;
   static const String roleSelection = CommonRoutes.roleSelection;
+  static const String passengerSplash = CommonRoutes.passengerSplash;
+  static const String driverSplash = CommonRoutes.driverSplash;
 
   // Auth routes
   static const String login = AuthRoutes.login;
   static const String register = AuthRoutes.register;
+  static const String forgotPassword = AuthRoutes.forgotPassword;
 
   // Passenger routes
   static const String homePassenger = PassengerRoutes.home;
@@ -124,6 +176,7 @@ class AppRoute {
   static const String myRides = DriverRoutes.myRides;
   static const String driverBookings = DriverRoutes.bookings;
   static const String driverRideDetails = DriverRoutes.rideDetails;
+  static const String passengersList = DriverRoutes.passengersList;
 
   // Chat routes
   static const String chatRooms = ChatRoutes.rooms;
@@ -135,6 +188,7 @@ class AppRoute {
 
   // Notification routes
   static const String notificationDetails = NotificationRoutes.details;
+  static const String promotions = NotificationRoutes.promotions;
 
   // Demo routes (disabled)
   static const String bookingDemo = '/__disabled__';
@@ -156,11 +210,13 @@ class AppRoute {
       DriverRoutes.myRides,
       DriverRoutes.bookings,
       DriverRoutes.rideDetails,
+      DriverRoutes.passengersList,
       ChatRoutes.rooms,
       ChatRoutes.chat,
       TripRoutes.detail,
       TripRoutes.review,
       NotificationRoutes.details,
+      NotificationRoutes.promotions,
     };
 
     final bool requiresAuth =
@@ -169,11 +225,7 @@ class AppRoute {
       final token = AuthManager().getToken();
       if (token == null || token.isEmpty) {
         return MaterialPageRoute(
-          builder:
-              (_) => SharexeBackgroundFactory(
-                type: SharexeBackgroundType.blueWithClouds,
-                child: const LoginPage(role: 'PASSENGER'),
-              ),
+          builder: (_) => _placeholderPage('Login Required'),
         );
       }
     }
@@ -181,172 +233,236 @@ class AppRoute {
     // Common routes
     if (routeName == splash) {
       return MaterialPageRoute(
-        builder:
-            (_) => SharexeBackgroundFactory(
-              type: SharexeBackgroundType.blueWithSun,
-              child: const SplashPage(),
-            ),
+        builder: (_) => const MainSplashScreen(),
       );
     } else if (routeName == onboarding) {
       return MaterialPageRoute(
-        builder:
-            (_) => SharexeBackgroundFactory(
-              type: SharexeBackgroundType.blueWithClouds,
-              child: const OnboardingPage(),
-            ),
+        builder: (_) => const OnboardingScreen(),
+      );
+    } else if (routeName == passengerSplash) {
+      return MaterialPageRoute(
+        builder: (_) => const PassengerSplashScreen(),
+      );
+    } else if (routeName == driverSplash) {
+      return MaterialPageRoute(
+        builder: (_) => const DriverSplashScreen(),
       );
     } else if (routeName == roleSelection) {
       return MaterialPageRoute(
-        builder:
-            (_) => SharexeBackgroundFactory(
-              type: SharexeBackgroundType.blueWithSun,
-              child: const RoleSelectionPage(),
-            ),
+        builder: (_) => const RoleSelectionScreen(),
       );
     }
     // Auth routes
     else if (routeName == login) {
       final role = arguments as String? ?? 'PASSENGER';
       return MaterialPageRoute(
-        builder:
-            (_) => SharexeBackgroundFactory(
-              type: SharexeBackgroundType.blueWithClouds,
-              child: LoginPage(role: role),
-            ),
+        builder: (_) => LoginScreen(role: role),
       );
     } else if (routeName == register) {
+      final args = arguments;
+      String role = 'PASSENGER';
+      
+      if (args is String) {
+        role = args;
+      } else if (args is Map<String, dynamic>) {
+        role = args['role'] ?? 'PASSENGER';
+        if (args['action'] == 'forgot_password') {
+          return MaterialPageRoute(
+            builder: (_) => ForgotPasswordScreen(role: role),
+          );
+        }
+      }
+      
+      return MaterialPageRoute(
+        builder: (_) => RegisterScreen(role: role),
+      );
+    } else if (routeName == forgotPassword) {
       final role = arguments as String? ?? 'PASSENGER';
       return MaterialPageRoute(
-        builder:
-            (_) => SharexeBackgroundFactory(
-              type: SharexeBackgroundType.blueWithClouds,
-              child: RegisterPage(role: role),
-            ),
+        builder: (_) => ForgotPasswordScreen(role: role),
       );
     }
-    // Passenger routes - Use passenger theme
+    // Passenger routes
     else if (routeName == homePassenger) {
       return MaterialPageRoute(
-        builder:
-            (_) =>
-                Theme(data: passengerTheme, child: const PassengerRidePage()),
+        builder: (_) => _placeholderPage('Passenger Home'),
       );
     } else if (routeName == passengerProfile) {
       return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: passengerTheme,
-              child: const ProfilePage(role: 'PASSENGER'),
-            ),
-      );
-    } else if (routeName == passengerBookings) {
-      return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: passengerTheme,
-              child: const ProfilePage(role: 'PASSENGER'),
-            ),
-      );
-    } else if (routeName == passengerTripHistory) {
-      return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: passengerTheme,
-              child: const ProfilePage(role: 'PASSENGER'),
-            ),
+        builder: (_) => _placeholderPage('Passenger Profile'),
       );
     } else if (routeName == searchRides) {
       return MaterialPageRoute(
-        builder:
-            (_) => Theme(data: passengerTheme, child: const SearchRidesPage()),
+        builder: (_) => _placeholderPage('Search Rides'),
       );
-    } else if (routeName == rideBooking) {
+    } else if (routeName == '/history') {
       return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: passengerTheme,
-              child: const ProfilePage(
-                role: 'PASSENGER',
-              ), // TODO: Create RideBookingPage
-            ),
+        builder: (_) => const HistoryScreen(),
+      );
+    } else if (routeName == '/favorites') {
+      return MaterialPageRoute(
+        builder: (_) => const FavoritesScreen(),
       );
     }
-    // Driver routes - Use driver theme
+    // Driver routes
+    else if (routeName == '/driver-home') {
+      return MaterialPageRoute(
+        builder: (_) => const DriverHomeScreen(),
+      );
+    } else if (routeName == '/driver-notifications') {
+      return MaterialPageRoute(
+        builder: (_) => const DriverNotificationsScreen(),
+      );
+    } else if (routeName == '/driver-tracking') {
+      final args = settings.arguments as Map<String, dynamic>?;
+      final booking = args?['booking'];
+      if (booking == null) {
+        return MaterialPageRoute(
+          builder: (_) => _placeholderPage('Driver Tracking - No booking data'),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => DriverTrackingScreen(booking: booking),
+      );
+    } else if (routeName == '/driver-review') {
+      final args = settings.arguments as Map<String, dynamic>?;
+      final booking = args?['booking'];
+      if (booking == null) {
+        return MaterialPageRoute(
+          builder: (_) => _placeholderPage('Driver Review - No booking data'),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => DriverReviewScreen(booking: booking),
+      );
+    } else if (routeName == '/driver-revenue') {
+      return MaterialPageRoute(
+        builder: (_) => const DriverRevenueScreen(),
+      );
+    } else if (routeName == '/driver-history') {
+      return MaterialPageRoute(
+        builder: (_) => const DriverHistoryScreen(),
+      );
+    } else if (routeName == '/driver/passengers-list') {
+      final args = settings.arguments as Map<String, dynamic>?;
+      final ride = args?['ride'];
+      if (ride == null) {
+        return MaterialPageRoute(
+          builder: (_) => _placeholderPage('Passengers List - No ride data'),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Passengers List - ${ride.toString()}'),
+      );
+    }
+    // Common routes
+    else if (routeName == '/notifications') {
+      final args = settings.arguments as Map<String, dynamic>?;
+      final userRole = args?['userRole'] ?? 'PASSENGER';
+      return MaterialPageRoute(
+        builder: (_) => NotificationsScreen(userRole: userRole),
+      );
+    } else if (routeName == '/map-tracking') {
+      final args = settings.arguments as Map<String, dynamic>?;
+      final rideId = args?['rideId'] ?? 1;
+      final userRole = args?['userRole'] ?? 'PASSENGER';
+      final isDriverTracking = args?['isDriverTracking'] ?? false;
+      return MaterialPageRoute(
+        builder: (_) => MapTrackingScreen(
+          rideId: rideId,
+          userRole: userRole,
+          isDriverTracking: isDriverTracking,
+        ),
+      );
+    } else if (routeName == '/create-ride') {
+      return MaterialPageRoute(
+        builder: (_) => const CreateRideScreen(),
+      );
+    } else if (routeName == '/ride-details') {
+      final args = settings.arguments as Map<String, dynamic>?;
+      final ride = args?['ride'];
+      final userRole = args?['userRole'] ?? 'PASSENGER';
+      return MaterialPageRoute(
+        builder: (_) => RideDetailsScreen(
+          ride: ride,
+          userRole: userRole,
+        ),
+      );
+    }
+    // Driver routes
     else if (routeName == homeDriver) {
       return MaterialPageRoute(
-        builder: (_) => Theme(data: driverTheme, child: const DriverHomePage()),
+        builder: (_) => _placeholderPage('Driver Home'),
       );
     } else if (routeName == driverProfile) {
       return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: driverTheme,
-              child: const ProfilePage(role: 'DRIVER'),
-            ),
-      );
-    } else if (routeName == createRide) {
-      return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: driverTheme,
-              child: const ProfilePage(role: 'DRIVER'),
-            ),
-      );
-    } else if (routeName == myRides) {
-      return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: driverTheme,
-              child: const ProfilePage(role: 'DRIVER'),
-            ),
-      );
-    } else if (routeName == driverBookings) {
-      return MaterialPageRoute(
-        builder:
-            (_) => Theme(
-              data: driverTheme,
-              child: const ProfilePage(role: 'DRIVER'),
-            ),
-      );
-    } else if (routeName == driverRideDetails) {
-      final rideData = arguments as Map<String, dynamic>? ?? {};
-      final String rideId = (rideData['rideId'] ?? '').toString();
-      return MaterialPageRoute(
-        builder:
-            (_) =>
-                Theme(data: driverTheme, child: RideDetailPage(rideId: rideId)),
+        builder: (_) => _placeholderPage('Driver Profile'),
       );
     }
-    // Chat routes - Use theme based on current user role
+    // Chat routes
     else if (routeName == chatRooms) {
-      return MaterialPageRoute(builder: (_) => const ChatRoomsPage());
-    } else if (routeName == chat) {
-      final args = arguments as Map<String, dynamic>? ?? {};
       return MaterialPageRoute(
-        builder:
-            (_) => ChatPage(
-              roomId: args['roomId'] ?? '',
-              participantName: args['participantName'] ?? '',
-              participantEmail: args['participantEmail'],
-            ),
+        builder: (_) => const ShareXeChatListScreen(),
       );
-    }
-    // Trip routes - Use theme based on current user role
-    else if (routeName == tripDetail) {
-      final tripData = arguments as Map<String, dynamic>? ?? {};
-      final String rideId = (tripData["rideId"] ?? '').toString();
-      return MaterialPageRoute(builder: (_) => RideDetailPage(rideId: rideId));
-    } else if (routeName == tripReview) {
-      final args = arguments as Map<String, dynamic>? ?? {};
-      final String rideId = (args["rideId"] ?? '').toString();
-      final String role = args["role"] ?? 'PASSENGER';
+    } else if (routeName == chat) {
+      final args = arguments as Map<String, dynamic>?;
+      if (args != null && 
+          args['roomId'] != null && 
+          args['participantName'] != null && 
+          args['participantEmail'] != null) {
+        return MaterialPageRoute(
+          builder: (_) => ShareXeChatRoomScreen(
+            roomId: args['roomId'] as String,
+            participantName: args['participantName'] as String,
+            participantEmail: args['participantEmail'] as String,
+          ),
+        );
+      }
       return MaterialPageRoute(
-        builder: (_) => RideReviewPage(rideId: rideId, role: role),
+        builder: (_) => _placeholderPage('Chat - Missing Arguments'),
       );
     }
     // Notification routes
-    else if (routeName == notificationDetails) {
-      return MaterialPageRoute(builder: (_) => const NotificationDetailsPage());
+    else if (routeName == promotions) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Promotions Screen'),
+      );
+    }
+    // Settings routes
+    else if (routeName == SettingsRoutes.main) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Settings - Import needed'),
+      );
+    } else if (routeName == SettingsRoutes.editProfile) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Edit Profile - Import needed'),
+      );
+    } else if (routeName == SettingsRoutes.changePassword) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Change Password - Import needed'),
+      );
+    } else if (routeName == SettingsRoutes.about) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('About - Import needed'),
+      );
+    } else if (routeName == SettingsRoutes.userGuide) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('User Guide - Import needed'),
+      );
+    }
+    // Other routes
+    else if (routeName == tripDetail) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Trip Detail'),
+      );
+    } else if (routeName == tripReview) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Trip Review'),
+      );
+    } else if (routeName == notificationDetails) {
+      return MaterialPageRoute(
+        builder: (_) => _placeholderPage('Notification Details'),
+      );
     }
     // Demo routes (disabled)
     else if (routeName == bookingDemo) {
@@ -356,6 +472,51 @@ class AppRoute {
     else {
       return _errorRoute(routeName);
     }
+  }
+
+  // Placeholder page for routes under development
+  static Widget _placeholderPage(String pageName) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(pageName),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.construction, size: 64, color: AppColors.primary),
+            const SizedBox(height: 16),
+            Text(
+              '$pageName',
+              style: AppTextStyles.headingLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Trang này đang được phát triển',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                final context = NavigationService().navigatorKey.currentContext;
+                if (context != null) Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Quay lại'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // Error route handler
@@ -450,67 +611,24 @@ class AppRoute {
 }
 
 // Legacy route map for backward compatibility
+// Temporarily commented out until pages are created
 final Map<String, WidgetBuilder> appRoutes = {
-  AppRoute.onboarding:
-      (context) => SharexeBackgroundFactory(
-        type: SharexeBackgroundType.blueWithClouds,
-        child: const OnboardingPage(),
-      ),
-  AppRoute.homePassenger:
-      (context) =>
-          Theme(data: passengerTheme, child: const PassengerRidePage()),
-  AppRoute.homeDriver:
-      (context) => Theme(data: driverTheme, child: const DriverHomePage()),
-  AppRoute.roleSelection:
-      (context) => SharexeBackgroundFactory(
-        type: SharexeBackgroundType.blueWithSun,
-        child: const RoleSelectionPage(),
-      ),
-  AppRoute.login: (context) {
-    final args = ModalRoute.of(context)!.settings.arguments as String?;
-    return SharexeBackgroundFactory(
-      type: SharexeBackgroundType.blueWithClouds,
-      child: LoginPage(role: args ?? 'PASSENGER'),
-    );
-  },
-  AppRoute.register: (context) {
-    final args = ModalRoute.of(context)!.settings.arguments as String?;
-    return SharexeBackgroundFactory(
-      type: SharexeBackgroundType.blueWithClouds,
-      child: RegisterPage(role: args ?? 'PASSENGER'),
-    );
-  },
-  // Demo disabled
-  AppRoute.chatRooms: (context) => const ChatRoomsPage(),
-  AppRoute.chat: (context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    return ChatPage(
-      roomId: args?['roomId'] ?? '',
-      participantName: args?['participantName'] ?? '',
-      participantEmail: args?['participantEmail'],
-    );
-  },
-  AppRoute.notificationDetails: (context) => const NotificationDetailsPage(),
-  AppRoute.tripDetail: (context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    final String rideId = (args?["rideId"] ?? '').toString();
-    return RideDetailPage(rideId: rideId);
-  },
-  AppRoute.tripReview: (context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    final String rideId = (args?["rideId"] ?? '').toString();
-    final String role = args?["role"] ?? 'PASSENGER';
-    return RideReviewPage(rideId: rideId, role: role);
-  },
-  AppRoute.passengerProfile:
-      (context) => Theme(
-        data: passengerTheme,
-        child: const ProfilePage(role: 'PASSENGER'),
-      ),
-  AppRoute.driverProfile:
-      (context) =>
-          Theme(data: driverTheme, child: const ProfilePage(role: 'DRIVER')),
+  AppRoute.splash: (context) => const MainSplashScreen(),
+  AppRoute.onboarding: (context) => const OnboardingScreen(),
+  AppRoute.passengerSplash: (context) => const PassengerSplashScreen(),
+  AppRoute.driverSplash: (context) => const DriverSplashScreen(),
+  // TODO: Uncomment when pages are created
+  // AppRoute.homePassenger: (context) => Theme(data: passengerTheme, child: const PassengerRidePage()),
+  // AppRoute.homeDriver: (context) => Theme(data: driverTheme, child: const DriverHomePage()),
+  // Note: These routes are commented out as the corresponding pages are not yet implemented
+  // AppRoute.roleSelection: (context) => _placeholderPage('Role Selection'),
+  // AppRoute.login: (context) => _placeholderPage('Login'),
+  // AppRoute.register: (context) => _placeholderPage('Register'),
+  // AppRoute.chatRooms: (context) => _placeholderPage('Chat Rooms'),
+  // AppRoute.chat: (context) => _placeholderPage('Chat'),
+  // AppRoute.notificationDetails: (context) => _placeholderPage('Notifications'),
+  // AppRoute.tripDetail: (context) => _placeholderPage('Trip Detail'),
+  // AppRoute.tripReview: (context) => _placeholderPage('Trip Review'),
+  // AppRoute.passengerProfile: (context) => _placeholderPage('Passenger Profile'),
+  // AppRoute.driverProfile: (context) => _placeholderPage('Driver Profile'),
 };

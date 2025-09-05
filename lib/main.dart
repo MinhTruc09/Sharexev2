@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharexev2/app.dart';
 import 'package:sharexev2/core/services/navigation_service.dart';
 // TODO: Create these files when Firebase integration is needed
@@ -50,11 +49,8 @@ Future<void> main() async {
 
   // ServiceRegistry removed; using GetIt ServiceLocator only
 
-  // Get shared preferences for first open check
-  final prefs = await SharedPreferences.getInstance();
-  final isFirstOpen = prefs.getBool('isFirstOpen') ?? true;
-
-  runApp(App(isFirstOpen: isFirstOpen));
+  // App sẽ tự động handle first time logic trong MainSplashScreen
+  runApp(const App());
 }
 
 // Extract Firebase initialization to a separate method

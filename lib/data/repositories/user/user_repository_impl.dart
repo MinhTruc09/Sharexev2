@@ -8,7 +8,7 @@ import '../../models/auth/dtos/change_pass_dto.dart';
 import '../../services/user_service.dart';
 import '../../services/passenger_service.dart';
 import '../../services/driver_service.dart';
-import '../../services/admin_service.dart';
+// import '../../services/admin_service.dart'; // Removed - service doesn't exist
 import '../../../core/network/api_response.dart';
 
 /// Implementation của User Repository
@@ -189,118 +189,5 @@ class DriverRepositoryImpl implements DriverRepositoryInterface {
   }
 }
 
-/// Implementation của Admin Repository
-class AdminRepositoryImpl implements AdminRepositoryInterface {
-  final AdminService _adminService;
-
-  AdminRepositoryImpl(this._adminService);
-
-  @override
-  Future<ApiResponse<List<dynamic>>> getUsersByRole({String? role}) async {
-    try {
-      final response = await _adminService.getUsersByRole(role: role);
-      
-      return ApiResponse<List<dynamic>>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: response.data ?? [],
-        success: response.success,
-      );
-    } catch (e) {
-      return ApiResponse<List<dynamic>>(
-        message: 'Lỗi lấy danh sách người dùng: $e',
-        statusCode: 500,
-        data: [],
-        success: false,
-      );
-    }
-  }
-
-  @override
-  Future<ApiResponse<DriverEntity>> getUserDetail(int userId) async {
-    try {
-      final response = await _adminService.getUserDetail(userId);
-      
-      final entity = response.data != null 
-          ? DriverEntityMapper.fromDto(response.data!)
-          : null;
-      
-      return ApiResponse<DriverEntity>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: entity,
-        success: response.success,
-      );
-    } catch (e) {
-      return ApiResponse<DriverEntity>(
-        message: 'Lỗi lấy thông tin người dùng: $e',
-        statusCode: 500,
-        data: null,
-        success: false,
-      );
-    }
-  }
-
-  @override
-  Future<ApiResponse<void>> approveDriver(int userId) async {
-    try {
-      final response = await _adminService.approveDriver(userId);
-      
-      return ApiResponse<void>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: null,
-        success: response.success,
-      );
-    } catch (e) {
-      return ApiResponse<void>(
-        message: 'Lỗi duyệt tài xế: $e',
-        statusCode: 500,
-        data: null,
-        success: false,
-      );
-    }
-  }
-
-  @override
-  Future<ApiResponse<bool>> rejectDriver(int userId, String rejectionReason) async {
-    try {
-      final response = await _adminService.rejectDriver(userId, rejectionReason);
-      
-      return ApiResponse<bool>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: response.data ?? false,
-        success: response.success,
-      );
-    } catch (e) {
-      return ApiResponse<bool>(
-        message: 'Lỗi từ chối tài xế: $e',
-        statusCode: 500,
-        data: false,
-        success: false,
-      );
-    }
-  }
-
-  @override
-  Future<ApiResponse<void>> deleteUser(int userId) async {
-    try {
-      final response = await _adminService.deleteUser(userId);
-      
-      return ApiResponse<void>(
-        message: response.message,
-        statusCode: response.statusCode,
-        data: null,
-        success: response.success,
-      );
-    } catch (e) {
-      return ApiResponse<void>(
-        message: 'Lỗi xóa người dùng: $e',
-        statusCode: 500,
-        data: null,
-        success: false,
-      );
-    }
-  }
-}
+// Admin Repository implementation removed - AdminService doesn't exist
+// This would need to be implemented when AdminService is created

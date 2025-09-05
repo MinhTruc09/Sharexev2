@@ -98,7 +98,7 @@ class ChatApiService implements ChatServiceInterface {
   ) async {
     try {
       final response = await _dio.put(
-        '${AppConfig.I.chat.markRead}$roomId/mark-read',
+        AppConfig.I.chat.markReadUrl(roomId),
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -242,6 +242,78 @@ class ChatApiService implements ChatServiceInterface {
       );
     } catch (e) {
       return ApiResponse<ChatMessageDto>(
+        message: 'Lỗi kết nối: $e',
+        statusCode: 500,
+        data: null,
+        success: false,
+      );
+    }
+  }
+
+  /// Create new chat room
+  Future<ApiResponse<String>> createChatRoom(
+    String otherUserEmail,
+    String token,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '${AppConfig.I.chat.roomByUser}$otherUserEmail',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.data != null && response.data['data'] is String) {
+        return ApiResponse<String>(
+          message: response.data['message'] ?? 'Tạo phòng chat thành công',
+          statusCode: response.statusCode ?? 200,
+          data: response.data['data'],
+          success: true,
+        );
+      }
+
+      return ApiResponse<String>(
+        message: response.data['message'] ?? 'Không thể tạo phòng chat',
+        statusCode: response.statusCode ?? 400,
+        data: null,
+        success: false,
+      );
+    } catch (e) {
+      return ApiResponse<String>(
+        message: 'Lỗi kết nối: $e',
+        statusCode: 500,
+        data: null,
+        success: false,
+      );
+    }
+  }
+
+  /// Delete chat room
+  Future<ApiResponse<void>> deleteChatRoom(
+    String roomId,
+    String token,
+  ) async {
+    try {
+      final response = await _dio.delete(
+        '${AppConfig.I.chat.messages}$roomId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200) {
+        return ApiResponse<void>(
+          message: response.data['message'] ?? 'Xóa phòng chat thành công',
+          statusCode: response.statusCode ?? 200,
+          data: null,
+          success: true,
+        );
+      }
+
+      return ApiResponse<void>(
+        message: response.data['message'] ?? 'Không thể xóa phòng chat',
+        statusCode: response.statusCode ?? 400,
+        data: null,
+        success: false,
+      );
+    } catch (e) {
+      return ApiResponse<void>(
         message: 'Lỗi kết nối: $e',
         statusCode: 500,
         data: null,

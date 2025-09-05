@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sharexe/views/widgets/custom_button.dart';
-import 'package:sharexe/views/widgets/custom_text_field.dart';
+import 'custom_button.dart';
+import 'custom_text_field.dart';
 
 class ForgotPasswordForm extends StatefulWidget {
   final VoidCallback onBack;
   final Function(String) onResetPassword;
   
   const ForgotPasswordForm({
-    Key? key,
+    super.key,
     required this.onBack,
     required this.onResetPassword,
-  }) : super(key: key);
+  });
 
   @override
   State<ForgotPasswordForm> createState() => _ForgotPasswordFormState();
@@ -67,11 +67,11 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
     return Container(
       padding: EdgeInsets.all(screenWidth * 0.05),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
+        color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -137,7 +137,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

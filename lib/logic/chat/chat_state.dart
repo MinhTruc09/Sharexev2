@@ -1,4 +1,5 @@
 import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_room.dart';
 
 enum ChatStatus { initial, loading, loaded, sending, error }
 
@@ -10,7 +11,7 @@ class ChatState {
   final bool isConnected;
   final bool isTyping;
   final String? typingUser;
-  final List<ChatRoomEntity> chatRooms;
+  final List<ChatRoom> chatRooms;
   final int unreadCount;
 
   const ChatState({
@@ -33,7 +34,7 @@ class ChatState {
     bool? isConnected,
     bool? isTyping,
     String? typingUser,
-    List<ChatRoomEntity>? chatRooms,
+    List<ChatRoom>? chatRooms,
     int? unreadCount,
   }) {
     return ChatState(

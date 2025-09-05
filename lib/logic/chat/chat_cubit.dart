@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharexev2/data/repositories/chat/chat_repository_interface.dart';
 import 'package:sharexev2/logic/chat/chat_state.dart';
 import 'package:sharexev2/data/models/chat/entities/chat_message_entity.dart';
+import 'package:sharexev2/data/models/chat/entities/chat_room.dart';
 import 'package:sharexev2/core/auth/auth_manager.dart';
 
 class ChatCubit extends Cubit<ChatState> {
@@ -37,30 +38,8 @@ class ChatCubit extends Cubit<ChatState> {
       final roomsResp = await _chatRepository?.getChatRooms(_currentToken!);
       final rooms = roomsResp?.data ?? [];
 
-      // Convert ChatRoom to ChatRoomEntity
-      final roomEntities =
-          rooms
-              .map(
-                (room) => ChatRoomEntity(
-                  id: room.roomId,
-                  otherUserEmail: room.participantEmail,
-                  otherUserName: room.participantName,
-                  unreadCount: room.unreadCount,
-                  lastMessage:
-                      room.lastMessage.isNotEmpty
-                          ? ChatMessageEntity(
-                            senderEmail: '',
-                            receiverEmail: '',
-                            senderName: '',
-                            content: room.lastMessage,
-                            roomId: room.roomId,
-                            timestamp: room.lastMessageTime ?? DateTime.now(),
-                            read: true,
-                          )
-                          : null,
-                ),
-              )
-              .toList();
+      // Use ChatRoom directly (from chat_room.dart)
+      final roomEntities = rooms;
 
       final totalUnread = rooms.fold<int>(
         0,
@@ -356,6 +335,36 @@ class ChatCubit extends Cubit<ChatState> {
     return results;
   }
 
+  // Mark messages as read
+  Future<void> markMessagesAsRead(String roomId) async {
+    if (_currentToken == null) return;
+
+    try {
+      await _chatRepository?.markMessagesAsRead(roomId, _currentToken!);
+      
+      // Update UI to mark messages as read
+      final updatedMessages = state.messages.map((msg) {
+        if (msg.roomId == roomId) {
+          return ChatMessageEntity(
+            senderEmail: msg.senderEmail,
+            receiverEmail: msg.receiverEmail,
+            senderName: msg.senderName,
+            content: msg.content,
+            roomId: msg.roomId,
+            timestamp: msg.timestamp,
+            read: true,
+          );
+        }
+        return msg;
+      }).toList();
+
+      emit(state.copyWith(messages: updatedMessages));
+    } catch (e) {
+      // Silent fail - don't show error for mark as read
+      print('Failed to mark messages as read: $e');
+    }
+  }
+
   // Helper methods for getting user information
   String _getCurrentUserEmail() {
     // Get from AuthManager
@@ -385,17 +394,18 @@ class ChatCubit extends Cubit<ChatState> {
     // Get participant email from current chat room
     if (state.currentRoomId != null) {
       final currentRoom = state.chatRooms.firstWhere(
-        (room) => room.id == state.currentRoomId,
+        (room) => room.roomId == state.currentRoomId,
         orElse:
-            () => ChatRoomEntity(
-              id: '',
-              otherUserEmail: '',
-              otherUserName: '',
+            () => ChatRoom(
+              roomId: '',
+              participantName: '',
+              participantEmail: '',
+              lastMessage: '',
+              lastMessageTime: null,
               unreadCount: 0,
-              lastMessage: null,
             ),
       );
-      return currentRoom.otherUserEmail;
+      return currentRoom.participantEmail;
     }
     return '';
   }

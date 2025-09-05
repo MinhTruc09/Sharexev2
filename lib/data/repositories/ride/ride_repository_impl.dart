@@ -2,18 +2,23 @@ import 'ride_repository_interface.dart';
 import '../../models/ride/entities/ride_entity.dart';
 import '../../models/ride/mappers/ride_mapper.dart';
 import '../../services/ride_service.dart';
+import '../../services/driver_service.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/network/api_response.dart';
 
 /// Implementation của Ride Repository
 class RideRepositoryImpl implements RideRepositoryInterface {
   final RideService _rideService;
+  final DriverService _driverService;
 
-  RideRepositoryImpl(this._rideService);
+  RideRepositoryImpl(this._rideService, this._driverService);
 
   /// Factory constructor sử dụng ServiceRegistry
   factory RideRepositoryImpl.fromRegistry() {
-    return RideRepositoryImpl(ServiceLocator.get<RideService>());
+    return RideRepositoryImpl(
+      ServiceLocator.get<RideService>(),
+      ServiceLocator.get<DriverService>(),
+    );
   }
 
   @override
@@ -180,6 +185,33 @@ class RideRepositoryImpl implements RideRepositoryInterface {
     } catch (e) {
       return ApiResponse<List<RideEntity>>(
         message: 'Lỗi lấy tất cả chuyến đi: $e',
+        statusCode: 500,
+        data: <RideEntity>[],
+        success: false,
+      );
+    }
+  }
+
+  @override
+  Future<ApiResponse<List<RideEntity>>> getDriverRides() async {
+    try {
+      // Use DriverService to get driver-specific rides
+      final response = await _driverService.getDriverRides();
+
+      // Convert DTOs to entities
+      final entities = response.data != null
+          ? RideMapper.fromDtoList(response.data!)
+          : <RideEntity>[];
+
+      return ApiResponse<List<RideEntity>>(
+        message: response.message,
+        statusCode: response.statusCode,
+        data: entities,
+        success: response.success,
+      );
+    } catch (e) {
+      return ApiResponse<List<RideEntity>>(
+        message: 'Lỗi lấy chuyến đi của tài xế: $e',
         statusCode: 500,
         data: <RideEntity>[],
         success: false,

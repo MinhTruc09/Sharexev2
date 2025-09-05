@@ -29,6 +29,12 @@ abstract class BookingRepositoryInterface {
 
   /// Driver hoàn thành ride
   Future<ApiResponse<BookingEntity>> completeRide(int rideId);
+
+  /// Get bookings with pagination
+  Future<ApiResponse<List<BookingEntity>>> getBookings({
+    int page = 1,
+    int limit = 10,
+  });
 }
 
 /// Legacy interface for backward compatibility

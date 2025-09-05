@@ -100,6 +100,80 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
+  /// Load driver bookings from repository
+  Future<void> loadBookings() async {
+    emit(state.copyWith(status: BookingStatus.loading, error: null));
+
+    try {
+      final response = await _bookingRepository?.getDriverBookings();
+
+      if (response?.success == true && response?.data != null) {
+        emit(state.copyWith(
+          status: BookingStatus.initial,
+          bookings: response!.data!,
+        ));
+      } else {
+        emit(state.copyWith(
+          status: BookingStatus.error,
+          error: response?.message ?? 'Failed to load bookings',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: BookingStatus.error,
+        error: e.toString(),
+      ));
+    }
+  }
+
+  /// Accept booking
+  Future<void> acceptBooking(int bookingId) async {
+    emit(state.copyWith(status: BookingStatus.loading, error: null));
+
+    try {
+      final response = await _bookingRepository?.acceptBooking(bookingId);
+
+      if (response?.success == true) {
+        // Reload bookings after accepting
+        await loadBookings();
+      } else {
+        emit(state.copyWith(
+          status: BookingStatus.error,
+          error: response?.message ?? 'Failed to accept booking',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: BookingStatus.error,
+        error: e.toString(),
+      ));
+    }
+  }
+
+  /// Reject booking
+  Future<void> rejectBooking(int bookingId) async {
+    emit(state.copyWith(status: BookingStatus.loading, error: null));
+
+    try {
+      final response = await _bookingRepository?.rejectBooking(bookingId);
+
+      if (response?.success == true) {
+        // Reload bookings after rejecting
+        await loadBookings();
+      } else {
+        emit(state.copyWith(
+          status: BookingStatus.error,
+          error: response?.message ?? 'Failed to reject booking',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: BookingStatus.error,
+        error: e.toString(),
+      ));
+    }
+  }
+
   /// Create booking through repository
   Future<void> createBooking(int rideId) async {
     if (state.selectedSeats.isEmpty) {
@@ -193,5 +267,46 @@ class BookingCubit extends Cubit<BookingState> {
 
   void clearError() {
     emit(state.copyWith(error: null));
+  }
+
+  /// Load more bookings for pagination
+  Future<void> loadMoreBookings() async {
+    if (state.status != BookingStatus.loaded || state.isLoadingMore) return;
+    
+    try {
+      emit(state.copyWith(isLoadingMore: true));
+      
+      if (_bookingRepository != null) {
+        final response = await _bookingRepository.getBookings(
+          page: state.currentPage + 1,
+          limit: 10,
+        );
+        
+        if (response.success && response.data != null) {
+          final newBookings = response.data!;
+          emit(state.copyWith(
+            bookings: [...(state.bookings ?? []), ...newBookings],
+            currentPage: state.currentPage + 1,
+            hasMoreBookings: newBookings.length >= 10,
+            isLoadingMore: false,
+          ));
+        } else {
+          emit(state.copyWith(
+            isLoadingMore: false,
+            error: response.message ?? 'Failed to load more bookings',
+          ));
+        }
+      } else {
+        emit(state.copyWith(
+          isLoadingMore: false,
+          error: 'Booking repository not available',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        isLoadingMore: false,
+        error: 'Error loading more bookings: $e',
+      ));
+    }
   }
 }

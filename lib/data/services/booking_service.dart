@@ -106,4 +106,18 @@ class BookingService {
       (json) => BookingDto.fromJson(json as Map<String, dynamic>),
     );
   }
+
+  /// Get bookings with pagination
+  Future<ApiResponse<List<BookingDto>>> getBookings({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final res = await _api.client.get(
+      "${AppConfig.I.passenger.bookings}?page=$page&limit=$limit",
+    );
+    return ApiResponse.listFromJson<BookingDto>(
+      res.data as Map<String, dynamic>,
+      (json) => BookingDto.fromJson(json as Map<String, dynamic>),
+    );
+  }
 }

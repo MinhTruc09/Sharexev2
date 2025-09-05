@@ -6,6 +6,9 @@ abstract class NotificationRepositoryInterface {
   Future<ApiResponse<int>> getUnreadCount();
   Future<ApiResponse<void>> markAsRead(String id);
   Future<ApiResponse<void>> markAllAsRead();
+  Future<ApiResponse<void>> deleteNotification(String id);
+  Future<ApiResponse<void>> deleteAllNotifications();
+  Future<ApiResponse<void>> sendNotification(NotificationDto notification);
 }
 
 

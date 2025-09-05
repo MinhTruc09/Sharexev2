@@ -9,6 +9,9 @@ class UserEntity extends Equatable {
   final String email;
   final String phoneNumber;
   final UserRole role;
+  final int? tripCount;
+  final double? rating;
+  final bool? isVerified;
 
   const UserEntity({
     required this.id,
@@ -17,6 +20,9 @@ class UserEntity extends Equatable {
     required this.email,
     required this.phoneNumber,
     required this.role,
+    this.tripCount,
+    this.rating,
+    this.isVerified,
   });
 
   @override
@@ -27,6 +33,9 @@ class UserEntity extends Equatable {
         email,
         phoneNumber,
         role,
+        tripCount,
+        rating,
+        isVerified,
       ];
 
   /// Business methods

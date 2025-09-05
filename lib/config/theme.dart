@@ -1,34 +1,34 @@
 // theme.dart
 import 'package:flutter/material.dart';
 
-// Grab-like Color System
+// ShareXe Color System - Consistent with app_theme.dart
 class AppColors {
-  // Grab Brand Colors
-  static const Color grabGreen = Color(0xFF00B14F);
-  static const Color grabDarkGreen = Color(0xFF009639);
-  static const Color grabOrange = Color(0xFFFF6B35);
-
+  // Primary Brand Colors (from app_theme.dart)
+  static const Color primary = Color(0xFF00AEEF); // Xanh trời chính
+  static const Color primaryDark = Color(0xFF002D62); // Xanh đậm
+  static const Color primaryLight = Color(0xFF87CEEB); // Xanh nhạt
+  
   // Role-specific colors
-  static const Color passengerPrimary = Color(0xFF00B14F); // Grab Green
-  static const Color passengerSecondary = Color(0xFF00D95F);
-  static const Color driverPrimary = Color(0xFF1E40AF); // Driver Blue
-  static const Color driverSecondary = Color(0xFF3B82F6);
+  static const Color passengerPrimary = Color(0xFF00AEEF); // Xanh trời cho hành khách
+  static const Color passengerSecondary = Color(0xFF87CEEB); // Xanh nhạt
+  static const Color driverPrimary = Color(0xFF002D62); // Xanh đậm cho tài xế
+  static const Color driverSecondary = Color(0xFF4682B4); // Xanh thép
 
-  // Neutral colors (Grab-like)
+  // Neutral colors
   static const Color surface = Colors.white;
   static const Color background = Color(0xFFF8F9FA);
   static const Color cardBackground = Color(0xFFFFFFFF);
-  static const Color textPrimary = Color(0xFF1A1A1A);
+  static const Color textPrimary = Color(0xFF002D62); // Xanh đậm cho text chính
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textTertiary = Color(0xFF9CA3AF);
   static const Color borderLight = Color(0xFFE5E7EB);
   static const Color borderMedium = Color(0xFFD1D5DB);
 
-  // Status colors
-  static const Color success = Color(0xFF10B981);
+  // Status colors với tone xanh
+  static const Color success = Color(0xFF00AEEF); // Dùng xanh chính cho success
   static const Color error = Color(0xFFEF4444);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color info = Color(0xFF3B82F6);
+  static const Color warning = Color(0xFFFFC107); // Vàng nhẹ
+  static const Color info = Color(0xFF00AEEF); // Xanh chính
 
   // Shadow colors
   static const Color shadowLight = Color(0x0A000000);
@@ -36,16 +36,22 @@ class AppColors {
   static const Color shadowDark = Color(0x25000000);
 }
 
-// Grab-like Gradients
+// ShareXe Gradients
 class AppGradients {
-  static const LinearGradient grabPrimary = LinearGradient(
-    colors: [AppColors.grabGreen, AppColors.grabDarkGreen],
+  static const LinearGradient primary = LinearGradient(
+    colors: [AppColors.primary, AppColors.primaryDark],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient passengerPrimary = LinearGradient(
+    colors: [AppColors.passengerPrimary, AppColors.primaryLight],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient driverPrimary = LinearGradient(
-    colors: [AppColors.driverPrimary, Color(0xFF1E3A8A)],
+    colors: [AppColors.driverPrimary, AppColors.driverSecondary],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -57,7 +63,7 @@ class AppGradients {
   );
 }
 
-// Spacing System (Grab-like)
+// Spacing System (ShareXe)
 class AppSpacing {
   static const double xs = 4.0;
   static const double sm = 8.0;
@@ -74,7 +80,7 @@ class AppSpacing {
   static const double avatarSize = 40.0;
 }
 
-// Border Radius (Grab-like)
+// Border Radius (ShareXe)
 class AppRadius {
   static const double xs = 4.0;
   static const double sm = 8.0;
@@ -261,11 +267,11 @@ class AppTheme {
   }
   
   static Color getBackgroundColor(String role) {
-    return role == 'PASSENGER' ? AppColors.background : Color(0xFF1A202C);
+    return role == 'PASSENGER' ? AppColors.background : AppColors.primaryDark;
   }
   
   static Color getSurfaceColor(String role) {
-    return role == 'PASSENGER' ? AppColors.surface : Color(0xFF2D3748);
+    return role == 'PASSENGER' ? AppColors.surface : AppColors.driverSecondary;
   }
   
   static Color getTextColor(String role) {
@@ -355,7 +361,7 @@ class ThemeManager {
   }
 }
 
-// Passenger theme (light blue)
+// Passenger theme (xanh trời)
 final ThemeData passengerTheme = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
@@ -426,7 +432,7 @@ final ThemeData passengerTheme = ThemeData(
   ),
 );
 
-// Driver theme (dark blue)
+// Driver theme (xanh đậm)
 final ThemeData driverTheme = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
@@ -489,8 +495,8 @@ final ThemeData driverTheme = ThemeData(
   
   // Bottom Navigation Bar Theme
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
-    backgroundColor: Color(0xFF2D3748),
-    selectedItemColor: AppColors.driverPrimary,
+    backgroundColor: AppColors.driverSecondary,
+    selectedItemColor: AppColors.primary,
     unselectedItemColor: Colors.white70,
     type: BottomNavigationBarType.fixed,
     elevation: 8,

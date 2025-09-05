@@ -371,37 +371,18 @@ class LocationRepositoryImpl implements LocationRepositoryInterface {
     required double radiusKm,
   }) async {
     try {
-      // Simulate API call with mock data - backend doesn't have nearby drivers endpoint yet
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      // In production, this should call:
+      // Backend doesn't have nearby drivers endpoint yet
+      // TODO: Implement when backend API is available
       // final drivers = await _trackingService.getNearbyDrivers(
       //   latitude: passengerLocation.latitude,
       //   longitude: passengerLocation.longitude,
       //   radiusKm: radiusKm,
       // );
 
-      // Mock nearby drivers for testing
-      final mockDrivers = <LocationData>[
-        LocationData(
-          latitude: passengerLocation.latitude + 0.001,
-          longitude: passengerLocation.longitude + 0.001,
-          address: 'Driver 1 - 500m away',
-          accuracy: 10.0,
-          timestamp: DateTime.now(),
-        ),
-        LocationData(
-          latitude: passengerLocation.latitude - 0.002,
-          longitude: passengerLocation.longitude - 0.001,
-          address: 'Driver 2 - 1km away',
-          accuracy: 15.0,
-          timestamp: DateTime.now(),
-        ),
-      ];
-
+      // Return empty list until API is implemented
       return ApiResponse.success(
-        data: mockDrivers,
-        message: 'Nearby drivers retrieved successfully',
+        data: <LocationData>[],
+        message: 'Nearby drivers endpoint not yet implemented',
       );
     } catch (e) {
       return ApiResponse.error(message: 'Failed to get nearby drivers: $e');

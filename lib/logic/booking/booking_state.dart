@@ -1,4 +1,6 @@
-enum BookingStatus { initial, selecting, confirmed, error }
+import 'package:sharexev2/data/models/booking/entities/booking_entity.dart';
+
+enum BookingStatus { initial, selecting, confirmed, error, loading, loaded }
 
 class VehicleSeat {
   final int seatNumber;
@@ -38,6 +40,10 @@ class BookingState {
   final List<int> selectedSeats;
   final double totalPrice;
   final Map<String, dynamic>? bookingData;
+  final List<BookingEntity>? bookings;
+  final bool isLoadingMore;
+  final int currentPage;
+  final bool hasMoreBookings;
 
   const BookingState({
     this.status = BookingStatus.initial,
@@ -49,6 +55,10 @@ class BookingState {
     this.selectedSeats = const [],
     this.totalPrice = 0.0,
     this.bookingData,
+    this.bookings,
+    this.isLoadingMore = false,
+    this.currentPage = 0,
+    this.hasMoreBookings = true,
   });
 
   BookingState copyWith({
@@ -61,6 +71,10 @@ class BookingState {
     List<int>? selectedSeats,
     double? totalPrice,
     Map<String, dynamic>? bookingData,
+    List<BookingEntity>? bookings,
+    bool? isLoadingMore,
+    int? currentPage,
+    bool? hasMoreBookings,
   }) {
     return BookingState(
       status: status ?? this.status,
@@ -72,6 +86,10 @@ class BookingState {
       selectedSeats: selectedSeats ?? this.selectedSeats,
       totalPrice: totalPrice ?? this.totalPrice,
       bookingData: bookingData ?? this.bookingData,
+      bookings: bookings ?? this.bookings,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      currentPage: currentPage ?? this.currentPage,
+      hasMoreBookings: hasMoreBookings ?? this.hasMoreBookings,
     );
   }
 }

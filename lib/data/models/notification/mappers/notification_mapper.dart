@@ -1,17 +1,21 @@
 import '../dtos/notification_dto.dart';
-import '../entities/notification.dart';
+import '../entities/notification_entity.dart';
 
+/// Mapper để convert giữa NotificationDto và NotificationEntity
 class NotificationMapper {
+  /// Convert từ DTO sang Entity
   static NotificationEntity fromDto(NotificationDto dto) {
     return NotificationEntity(
       id: dto.id,
-      userEmail: dto.userEmail,
       title: dto.title,
-      content: dto.content,
-      type: _mapType(dto.type),
-      referenceId: dto.referenceId,
+      message: dto.content,
+      type: dto.type,
+      isRead: dto.read,
       createdAt: dto.createdAt,
-      read: dto.read,
+      data: {
+        'userEmail': dto.userEmail,
+        'referenceId': dto.referenceId,
+      },
     );
   }
 
@@ -19,47 +23,46 @@ class NotificationMapper {
   static NotificationDto toDto(NotificationEntity entity) {
     return NotificationDto(
       id: entity.id,
-      userEmail: entity.userEmail,
+      userEmail: entity.data['userEmail'] ?? '',
       title: entity.title,
-      content: entity.content,
-      type: _mapTypeToString(entity.type),
-      referenceId: entity.referenceId,
+      content: entity.message,
+      type: entity.type,
+      referenceId: entity.data['referenceId'] ?? 0,
       createdAt: entity.createdAt,
-      read: entity.read,
+      read: entity.isRead,
     );
   }
 
-  /// Map type từ String sang Entity enum
-  static NotificationType _mapType(String type) {
-    switch (type.toLowerCase()) {
+  /// Convert list từ DTO sang Entity
+  static List<NotificationEntity> fromDtoList(List<NotificationDto> dtoList) {
+    return dtoList.map((dto) => fromDto(dto)).toList();
+  }
+
+  /// Convert list từ Entity sang DTO
+  static List<NotificationDto> toDtoList(List<NotificationEntity> entityList) {
+    return entityList.map((entity) => toDto(entity)).toList();
+  }
+
+  /// Map notification type từ string sang enum (if needed)
+  static String _mapNotificationType(String? type) {
+    switch (type?.toLowerCase()) {
       case 'booking':
-        return NotificationType.booking;
+        return 'booking';
       case 'ride':
-        return NotificationType.ride;
+        return 'ride';
       case 'payment':
-        return NotificationType.payment;
+        return 'payment';
       case 'system':
-        return NotificationType.system;
+        return 'system';
       case 'promotion':
-        return NotificationType.promotion;
+        return 'promotion';
       default:
-        return NotificationType.system; // fallback
+        return 'system';
     }
   }
 
-  /// Map type từ Entity enum sang String cho DTO
-  static String _mapTypeToString(NotificationType type) {
-    switch (type) {
-      case NotificationType.booking:
-        return 'booking';
-      case NotificationType.ride:
-        return 'ride';
-      case NotificationType.payment:
-        return 'payment';
-      case NotificationType.system:
-        return 'system';
-      case NotificationType.promotion:
-        return 'promotion';
-    }
+  /// Map notification type từ enum sang string (if needed)
+  static String _mapNotificationTypeToString(String type) {
+    return type;
   }
 }

@@ -1,7 +1,4 @@
 import 'package:equatable/equatable.dart';
-import '../../auth/entities/user_entity.dart';
-import '../../auth/entities/driver_entity.dart';
-import '../booking_status.dart';
 
 /// Business Entity cho Booking - dùng trong UI và business logic
 class BookingEntity extends Equatable {
@@ -172,6 +169,77 @@ class BookingEntity extends Equatable {
       fellowPassengers: fellowPassengers ?? this.fellowPassengers,
     );
   }
+
+  /// Convert to JSON for local storage
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'rideId': rideId,
+      'seatsBooked': seatsBooked,
+      'status': status.name,
+      'createdAt': createdAt.toIso8601String(),
+      'totalPrice': totalPrice,
+      'departure': departure,
+      'destination': destination,
+      'startTime': startTime.toIso8601String(),
+      'pricePerSeat': pricePerSeat,
+      'rideStatus': rideStatus,
+      'totalSeats': totalSeats,
+      'availableSeats': availableSeats,
+      'driverId': driverId,
+      'driverName': driverName,
+      'driverPhone': driverPhone,
+      'driverEmail': driverEmail,
+      'driverAvatarUrl': driverAvatarUrl,
+      'driverStatus': driverStatus,
+      'vehicle': vehicle?.toJson(),
+      'passengerId': passengerId,
+      'passengerName': passengerName,
+      'passengerPhone': passengerPhone,
+      'passengerEmail': passengerEmail,
+      'passengerAvatarUrl': passengerAvatarUrl,
+      'fellowPassengers': fellowPassengers.map((p) => p.toJson()).toList(),
+    };
+  }
+
+  /// Create from JSON for local storage
+  factory BookingEntity.fromJson(Map<String, dynamic> json) {
+    return BookingEntity(
+      id: json['id'] as int,
+      rideId: json['rideId'] as int,
+      seatsBooked: json['seatsBooked'] as int,
+      status: BookingStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => BookingStatus.pending,
+      ),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      totalPrice: (json['totalPrice'] as num).toDouble(),
+      departure: json['departure'] as String,
+      destination: json['destination'] as String,
+      startTime: DateTime.parse(json['startTime'] as String),
+      pricePerSeat: (json['pricePerSeat'] as num).toDouble(),
+      rideStatus: json['rideStatus'] as String,
+      totalSeats: json['totalSeats'] as int,
+      availableSeats: json['availableSeats'] as int,
+      driverId: json['driverId'] as int,
+      driverName: json['driverName'] as String,
+      driverPhone: json['driverPhone'] as String,
+      driverEmail: json['driverEmail'] as String,
+      driverAvatarUrl: json['driverAvatarUrl'] as String?,
+      driverStatus: json['driverStatus'] as String,
+      vehicle: json['vehicle'] != null 
+          ? VehicleEntity.fromJson(json['vehicle'] as Map<String, dynamic>)
+          : null,
+      passengerId: json['passengerId'] as int,
+      passengerName: json['passengerName'] as String,
+      passengerPhone: json['passengerPhone'] as String,
+      passengerEmail: json['passengerEmail'] as String,
+      passengerAvatarUrl: json['passengerAvatarUrl'] as String?,
+      fellowPassengers: (json['fellowPassengers'] as List<dynamic>)
+          .map((p) => PassengerInfoEntity.fromJson(p as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }
 
 class VehicleEntity extends Equatable {
@@ -205,6 +273,32 @@ class VehicleEntity extends Equatable {
       ];
 
   String get fullInfo => '$brand $model - $color - $licensePlate';
+
+  /// Convert to JSON for local storage
+  Map<String, dynamic> toJson() {
+    return {
+      'licensePlate': licensePlate,
+      'brand': brand,
+      'model': model,
+      'color': color,
+      'numberOfSeats': numberOfSeats,
+      'vehicleImageUrl': vehicleImageUrl,
+      'licenseImageUrl': licenseImageUrl,
+    };
+  }
+
+  /// Create from JSON for local storage
+  factory VehicleEntity.fromJson(Map<String, dynamic> json) {
+    return VehicleEntity(
+      licensePlate: json['licensePlate'] as String,
+      brand: json['brand'] as String,
+      model: json['model'] as String,
+      color: json['color'] as String,
+      numberOfSeats: json['numberOfSeats'] as int,
+      vehicleImageUrl: json['vehicleImageUrl'] as String?,
+      licenseImageUrl: json['licenseImageUrl'] as String?,
+    );
+  }
 }
 
 class PassengerInfoEntity extends Equatable {
@@ -228,6 +322,35 @@ class PassengerInfoEntity extends Equatable {
 
   @override
   List<Object?> get props => [id, name, phone, email, avatarUrl, status, seatsBooked];
+
+  /// Convert to JSON for local storage
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'phone': phone,
+      'email': email,
+      'avatarUrl': avatarUrl,
+      'status': status.name,
+      'seatsBooked': seatsBooked,
+    };
+  }
+
+  /// Create from JSON for local storage
+  factory PassengerInfoEntity.fromJson(Map<String, dynamic> json) {
+    return PassengerInfoEntity(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      phone: json['phone'] as String,
+      email: json['email'] as String,
+      avatarUrl: json['avatarUrl'] as String?,
+      status: BookingStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => BookingStatus.pending,
+      ),
+      seatsBooked: json['seatsBooked'] as int,
+    );
+  }
 }
 
 enum BookingStatus {

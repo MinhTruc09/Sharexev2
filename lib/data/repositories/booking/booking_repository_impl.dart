@@ -110,4 +110,17 @@ class BookingRepositoryImpl implements BookingRepositoryInterface {
     }
     return ApiResponse.error(message: response.message);
   }
+
+  @override
+  Future<ApiResponse<List<BookingEntity>>> getBookings({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _bookingService.getBookings(page: page, limit: limit);
+    if (response.success && response.data != null) {
+      final entities = BookingMapper.fromDtoList(response.data!);
+      return ApiResponse.success(data: entities, message: response.message);
+    }
+    return ApiResponse.error(message: response.message);
+  }
 }

@@ -36,9 +36,7 @@ import 'package:sharexev2/logic/tracking/tracking_cubit.dart';
 import 'package:sharexev2/core/di/service_locator.dart';
 
 class App extends StatelessWidget {
-  final bool isFirstOpen;
-
-  const App({super.key, required this.isFirstOpen});
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -136,12 +134,7 @@ class App extends StatelessWidget {
         BlocProvider(
           create:
               (_) => TrackingCubit(
-                trackingRepository:
-                    ServiceLocator.get<TrackingRepositoryInterface>(),
-                bookingRepository:
-                    ServiceLocator.get<BookingRepositoryInterface>(),
-                locationRepository:
-                    ServiceLocator.get<LocationRepositoryInterface>(),
+                ServiceLocator.get<TrackingRepositoryInterface>(),
               ),
         ),
       ],
@@ -149,7 +142,7 @@ class App extends StatelessWidget {
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: navigationService.navigatorKey,
-          initialRoute: isFirstOpen ? AppRoute.onboarding : AppRoute.splash,
+          initialRoute: AppRoute.splash,
           onGenerateRoute: AppRoute.onGenerateRoute,
           title: 'ShareXev2',
           builder: (context, child) {

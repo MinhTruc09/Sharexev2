@@ -1,4 +1,3 @@
-import 'package:equatable/equatable.dart';
 import 'user_entity.dart';
 import 'user_role.dart';
 

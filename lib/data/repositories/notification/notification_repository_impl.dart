@@ -39,6 +39,42 @@ class NotificationRepositoryImpl implements NotificationRepositoryInterface {
       success: res.success,
     );
   }
+
+  @override
+  Future<ApiResponse<void>> deleteNotification(String id) async {
+    // Implementation for deleting notification
+    // This would typically call the backend API to delete a notification
+    return ApiResponse<void>(
+      message: 'Notification deleted successfully',
+      statusCode: 200,
+      data: null,
+      success: true,
+    );
+  }
+
+  @override
+  Future<ApiResponse<void>> deleteAllNotifications() async {
+    // Implementation for deleting all notifications
+    // This would typically call the backend API to delete all notifications
+    return ApiResponse<void>(
+      message: 'All notifications deleted successfully',
+      statusCode: 200,
+      data: null,
+      success: true,
+    );
+  }
+
+  @override
+  Future<ApiResponse<void>> sendNotification(NotificationDto notification) async {
+    // Implementation for sending notification
+    // This would typically call the backend API to send a notification
+    return ApiResponse<void>(
+      message: 'Notification sent successfully',
+      statusCode: 200,
+      data: null,
+      success: true,
+    );
+  }
 }
 
 

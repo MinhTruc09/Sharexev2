@@ -6,13 +6,11 @@ part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   final UserRepositoryInterface? _userRepository;
-  final AuthRepositoryInterface? _authRepository;
 
   ProfileCubit({
     required UserRepositoryInterface? userRepository,
     required AuthRepositoryInterface? authRepository,
   }) : _userRepository = userRepository,
-       _authRepository = authRepository,
        super(const ProfileState());
 
   // ===== Repository Integration Methods =====
@@ -20,6 +18,12 @@ class ProfileCubit extends Cubit<ProfileState> {
   /// Initialize profile and load user data from repository
   Future<void> initializeProfile(String role) async {
     emit(state.copyWith(role: role, status: ProfileStatus.loading));
+    await _loadUserData();
+  }
+
+  /// Load user profile data
+  Future<void> loadUserProfile() async {
+    emit(state.copyWith(status: ProfileStatus.loading));
     await _loadUserData();
   }
 
@@ -34,6 +38,11 @@ class ProfileCubit extends Cubit<ProfileState> {
           emit(
             state.copyWith(
               status: ProfileStatus.loaded,
+              userName: user.fullName,
+              avatarUrl: user.avatarUrl ?? '',
+              tripCount: user.tripCount ?? 0,
+              rating: user.rating ?? 5.0,
+              isVerified: user.isVerified ?? true,
               userData: {
                 'id': user.id,
                 'name': user.fullName,

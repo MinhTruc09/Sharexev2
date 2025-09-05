@@ -1,5 +1,32 @@
 part of 'tracking_cubit.dart';
 
+enum TrackingStatus {
+  initial,
+  active,
+  inactive,
+  error,
+}
+
+class LocationData {
+  final double latitude;
+  final double longitude;
+  final DateTime timestamp;
+  final double? accuracy;
+  final double? altitude;
+  final double? speed;
+  final double? heading;
+
+  const LocationData({
+    required this.latitude,
+    required this.longitude,
+    required this.timestamp,
+    this.accuracy,
+    this.altitude,
+    this.speed,
+    this.heading,
+  });
+}
+
 class TrackingState {
   final TrackingStatus status;
   final String? error;

@@ -25,6 +25,15 @@ class NotificationRepository implements NotificationRepositoryInterface {
 
   @override
   Future<ApiResponse<void>> markAllAsRead() => _impl.markAllAsRead();
+
+  @override
+  Future<ApiResponse<void>> deleteNotification(String id) => _impl.deleteNotification(id);
+
+  @override
+  Future<ApiResponse<void>> deleteAllNotifications() => _impl.deleteAllNotifications();
+
+  @override
+  Future<ApiResponse<void>> sendNotification(NotificationDto notification) => _impl.sendNotification(notification);
 }
 
 

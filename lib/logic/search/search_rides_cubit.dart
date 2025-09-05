@@ -83,6 +83,35 @@ class SearchRidesCubit extends Cubit<SearchRidesState> {
     );
   }
 
+  /// Load more rides for pagination
+  Future<void> loadMoreRides() async {
+    try {
+      if (state.status == SearchRidesStatus.loading) return;
+      
+      emit(state.copyWith(status: SearchRidesStatus.loading));
+
+      // Load more rides from repository
+      final moreRides = await _rideRepository.getAvailableRides();
+      
+      // Append new rides to existing list
+      final allRides = [...state.rides, ...moreRides];
+
+      emit(
+        state.copyWith(
+          status: SearchRidesStatus.loaded,
+          rides: allRides,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: SearchRidesStatus.error,
+          error: 'Lỗi khi tải thêm chuyến đi: ${e.toString()}',
+        ),
+      );
+    }
+  }
+
   /// Refresh current search or available rides
   Future<void> refresh() async {
     if (state.hasSearched) {

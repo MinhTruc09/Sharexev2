@@ -30,6 +30,12 @@ class DriverService {
     );
   }
 
+  /// Lấy danh sách chuyến đi của tài xế (alias for getMyRides)
+  /// GET /api/driver/my-rides
+  Future<ApiResponse<List<RideRequestDTO>>> getDriverRides() async {
+    return getMyRides();
+  }
+
   /// Lấy danh sách đặt chỗ của tài xế
   /// GET /api/driver/bookings
   Future<ApiResponse<List<BookingDto>>> getDriverBookings() async {

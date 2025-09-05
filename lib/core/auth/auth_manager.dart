@@ -62,4 +62,5 @@ class AuthManager {
 
   String? getToken() => _accessToken;
   String? getRefreshToken() => _refreshToken;
+  String? getUserEmail() => _currentUser?.email.value;
 }

@@ -8,6 +8,7 @@ import '../../data/services/auth_service.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/services/ride_service.dart';
 import '../../data/services/user_service.dart';
+import '../../data/services/driver_service.dart';
 import '../../data/services/firebase_auth_service.dart' as firebase;
 import '../../data/services/tracking_service.dart';
 import '../../data/services/chat/chat_api_service.dart';
@@ -96,6 +97,10 @@ class ServiceLocator {
       () => UserService(get<ApiClient>()),
     );
 
+    _getIt.registerLazySingleton<DriverService>(
+      () => DriverService(get<ApiClient>()),
+    );
+
     // Firebase Auth Service
     _getIt.registerLazySingleton<firebase.FirebaseAuthService>(
       () => firebase.FirebaseAuthService(),
@@ -137,7 +142,7 @@ class ServiceLocator {
 
     // Ride Repository - Real implementation
     _getIt.registerLazySingleton<RideRepositoryInterface>(
-      () => RideRepositoryImpl(get<RideService>()),
+      () => RideRepositoryImpl(get<RideService>(), get<DriverService>()),
     );
 
     // User Repository - Real implementation
